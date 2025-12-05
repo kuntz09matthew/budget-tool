@@ -19,6 +19,15 @@ except ImportError:
     UPDATER_AVAILABLE = False
     updater = None
 
+# Import changelog manager
+try:
+    from changelog_manager import ChangelogManager
+    changelog_manager = ChangelogManager()
+    CHANGELOG_AVAILABLE = True
+except ImportError:
+    CHANGELOG_AVAILABLE = False
+    changelog_manager = None
+
 # In-memory data storage (in production, use SQLite or similar)
 budget_data = {
     'categories': [],
@@ -118,6 +127,49 @@ def install_update():
     # This will exit the app and launch installer
     updater.install_update(installer_path)
     return jsonify({'success': True})
+
+# Changelog endpoints
+@app.route('/api/changelog', methods=['GET'])
+def get_changelog():
+    """Get all version history"""
+    if not CHANGELOG_AVAILABLE or not changelog_manager:
+        return jsonify({'error': 'Changelog not available'}), 503
+    
+    versions = changelog_manager.get_all_versions()
+    return jsonify({'versions': versions})
+
+@app.route('/api/changelog/<version>', methods=['GET'])
+def get_version_changes(version):
+    """Get changes for a specific version"""
+    if not CHANGELOG_AVAILABLE or not changelog_manager:
+        return jsonify({'error': 'Changelog not available'}), 503
+    
+    version_data = changelog_manager.get_version(version)
+    if not version_data:
+        return jsonify({'error': 'Version not found'}), 404
+    
+    return jsonify(version_data)
+
+@app.route('/api/changelog/latest', methods=['GET'])
+def get_latest_version():
+    """Get the latest version info"""
+    if not CHANGELOG_AVAILABLE or not changelog_manager:
+        return jsonify({'error': 'Changelog not available'}), 503
+    
+    latest = changelog_manager.get_latest_version()
+    if not latest:
+        return jsonify({'error': 'No versions found'}), 404
+    
+    return jsonify(latest)
+
+@app.route('/api/changelog/markdown', methods=['GET'])
+def get_changelog_markdown():
+    """Get changelog as markdown"""
+    if not CHANGELOG_AVAILABLE or not changelog_manager:
+        return jsonify({'error': 'Changelog not available'}), 503
+    
+    markdown = changelog_manager.export_changelog_markdown()
+    return jsonify({'markdown': markdown})
 
 if __name__ == '__main__':
     print('Starting Budget Tool Flask server...')

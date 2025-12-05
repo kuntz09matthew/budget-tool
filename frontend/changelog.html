@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Version History - Budget Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .version-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .version-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .version-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-major { background: #ff6b6b; color: white; }
+        .badge-minor { background: #ffd93d; color: #333; }
+        .badge-patch { background: #6bcf7f; color: white; }
+        .badge-released { background: #4facfe; color: white; }
+        .badge-unreleased { background: #e0e0e0; color: #666; }
+
+        .version-date {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .version-summary {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .changes-section {
+            margin-top: 15px;
+        }
+
+        .change-type-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #333;
+            margin: 15px 0 10px 0;
+            font-size: 14px;
+        }
+
+        .change-icon {
+            font-size: 18px;
+        }
+
+        .change-list {
+            list-style: none;
+            margin-left: 28px;
+        }
+
+        .change-item {
+            padding: 8px 0;
+            color: #666;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .change-item:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📜 Version History</h1>
+            <p>Track all updates and improvements to Budget Tool</p>
+            <button class="back-button" onclick="window.location.href='/'">← Back to App</button>
+        </div>
+
+        <div id="content"></div>
+    </div>
+
+    <script>
+        async function loadChangelog() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading version history...</div>';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/changelog');
+                const data = await response.json();
+
+                if (data.error) {
+                    content.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                    return;
+                }
+
+                if (!data.versions || data.versions.length === 0) {
+                    content.innerHTML = `
+                        <div class="empty-state">
+                            <h2>📝 No Version History Yet</h2>
+                            <p>Version history will appear here after your first deployment</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                content.innerHTML = data.versions.map(version => `
+                    <div class="version-card">
+                        <div class="version-header">
+                            <div>
+                                <div class="version-number">v${version.version}</div>
+                                <div class="version-date">${new Date(version.release_date).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</div>
+                            </div>
+                            <div>
+                                <span class="version-badge badge-${version.version_type}">${version.version_type}</span>
+                                <span class="version-badge ${version.is_released ? 'badge-released' : 'badge-unreleased'}">
+                                    ${version.is_released ? 'Released' : 'Unreleased'}
+                                </span>
+                            </div>
+                        </div>
+
+                        ${version.summary ? `
+                            <div class="version-summary">
+                                ${version.summary}
+                            </div>
+                        ` : ''}
+
+                        ${version.changes && version.changes.length > 0 ? `
+                            <div class="changes-section">
+                                ${renderChanges(version.changes)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="error">
+                        ❌ Failed to load version history<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function renderChanges(changes) {
+            const grouped = {};
+            changes.forEach(change => {
+                if (!grouped[change.change_type]) {
+                    grouped[change.change_type] = [];
+                }
+                grouped[change.change_type].push(change.description);
+            });
+
+            const icons = {
+                'feature': '✨',
+                'features': '✨',
+                'fix': '🐛',
+                'fixes': '🐛',
+                'improvement': '🚀',
+                'improvements': '🚀',
+                'breaking': '💥',
+                'other': '📝'
+            };
+
+            const labels = {
+                'feature': 'New Features',
+                'features': 'New Features',
+                'fix': 'Bug Fixes',
+                'fixes': 'Bug Fixes',
+                'improvement': 'Improvements',
+                'improvements': 'Improvements',
+                'breaking': 'Breaking Changes',
+                'other': 'Other Changes'
+            };
+
+            return Object.entries(grouped).map(([type, items]) => `
+                <div class="change-type-header">
+                    <span class="change-icon">${icons[type] || '📝'}</span>
+                    <span>${labels[type] || 'Changes'}</span>
+                </div>
+                <ul class="change-list">
+                    ${items.map(item => `<li class="change-item">${item}</li>`).join('')}
+                </ul>
+            `).join('');
+        }
+
+        // Load changelog on page load
+        loadChangelog();
+
+        // Refresh every 30 seconds
+        setInterval(loadChangelog, 30000);
+    </script>
+</body>
+</html>
