@@ -1,0 +1,20 @@
+# Budget Tool - Python Requirements
+
+# Core Flask dependencies
+Flask==3.0.0
+Flask-CORS==4.0.0
+Werkzeug==3.0.1
+
+# Desktop window (Python alternative to Electron)
+pywebview==5.1
+
+# Auto-updater
+requests>=2.31.0
+packaging>=23.0
+
+# Optional: Database support (uncomment when ready to add)
+# SQLite comes with Python, no need to install
+
+# Optional: Data analysis (uncomment if needed)
+# pandas>=2.0.0
+# matplotlib>=3.7.0

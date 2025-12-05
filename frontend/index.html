@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <h1>💰 Budget Tool</h1>
+            <p class="subtitle">Your Local Budgeting Assistant</p>
+        </header>
+
+        <main class="app-main">
+            <!-- Server Status Card -->
+            <div class="status-card">
+                <h2>Server Status</h2>
+                <p id="server-status" class="status-checking">Checking...</p>
+            </div>
+
+            <!-- Update Banner (hidden by default) -->
+            <div id="update-banner" class="update-banner" style="display: none;">
+                <p id="update-message"></p>
+                <button id="update-button" class="update-button" style="display: none;">
+                    Restart & Update
+                </button>
+            </div>
+
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <h2>Welcome to Budget Tool</h2>
+                <p>
+                    This is your local budgeting application running with a Python Flask backend. 
+                    The server runs on your laptop, and everything works offline!
+                </p>
+                <div class="feature-list">
+                    <div class="feature">
+                        <h3>🏠 Runs Locally</h3>
+                        <p>No internet required - all data stays on your computer</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🐍 Python Backend</h3>
+                        <p>Flask server for flexible and powerful data handling</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔄 Auto-Updates</h3>
+                        <p>Automatically checks for updates when available</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Overview Section -->
+            <div class="budget-section">
+                <h2>Budget Overview</h2>
+                <div class="budget-stats">
+                    <div class="stat-card">
+                        <h3>Total Budget</h3>
+                        <p class="stat-value">$0.00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Transactions</h3>
+                        <p class="stat-value" id="transaction-count">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Categories</h3>
+                        <p class="stat-value" id="category-count">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h2>Next Steps</h2>
+                <ul>
+                    <li>✅ Python Flask backend is running</li>
+                    <li>✅ Frontend connected to backend</li>
+                    <li>📝 Build transaction management UI</li>
+                    <li>📊 Add budget categories and tracking</li>
+                    <li>💾 Implement SQLite for persistent storage</li>
+                    <li>📈 Create data visualization (charts/graphs)</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
