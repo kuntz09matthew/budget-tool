@@ -201,6 +201,9 @@ function Save-ToDatabase {
         [bool]$isReleased
     )
     
+    # Create a temporary Python script
+    $tempScript = [System.IO.Path]::GetTempFileName() + ".py"
+    
     $pythonCode = @"
 import sys
 sys.path.append('server')
@@ -214,12 +217,16 @@ version_id = manager.add_version('$version', '$versionType', '$summary', $isRele
     # Add each change to the database
     foreach ($type in $changes.Keys) {
         foreach ($change in $changes[$type]) {
-            $cleanChange = $change -replace "'", "''"
-            $pythonCode += "manager.add_change($version_id, '$type', '$cleanChange')`n"
+            if ($change) {
+                $cleanChange = $change -replace "'", "''"
+                $pythonCode += "manager.add_change(version_id, '$type', '$cleanChange')`n"
+            }
         }
     }
     
-    $pythonCode | python -
+    $pythonCode | Out-File -FilePath $tempScript -Encoding UTF8
+    python $tempScript
+    Remove-Item $tempScript -ErrorAction SilentlyContinue
 }
 
 # Check for changes
