@@ -1,7 +1,7 @@
-# Quick Deploy Script - No Parameters Required
+# Quick Deploy Script - Now with Smart Versioning!
 # Just double-click this file or run: .\quick-deploy.ps1
 
-Write-Host "`n🚀 Quick Deploy - Budget Tool`n" -ForegroundColor Cyan
+Write-Host "`n🤖 Smart Quick Deploy - Budget Tool`n" -ForegroundColor Cyan
 
 # Check for changes
 $status = git status --porcelain
@@ -16,30 +16,38 @@ Write-Host "📝 Changes to deploy:" -ForegroundColor Yellow
 git status --short
 Write-Host ""
 
-# Ask for commit message
-Write-Host "💬 Enter a brief description of your changes:" -ForegroundColor Cyan
+# Get current version
+$currentVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+Write-Host "📊 Current version: $currentVersion`n" -ForegroundColor Cyan
+
+# Ask for commit message with examples
+Write-Host "💬 Enter a description of your changes:" -ForegroundColor Cyan
+Write-Host "   Examples:" -ForegroundColor Gray
+Write-Host "   - 'feat: Added budget charts'          → Minor version bump" -ForegroundColor Gray
+Write-Host "   - 'fix: Fixed calculation bug'         → Patch version bump" -ForegroundColor Gray
+Write-Host "   - 'breaking: Changed database schema'  → Major version bump" -ForegroundColor Gray
 Write-Host "   (or press Enter for automatic message)" -ForegroundColor Gray
-$message = Read-Host "   Message"
+$message = Read-Host "`n   Message"
 
 if ([string]::IsNullOrWhiteSpace($message)) {
     $message = "Update: $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
 }
 
+# Ask if this should create a release
+Write-Host "`n❓ Create a release (build installer)? (y/N): " -NoNewline -ForegroundColor Yellow
+$createRelease = Read-Host
+
+$releaseFlag = if ($createRelease -eq "y" -or $createRelease -eq "yes") { "-CreateRelease" } else { "" }
+
 Write-Host ""
-Write-Host "📤 Deploying with message: `"$message`"`n" -ForegroundColor Cyan
+Write-Host "📤 Deploying...`n" -ForegroundColor Cyan
 
-# Stage, commit, and push
-git add .
-git commit -m "$message"
-git push origin main
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host ""
-    Write-Host "✅ Successfully deployed to GitHub! 🎉`n" -ForegroundColor Green
-    Write-Host "🌐 View at: https://github.com/kuntz09matthew/budget-tool`n" -ForegroundColor White
+# Call the smart deploy script
+if ($releaseFlag) {
+    & ".\smart-deploy.ps1" -Message $message -CreateRelease
 } else {
-    Write-Host ""
-    Write-Host "❌ Deployment failed. Check the error messages above.`n" -ForegroundColor Red
+    & ".\smart-deploy.ps1" -Message $message
 }
 
+Write-Host ""
 Read-Host "Press Enter to exit"
