@@ -1,6 +1,6 @@
 {
   "name": "budget-tool",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "A local desktop budgeting application with Python backend",
   "main": "electron/main.js",
   "scripts": {
@@ -60,7 +60,7 @@
         }
       ],
       "icon": "assets/icon.ico",
-      "artifactName": "${productName}-${version}-Setup.${ext}"
+      "artifactName": "Budget.Tool-${version}-Setup.${ext}"
     },
     "nsis": {
       "oneClick": false,
