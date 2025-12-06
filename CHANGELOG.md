@@ -3,6 +3,22 @@
 All notable changes to Budget Tool.
 
 
+## [1.2.11] - Released
+*2025-12-06 01:43:55*
+
+Improved: Enhanced user interface in app.js, Enhanced user interface in index.html, Enhanced user interface in styles.css, Enhanced user interface design
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+- Updated dependencies
+
+### 📝 Changes
+- Enhanced user interface in app.js
+- Enhanced user interface in index.html
+- Enhanced user interface in styles.css
+- Enhanced user interface design
+
+
 ## [1.2.9] - Released
 *2025-12-06 01:35:26*
 
