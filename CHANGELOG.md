@@ -3,6 +3,18 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.1] - Released
+*2025-12-05*
+
+Testing the new update system
+
+### ✨ New Features
+- Added version badge to welcome section
+
+### 🔄 Updates
+- Bumped version to 1.5.1 for update system test
+
+
 ## [1.5.0] - Released
 *2025-12-06 02:42:00*
 
