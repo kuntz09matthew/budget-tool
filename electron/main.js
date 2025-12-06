@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 let serverProcess;
+let downloadProgressWindow = null;
 
 // Configure auto-updater
 autoUpdater.autoDownload = false; // Don't auto-download, let user choose
@@ -14,8 +15,14 @@ autoUpdater.allowPrerelease = false; // Only stable releases
 
 // Enable differential downloads (smart binary diff downloads)
 // This will automatically use .nsis.7z differential packages when available
-autoUpdater.logger = require('electron-log');
+const log = require('electron-log');
+autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
+
+// Additional logging configuration
+log.info('App starting...');
+log.info('Version:', app.getVersion());
+log.info('Update feed URL:', autoUpdater.getFeedURL());
 
 // Start the Python Flask server
 function startServer() {
@@ -143,6 +150,7 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('Update available:', info.version);
+  console.log('Update info:', JSON.stringify(info, null, 2));
   
   // Send update info to renderer
   mainWindow.webContents.send('update-available', {
@@ -151,44 +159,97 @@ autoUpdater.on('update-available', (info) => {
     releaseDate: info.releaseDate
   });
   
-  // Show dialog to user
+  // Calculate download size
+  const downloadSize = info.files && info.files[0] ? info.files[0].size : null;
+  const sizeInMB = downloadSize ? (downloadSize / 1024 / 1024).toFixed(2) : 'Unknown';
+  
+  // Show dialog to user with size info
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Update Available',
     message: `A new version (${info.version}) is available!`,
-    detail: 'Would you like to download and install the update?',
+    detail: `Download size: ${sizeInMB} MB\n\nWould you like to download and install the update?`,
     buttons: ['Download & Install', 'Later'],
     defaultId: 0,
     cancelId: 1
   }).then((result) => {
     if (result.response === 0) {
       // User chose to download
+      console.log('Starting download...');
+      
+      // Show progress dialog
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Downloading Update',
+        message: 'Downloading update...',
+        detail: `Size: ${sizeInMB} MB\nThis may take a few minutes.`,
+        buttons: []
+      });
+      
       autoUpdater.downloadUpdate();
       mainWindow.webContents.send('update-downloading');
     }
   });
 });
 
-autoUpdater.on('update-not-available', () => {
+autoUpdater.on('update-not-available', (info) => {
   console.log('No updates available');
+  console.log('Current version is up to date:', info.version);
 });
 
 autoUpdater.on('error', (err) => {
   console.error('Update error:', err);
+  console.error('Error stack:', err.stack);
+  
+  // Clear progress bar
+  if (mainWindow && process.platform === 'win32') {
+    mainWindow.setProgressBar(-1);
+  }
+  
   mainWindow.webContents.send('update-error', err.message);
+  
+  // Show error to user
+  dialog.showMessageBox(mainWindow, {
+    type: 'error',
+    title: 'Update Error',
+    message: 'Failed to download update',
+    detail: `Error: ${err.message}\n\nPlease check your internet connection and try again later.`,
+    buttons: ['OK']
+  });
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
-  console.log(`Download progress: ${progressObj.percent}%`);
+  const percent = Math.round(progressObj.percent);
+  const transferredMB = (progressObj.transferred / 1024 / 1024).toFixed(2);
+  const totalMB = (progressObj.total / 1024 / 1024).toFixed(2);
+  const bytesPerSecond = progressObj.bytesPerSecond || 0;
+  const speedMB = (bytesPerSecond / 1024 / 1024).toFixed(2);
+  
+  console.log(`Download progress: ${percent}% (${transferredMB}/${totalMB} MB) @ ${speedMB} MB/s`);
+  
+  // Update window progress bar (Windows only)
+  if (mainWindow && process.platform === 'win32') {
+    mainWindow.setProgressBar(progressObj.percent / 100);
+  }
+  
   mainWindow.webContents.send('update-download-progress', {
-    percent: progressObj.percent,
+    percent: percent,
     transferred: progressObj.transferred,
-    total: progressObj.total
+    total: progressObj.total,
+    transferredMB: transferredMB,
+    totalMB: totalMB,
+    speedMB: speedMB
   });
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('Update downloaded');
+  console.log('Update downloaded successfully!');
+  console.log('Downloaded version:', info.version);
+  
+  // Clear progress bar
+  if (mainWindow && process.platform === 'win32') {
+    mainWindow.setProgressBar(-1);
+  }
   
   // Send notification to renderer
   mainWindow.webContents.send('update-downloaded', {
@@ -207,6 +268,7 @@ autoUpdater.on('update-downloaded', (info) => {
   }).then((result) => {
     if (result.response === 0) {
       // User chose to restart
+      console.log('Restarting to install update...');
       setImmediate(() => autoUpdater.quitAndInstall());
     }
   });

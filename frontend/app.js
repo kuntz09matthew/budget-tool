@@ -20,6 +20,9 @@ async function checkServerHealth() {
         statusElement.className = 'status-error';
         console.error('Server health check failed:', error);
     }
+    
+    // Setup Electron update handlers if available
+    setupElectronUpdates();
 }
 
 // Load budget data
@@ -199,3 +202,110 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show home section by default
     showSection('home');
 });
+
+// Electron Update Handlers
+function setupElectronUpdates() {
+    // Check if running in Electron
+    if (typeof window.electron === 'undefined') {
+        console.log('Not running in Electron, skipping update setup');
+        return;
+    }
+    
+    console.log('Setting up Electron update handlers...');
+    
+    // Listen for update download progress
+    window.electron.onUpdateDownloadProgress((progress) => {
+        console.log('Download progress:', progress);
+        showUpdateProgress(progress);
+    });
+    
+    // Listen for update downloaded
+    window.electron.onUpdateDownloaded((info) => {
+        console.log('Update downloaded:', info);
+        showUpdateReady(info);
+    });
+    
+    // Listen for update errors
+    window.electron.onUpdateError((error) => {
+        console.error('Update error:', error);
+        showUpdateError(error);
+    });
+}
+
+function showUpdateProgress(progress) {
+    const updateBanner = document.getElementById('update-banner');
+    const updateMessage = document.getElementById('update-message');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressSize = document.getElementById('progress-size');
+    const updateButton = document.getElementById('update-button');
+    
+    // Show banner and progress
+    updateBanner.style.display = 'block';
+    progressContainer.style.display = 'block';
+    updateButton.style.display = 'none';
+    
+    // Update progress bar
+    const percent = Math.round(progress.percent) || 0;
+    progressBar.style.width = `${percent}%`;
+    progressPercent.textContent = `${percent}%`;
+    
+    // Update size info
+    if (progress.transferredMB && progress.totalMB) {
+        progressSize.textContent = `${progress.transferredMB} MB / ${progress.totalMB} MB`;
+        if (progress.speedMB) {
+            progressSize.textContent += ` @ ${progress.speedMB} MB/s`;
+        }
+    } else {
+        progressSize.textContent = 'Downloading...';
+    }
+    
+    updateMessage.innerHTML = `
+        <strong>📥 Downloading Update...</strong>
+        <br><small>Please wait while the update is being downloaded.</small>
+    `;
+}
+
+function showUpdateReady(info) {
+    const updateBanner = document.getElementById('update-banner');
+    const updateMessage = document.getElementById('update-message');
+    const progressContainer = document.getElementById('progress-container');
+    const updateButton = document.getElementById('update-button');
+    
+    // Hide progress, show button
+    progressContainer.style.display = 'none';
+    updateButton.style.display = 'inline-block';
+    updateButton.textContent = 'Restart & Install';
+    
+    updateMessage.innerHTML = `
+        <strong>✅ Update Downloaded!</strong>
+        <br><small>Version ${info.version} is ready to install.</small>
+    `;
+    
+    updateButton.onclick = () => {
+        if (window.electron && window.electron.installUpdate) {
+            window.electron.installUpdate();
+        }
+    };
+}
+
+function showUpdateError(error) {
+    const updateBanner = document.getElementById('update-banner');
+    const updateMessage = document.getElementById('update-message');
+    const progressContainer = document.getElementById('progress-container');
+    const updateButton = document.getElementById('update-button');
+    
+    progressContainer.style.display = 'none';
+    updateButton.style.display = 'none';
+    
+    updateMessage.innerHTML = `
+        <strong>❌ Update Failed</strong>
+        <br><small>${error}</small>
+    `;
+    
+    // Hide banner after 10 seconds
+    setTimeout(() => {
+        updateBanner.style.display = 'none';
+    }, 10000);
+}
