@@ -25,7 +25,7 @@ def generate_test_data():
                 'id': int(datetime.now().timestamp() * 1000),
                 'type': 'checking',
                 'name': 'Family Checking',
-                'balance': 1450.75,
+                'balance': 185.50,  # Low balance to trigger WARNING
                 'institution': 'Wells Fargo',
                 'notes': 'Main household checking account',
                 'created_at': (datetime.now() - timedelta(days=730)).isoformat(),
@@ -65,7 +65,7 @@ def generate_test_data():
                 'id': int(datetime.now().timestamp() * 1000) + 4,
                 'type': 'checking',
                 'name': 'Spouse Checking',
-                'balance': 625.40,
+                'balance': 95.75,  # Very low balance to increase urgency
                 'institution': 'Chase',
                 'notes': 'Side income account',
                 'created_at': (datetime.now() - timedelta(days=500)).isoformat(),
@@ -88,7 +88,7 @@ def generate_test_data():
                 'name': 'Car Payment',
                 'amount': 285,
                 'frequency': 'monthly',
-                'due_date': 10,
+                'due_date': 8,  # Due in 2 days - UPCOMING
                 'category': 'Transportation',
                 'auto_pay': True
             },
@@ -97,7 +97,7 @@ def generate_test_data():
                 'name': 'Car Insurance',
                 'amount': 125,
                 'frequency': 'monthly',
-                'due_date': 5,
+                'due_date': 10,  # Due in 4 days - UPCOMING
                 'category': 'Insurance',
                 'auto_pay': True
             },
@@ -106,7 +106,7 @@ def generate_test_data():
                 'name': 'Electric Bill',
                 'amount': 85,
                 'frequency': 'monthly',
-                'due_date': 15,
+                'due_date': 9,  # Due in 3 days - UPCOMING
                 'category': 'Utilities',
                 'auto_pay': False
             },
@@ -124,7 +124,7 @@ def generate_test_data():
                 'name': 'Phone Plan',
                 'amount': 75,
                 'frequency': 'monthly',
-                'due_date': 8,
+                'due_date': 7,  # Due TOMORROW - URGENT!
                 'category': 'Utilities',
                 'auto_pay': True
             },
@@ -142,7 +142,7 @@ def generate_test_data():
                 'name': 'Gym Membership',
                 'amount': 30,
                 'frequency': 'monthly',
-                'due_date': 3,
+                'due_date': 11,  # Due in 5 days - UPCOMING
                 'category': 'Health',
                 'auto_pay': True
             }
@@ -341,6 +341,121 @@ def generate_test_data():
     
     budget_data['income_sources'] = income_sources
     
+    # Generate realistic transactions for November and December 2025
+    # This will help test the month comparison feature
+    transactions = []
+    transaction_id = 1
+    
+    # Realistic spending categories for a family making ~$60k/year
+    # Available spending after fixed expenses: ~$4,000-$4,500/month
+    # Groceries: $600-800/month, Gas: $200-250/month, Dining: $150-250/month, etc.
+    
+    # November 2025 transactions (for comparison)
+    november_transactions = [
+        # Week 1 (Nov 1-7)
+        {'date': '2025-11-01T09:00:00', 'merchant': 'Walmart', 'description': 'Grocery shopping', 'amount': 135.20, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-01T15:30:00', 'merchant': 'Shell', 'description': 'Gas fill-up', 'amount': 45.00, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-11-02T12:00:00', 'merchant': 'Subway', 'description': 'Lunch', 'amount': 18.50, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-11-03T10:30:00', 'merchant': 'Target', 'description': 'Household items', 'amount': 52.75, 'category': 'Household', 'payment_method': 'credit'},
+        {'date': '2025-11-03T18:00:00', 'merchant': 'Pizza Hut', 'description': 'Family dinner', 'amount': 38.90, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-11-04T11:15:00', 'merchant': 'CVS', 'description': 'Medicine', 'amount': 22.00, 'category': 'Healthcare', 'payment_method': 'debit'},
+        {'date': '2025-11-05T14:45:00', 'merchant': 'Aldi', 'description': 'Weekly groceries', 'amount': 88.40, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-06T16:20:00', 'merchant': 'Kwik Trip', 'description': 'Gas', 'amount': 40.25, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-11-07T19:30:00', 'merchant': 'Chipotle', 'description': 'Dinner', 'amount': 32.60, 'category': 'Dining Out', 'payment_method': 'debit'},
+        
+        # Week 2 (Nov 8-14)
+        {'date': '2025-11-08T09:30:00', 'merchant': 'Walmart', 'description': 'Groceries', 'amount': 118.65, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-09T13:00:00', 'merchant': 'Amazon', 'description': 'Online shopping', 'amount': 54.99, 'category': 'Shopping', 'payment_method': 'credit'},
+        {'date': '2025-11-10T10:00:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 43.50, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-11-11T12:30:00', 'merchant': 'Olive Garden', 'description': 'Lunch date', 'amount': 48.75, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-11-12T11:00:00', 'merchant': 'Target', 'description': 'Clothing', 'amount': 72.30, 'category': 'Clothing', 'payment_method': 'credit'},
+        {'date': '2025-11-13T15:30:00', 'merchant': 'PetSmart', 'description': 'Pet supplies', 'amount': 38.50, 'category': 'Pet Care', 'payment_method': 'debit'},
+        {'date': '2025-11-14T09:45:00', 'merchant': 'Aldi', 'description': 'Groceries', 'amount': 92.15, 'category': 'Groceries', 'payment_method': 'debit'},
+        
+        # Week 3 (Nov 15-21)
+        {'date': '2025-11-15T10:30:00', 'merchant': 'Walmart', 'description': 'Weekly shopping', 'amount': 145.80, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-16T14:00:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 41.75, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-11-17T18:30:00', 'merchant': 'Applebees', 'description': 'Dinner out', 'amount': 58.90, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-11-18T11:15:00', 'merchant': 'Walgreens', 'description': 'Pharmacy', 'amount': 16.25, 'category': 'Healthcare', 'payment_method': 'debit'},
+        {'date': '2025-11-19T13:45:00', 'merchant': 'Target', 'description': 'Home goods', 'amount': 67.40, 'category': 'Household', 'payment_method': 'credit'},
+        {'date': '2025-11-20T09:00:00', 'merchant': 'Aldi', 'description': 'Groceries', 'amount': 85.60, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-21T16:00:00', 'merchant': 'Kwik Trip', 'description': 'Gas', 'amount': 38.90, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        
+        # Week 4 (Nov 22-30)
+        {'date': '2025-11-22T10:00:00', 'merchant': 'Walmart', 'description': 'Groceries', 'amount': 128.50, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-23T12:30:00', 'merchant': 'Starbucks', 'description': 'Coffee', 'amount': 8.75, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-11-24T15:00:00', 'merchant': 'CVS', 'description': 'Personal care', 'amount': 24.90, 'category': 'Personal Care', 'payment_method': 'debit'},
+        {'date': '2025-11-25T11:30:00', 'merchant': 'McDonalds', 'description': 'Quick lunch', 'amount': 15.40, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-11-26T14:15:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 44.25, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-11-27T09:45:00', 'merchant': 'Aldi', 'description': 'Thanksgiving groceries', 'amount': 156.80, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-11-28T16:30:00', 'merchant': 'Amazon', 'description': 'Black Friday deal', 'amount': 89.99, 'category': 'Shopping', 'payment_method': 'credit'},
+        {'date': '2025-11-29T10:30:00', 'merchant': 'Target', 'description': 'Black Friday shopping', 'amount': 112.50, 'category': 'Shopping', 'payment_method': 'credit'},
+        {'date': '2025-11-30T13:00:00', 'merchant': 'Panera', 'description': 'Lunch', 'amount': 22.75, 'category': 'Dining Out', 'payment_method': 'debit'},
+    ]
+    
+    # December 2025 transactions (current month)
+    december_transactions = [
+        # Week 1 (Dec 1-7)
+        {'date': '2025-12-01T08:30:00', 'merchant': 'Walmart', 'description': 'Grocery shopping', 'amount': 127.45, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-01T14:20:00', 'merchant': 'Shell', 'description': 'Gas fill-up', 'amount': 42.00, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-02T12:15:00', 'merchant': 'Elementary School', 'description': 'School lunch account', 'amount': 35.00, 'category': 'Childcare/Education', 'payment_method': 'debit'},
+        {'date': '2025-12-02T18:45:00', 'merchant': 'Olive Garden', 'description': 'Family dinner', 'amount': 58.75, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-03T09:00:00', 'merchant': 'Starbucks', 'description': 'Coffee', 'amount': 6.25, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-12-03T16:30:00', 'merchant': 'Target', 'description': 'Household items', 'amount': 45.80, 'category': 'Household', 'payment_method': 'debit'},
+        {'date': '2025-12-04T10:45:00', 'merchant': 'Dollar General', 'description': 'Cleaning supplies', 'amount': 28.30, 'category': 'Household', 'payment_method': 'debit'},
+        {'date': '2025-12-04T19:00:00', 'merchant': 'Pizza Hut', 'description': 'Pizza night', 'amount': 32.50, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-05T11:20:00', 'merchant': 'CVS', 'description': 'Prescriptions', 'amount': 15.00, 'category': 'Healthcare', 'payment_method': 'debit'},
+        {'date': '2025-12-05T16:00:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 38.50, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-06T13:30:00', 'merchant': 'Aldi', 'description': 'Weekly groceries', 'amount': 95.20, 'category': 'Groceries', 'payment_method': 'debit'},
+        
+        # Week 2 (Dec 8-14) - A bit more spending
+        {'date': '2025-12-08T09:30:00', 'merchant': 'Walmart', 'description': 'Groceries', 'amount': 142.35, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-08T14:00:00', 'merchant': 'Amazon', 'description': 'Kids toys', 'amount': 67.99, 'category': 'Shopping', 'payment_method': 'credit'},
+        {'date': '2025-12-09T10:15:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 41.00, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-09T19:30:00', 'merchant': 'Chipotle', 'description': 'Quick dinner', 'amount': 28.45, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-12-10T11:00:00', 'merchant': 'Walgreens', 'description': 'Household items', 'amount': 22.75, 'category': 'Household', 'payment_method': 'debit'},
+        {'date': '2025-12-10T17:45:00', 'merchant': 'McDonalds', 'description': 'Kids dinner', 'amount': 18.60, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-11T12:30:00', 'merchant': 'Target', 'description': 'Clothing', 'amount': 85.40, 'category': 'Clothing', 'payment_method': 'credit'},
+        {'date': '2025-12-11T15:00:00', 'merchant': 'PetSmart', 'description': 'Dog food', 'amount': 42.00, 'category': 'Pet Care', 'payment_method': 'debit'},
+        {'date': '2025-12-12T10:00:00', 'merchant': 'Kwik Trip', 'description': 'Gas and snacks', 'amount': 52.30, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-12T18:00:00', 'merchant': 'Buffalo Wild Wings', 'description': 'Date night', 'amount': 72.50, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-13T09:45:00', 'merchant': 'Aldi', 'description': 'Groceries', 'amount': 78.90, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-14T11:30:00', 'merchant': 'Starbucks', 'description': 'Coffee', 'amount': 7.50, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-12-14T16:20:00', 'merchant': 'Auto Zone', 'description': 'Car maintenance', 'amount': 38.75, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        
+        # Week 3 (Dec 15-21) - Holiday shopping starting
+        {'date': '2025-12-15T10:00:00', 'merchant': 'Walmart', 'description': 'Weekly shopping', 'amount': 156.80, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-15T14:30:00', 'merchant': 'Amazon', 'description': 'Holiday gifts', 'amount': 125.99, 'category': 'Gifts', 'payment_method': 'credit'},
+        {'date': '2025-12-16T09:00:00', 'merchant': 'Shell', 'description': 'Gas', 'amount': 44.00, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-16T19:00:00', 'merchant': 'Papa Johns', 'description': 'Pizza', 'amount': 29.99, 'category': 'Dining Out', 'payment_method': 'debit'},
+        {'date': '2025-12-17T11:15:00', 'merchant': 'Target', 'description': 'Holiday decor', 'amount': 92.30, 'category': 'Shopping', 'payment_method': 'credit'},
+        {'date': '2025-12-17T15:45:00', 'merchant': 'CVS', 'description': 'Pharmacy', 'amount': 18.50, 'category': 'Healthcare', 'payment_method': 'debit'},
+        {'date': '2025-12-18T10:30:00', 'merchant': 'Kohls', 'description': 'Gifts', 'amount': 145.75, 'category': 'Gifts', 'payment_method': 'credit'},
+        {'date': '2025-12-18T18:00:00', 'merchant': 'Applebees', 'description': 'Dinner out', 'amount': 64.25, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-19T09:15:00', 'merchant': 'Kwik Trip', 'description': 'Gas', 'amount': 39.75, 'category': 'Gas/Transportation', 'payment_method': 'credit'},
+        {'date': '2025-12-19T14:00:00', 'merchant': 'Walgreens', 'description': 'Wrapping paper', 'amount': 24.50, 'category': 'Shopping', 'payment_method': 'debit'},
+        {'date': '2025-12-20T10:00:00', 'merchant': 'Aldi', 'description': 'Groceries', 'amount': 88.40, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-20T16:30:00', 'merchant': 'Best Buy', 'description': 'Electronics gift', 'amount': 189.99, 'category': 'Gifts', 'payment_method': 'credit'},
+        {'date': '2025-12-21T12:00:00', 'merchant': 'Panera', 'description': 'Lunch', 'amount': 26.80, 'category': 'Dining Out', 'payment_method': 'debit'},
+    ]
+    
+    # Combine November and December transactions
+    all_transactions = november_transactions + december_transactions
+    
+    for tx_data in all_transactions:
+        transactions.append({
+            'id': transaction_id,
+            'date': tx_data['date'],
+            'description': tx_data['description'],
+            'merchant': tx_data['merchant'],
+            'amount': tx_data['amount'],
+            'category': tx_data['category'],
+            'payment_method': tx_data['payment_method']
+        })
+        transaction_id += 1
+    
+    budget_data['transactions'] = transactions
+    
     # Generate retirement accounts with contributions
     retirement_accounts = []
     
@@ -435,6 +550,8 @@ def generate_test_data():
     print(f"\n📊 Summary:")
     print(f"   - Income sources: {len(income_sources)}")
     print(f"   - Retirement accounts: {len(retirement_accounts)}")
+    print(f"   - Fixed expenses: {len(budget_data['fixed_expenses'])}")
+    print(f"   - Transactions (December 2025): {len(budget_data['transactions'])}")
     print(f"   - Years covered: 2023, 2024, 2025")
     
     # Calculate totals by year
@@ -460,6 +577,41 @@ def generate_test_data():
     print(f"\n🏦 Retirement Contributions:")
     print(f"   - Total contributed: ${retirement_total:,.2f}")
     print(f"   - Total balance: ${sum(acc['current_balance'] for acc in retirement_accounts):,.2f}")
+    
+    # Calculate spending by month
+    november_spending = sum(tx['amount'] for tx in budget_data['transactions'] if '2025-11-' in tx['date'])
+    december_spending = sum(tx['amount'] for tx in budget_data['transactions'] if '2025-12-' in tx['date'])
+    
+    print(f"\n💳 November 2025 Spending:")
+    print(f"   - Total spent: ${november_spending:,.2f}")
+    print(f"   - Number of transactions: {sum(1 for tx in budget_data['transactions'] if '2025-11-' in tx['date'])}")
+    
+    print(f"\n💳 December 2025 Spending (so far):")
+    print(f"   - Total spent: ${december_spending:,.2f}")
+    print(f"   - Number of transactions: {sum(1 for tx in budget_data['transactions'] if '2025-12-' in tx['date'])}")
+    print(f"   - Average per transaction: ${december_spending / sum(1 for tx in budget_data['transactions'] if '2025-12-' in tx['date']) if december_spending > 0 else 0:.2f}")
+    
+    # Calculate month-over-month change
+    if november_spending > 0:
+        spending_change = december_spending - november_spending
+        spending_percent = (spending_change / november_spending) * 100
+        print(f"\n📊 Month-over-Month Comparison:")
+        print(f"   - Spending change: ${spending_change:,.2f} ({spending_percent:+.1f}%)")
+        if spending_change < 0:
+            print(f"   - ✅ Great! Spending decreased from last month")
+        elif spending_change > 0:
+            print(f"   - ⚠️  Spending increased from last month")
+    
+    # Calculate spending by category (December only)
+    category_totals = {}
+    for tx in budget_data['transactions']:
+        if '2025-12-' in tx['date']:
+            cat = tx['category']
+            category_totals[cat] = category_totals.get(cat, 0) + tx['amount']
+    
+    print(f"\n📊 December Spending by Category:")
+    for cat, amount in sorted(category_totals.items(), key=lambda x: x[1], reverse=True):
+        print(f"   - {cat}: ${amount:,.2f}")
 
 if __name__ == '__main__':
     print("🔧 Generating test data for Budget App...\n")

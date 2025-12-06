@@ -801,6 +801,11 @@ body {
     }
 }
 
+/* Full width utility for cards that should span entire grid */
+.summary-card.full-width {
+    grid-column: 1 / -1;
+}
+
 .summary-card {
     background: var(--bg-secondary);
     padding: 1.75rem;
@@ -946,6 +951,460 @@ body {
 
 .expense-card .summary-amount {
     color: #ef4444;
+}
+
+/* ==========================================
+   OVERDRAFT WARNING CARD ON OVERVIEW
+   ========================================== */
+
+.summary-card.overdraft-warning-card {
+    grid-column: 1 / -1;
+    padding: 0;
+    cursor: pointer;
+    border-width: 3px;
+    animation: attention-pulse 2s ease-in-out infinite;
+}
+
+.summary-card.overdraft-warning-card.card-critical {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    animation: critical-attention-pulse 1.5s ease-in-out infinite;
+}
+
+.summary-card.overdraft-warning-card.card-warning {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+}
+
+.summary-card.overdraft-warning-card::before {
+    height: 6px;
+}
+
+.summary-card.overdraft-warning-card.card-critical::before {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 50%, #ef4444 100%);
+    animation: slide-gradient 2s ease-in-out infinite;
+}
+
+.summary-card.overdraft-warning-card.card-warning::before {
+    background: linear-gradient(90deg, #f59e0b 0%, #d97706 50%, #f59e0b 100%);
+    animation: slide-gradient 3s ease-in-out infinite;
+}
+
+@keyframes attention-pulse {
+    0%, 100% {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+    50% {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+    }
+}
+
+@keyframes critical-attention-pulse {
+    0%, 100% {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    50% {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+}
+
+@keyframes slide-gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.overdraft-warning-card:hover {
+    transform: translateY(-5px) scale(1.01);
+}
+
+.overdraft-warning-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.75rem;
+}
+
+.warning-icon-large {
+    font-size: 4rem;
+    line-height: 1;
+    flex-shrink: 0;
+    animation: shake-gentle 2s ease-in-out infinite;
+}
+
+.card-critical .warning-icon-large {
+    animation: shake-urgent 0.8s ease-in-out infinite;
+}
+
+@keyframes shake-gentle {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    25% {
+        transform: translateX(-3px) rotate(-3deg);
+    }
+    75% {
+        transform: translateX(3px) rotate(3deg);
+    }
+}
+
+@keyframes shake-urgent {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px) rotate(-5deg);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px) rotate(5deg);
+    }
+}
+
+.warning-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.warning-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.card-critical .warning-title {
+    color: #ef4444;
+}
+
+.card-warning .warning-title {
+    color: #f59e0b;
+}
+
+.warning-message {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.warning-action {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive Design for Warning Card */
+@media (max-width: 768px) {
+    .overdraft-warning-content {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+    
+    .warning-icon-large {
+        font-size: 3rem;
+    }
+    
+    .warning-title {
+        font-size: 1.25rem;
+    }
+    
+    .warning-message {
+        font-size: 1rem;
+    }
+}
+
+/* ==========================================
+   MONTH COMPARISON STYLES
+   ========================================== */
+
+.section-divider {
+    grid-column: 1 / -1;
+    margin: 2rem 0 1rem 0;
+    padding: 1rem 0 0.5rem 0;
+    border-top: 2px solid var(--border-color);
+    text-align: center;
+}
+
+.section-divider h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+}
+
+.comparison-card {
+    transition: all 0.3s ease;
+}
+
+.comparison-card:hover {
+    transform: translateY(-5px);
+}
+
+.comparison-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.comparison-values .current-value,
+.comparison-values .previous-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.comparison-values .label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.comparison-values .value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.comparison-change {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.comparison-change .trend-arrow {
+    font-size: 1.25rem;
+}
+
+.comparison-change .change-amount {
+    font-size: 1rem;
+}
+
+.comparison-change .change-percent {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Trend color classes */
+.trend-good {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    color: #059669;
+}
+
+.trend-bad {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border: 2px solid rgba(239, 68, 68, 0.3);
+    color: #dc2626;
+}
+
+.trend-neutral {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.1) 0%, rgba(75, 85, 99, 0.05) 100%);
+    border: 2px solid rgba(107, 114, 128, 0.3);
+    color: var(--text-secondary);
+}
+
+/* Insights section */
+.comparison-insights {
+    grid-column: 1 / -1;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.comparison-insights h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.insight-item:hover {
+    transform: translateX(5px);
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.insight-message {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.insight-positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border-left: 4px solid #10b981;
+}
+
+.insight-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+    border-left: 4px solid #f59e0b;
+}
+
+.insight-info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border-left: 4px solid #3b82f6;
+}
+
+/* Responsive design for month comparison */
+@media (max-width: 768px) {
+    .section-divider h3 {
+        font-size: 1.25rem;
+    }
+    
+    .comparison-values {
+        font-size: 0.85rem;
+    }
+    
+    .comparison-change {
+        flex-wrap: wrap;
+        padding: 0.5rem;
+    }
+    
+    .comparison-insights {
+        padding: 1rem;
+    }
+    
+    .insight-item {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ==========================================
+   BUDGET HEALTH SCORE STYLES
+   ========================================== */
+
+.health-score-summary {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.health-category {
+    animation: slideInUp 0.6s ease-out backwards;
+}
+
+.health-category:nth-child(1) { animation-delay: 0.1s; }
+.health-category:nth-child(2) { animation-delay: 0.2s; }
+.health-category:nth-child(3) { animation-delay: 0.3s; }
+.health-category:nth-child(4) { animation-delay: 0.4s; }
+.health-category:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Health Score Card on Dashboard */
+.summary-card[onclick*="showHealthScoreModal"] {
+    transition: all 0.3s ease;
+}
+
+.summary-card[onclick*="showHealthScoreModal"]:hover {
+    transform: translateY(-8px) scale(1.02);
+}
+
+.health-score-breakdown {
+    --card-bg: var(--bg-secondary);
+    --border-color: var(--border-color);
+}
+
+[data-theme="dark"] .health-score-breakdown {
+    --card-bg: #1e293b;
+}
+
+.health-summary,
+.health-recommendations {
+    animation: fadeIn 0.7s ease-in;
+}
+
+/* Responsive Health Score Modal */
+@media (max-width: 768px) {
+    .health-score-summary {
+        padding: 1rem !important;
+    }
+    
+    .health-score-summary > div:first-child {
+        font-size: 3rem !important;
+    }
+    
+    .health-score-summary > div:nth-child(2) {
+        font-size: 1.2rem !important;
+    }
+    
+    .health-summary > div:last-child {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 .available-card {
@@ -1282,6 +1741,766 @@ body {
 .velocity-status.status-danger ~ .velocity-message {
     border-left-color: #ef4444;
     background: rgba(239, 68, 68, 0.05);
+}
+
+/* Velocity Header */
+.velocity-header {
+    margin-bottom: 1.5rem;
+}
+
+.velocity-title-section h3 {
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.velocity-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Velocity Status Enhancements */
+.velocity-status .status-label {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.velocity-status .status-message {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+/* Progress Bars */
+.progress-bar-container {
+    width: 100%;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0.75rem 0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    transition: width 0.6s ease;
+    border-radius: 12px;
+    position: relative;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.progress-bar-primary {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.progress-bar-success {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.progress-bar-warning {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-bar-danger {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* ==================== PAYCHECK COUNTDOWN CARD ==================== */
+.paycheck-countdown-card {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.paycheck-countdown-card.status-success {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: #22c55e;
+}
+
+.paycheck-countdown-card.status-info {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: #3b82f6;
+}
+
+.paycheck-countdown-card.status-warning {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: #f59e0b;
+}
+
+.paycheck-countdown-card.paycheck-today {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.15));
+    border-color: #10b981;
+    box-shadow: 0 8px 24px rgba(34, 197, 94, 0.2);
+    animation: celebrate 2s ease-in-out infinite;
+}
+
+@keyframes celebrate {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-4px) scale(1.01);
+    }
+}
+
+@keyframes highlight-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: scale(1);
+    }
+    25% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: scale(1.02);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: scale(1);
+    }
+    75% {
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: scale(1.01);
+    }
+}
+
+.paycheck-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.paycheck-icon-large {
+    font-size: 3rem;
+    line-height: 1;
+    animation: paycheck-pulse 3s ease-in-out infinite;
+}
+
+@keyframes paycheck-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.paycheck-countdown-card.paycheck-today .paycheck-icon-large {
+    animation: paycheck-bounce 1s ease-in-out infinite;
+}
+
+@keyframes paycheck-bounce {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-10px) rotate(-5deg);
+    }
+    75% {
+        transform: translateY(-5px) rotate(5deg);
+    }
+}
+
+.paycheck-title-section h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+}
+
+.paycheck-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.paycheck-countdown-main {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+.countdown-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    min-width: 140px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.countdown-number {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.countdown-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.paycheck-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.paycheck-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.paycheck-detail-row:hover {
+    background: var(--bg-hover);
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.upcoming-paychecks-summary {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.upcoming-paychecks-summary h5 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+
+.upcoming-paychecks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.upcoming-paycheck-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.upcoming-paycheck-item:hover {
+    background: var(--bg-hover);
+    transform: translateX(4px);
+}
+
+.upcoming-paycheck-item.is-next {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    font-weight: 600;
+}
+
+.paycheck-item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.paycheck-item-earner {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.paycheck-item-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.paycheck-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.paycheck-item-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.paycheck-item-days {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.paycheck-summary-footer {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.paycheck-summary-footer strong {
+    color: var(--primary-color);
+}
+
+.paycheck-content {
+    text-align: center;
+}
+
+.paycheck-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.paycheck-content p {
+    margin: 0 0 1rem 0;
+    color: var(--text-secondary);
+}
+
+.paycheck-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design for Paycheck Countdown */
+@media (max-width: 768px) {
+    .paycheck-countdown-main {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .countdown-display {
+        width: 100%;
+    }
+    
+    .paycheck-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .upcoming-paycheck-item {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+    
+    .paycheck-item-right {
+        align-items: center;
+    }
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.progress-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+/* Velocity Comparison Card */
+.velocity-comparison-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.velocity-comparison-card h4 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.rate-comparison {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.rate-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rate-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.rate-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.rate-value.rate-actual {
+    color: var(--primary-color);
+}
+
+.rate-value.rate-safe {
+    color: #22c55e;
+}
+
+.rate-bar-container {
+    width: 100%;
+    height: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.rate-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease;
+}
+
+.rate-bar-actual {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+}
+
+.rate-bar-safe {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.rate-divider {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.rate-explanation {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+/* Velocity Details Grid */
+.velocity-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.velocity-detail-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.velocity-detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.detail-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.detail-subtext {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.text-success {
+    color: #22c55e !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.text-warning {
+    color: #f59e0b !important;
+}
+
+/* Upcoming Bills Section */
+.upcoming-bills-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid #f59e0b;
+    border-radius: 12px;
+}
+
+.upcoming-bills-section h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+
+.bills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.bill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.bill-item:hover {
+    background: var(--bg-secondary);
+    transform: translateX(4px);
+}
+
+.bill-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.bill-details {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.bill-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f59e0b;
+}
+
+.bill-due {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.bills-total {
+    padding: 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 8px;
+    text-align: right;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.bills-total strong {
+    color: #f59e0b;
+}
+
+/* Velocity Recommendations */
+.velocity-recommendations,
+.velocity-success-message {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.velocity-recommendations {
+    border-left: 4px solid #f59e0b;
+}
+
+.velocity-success-message {
+    border-left: 4px solid #22c55e;
+}
+
+.velocity-recommendations h4,
+.velocity-success-message h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+
+.velocity-recommendations ul,
+.velocity-success-message ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style: none;
+}
+
+.velocity-recommendations li,
+.velocity-success-message li {
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.velocity-recommendations li:last-child,
+.velocity-success-message li:last-child {
+    margin-bottom: 0;
+}
+
+/* Velocity Help Section */
+.velocity-help {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.velocity-help details {
+    cursor: pointer;
+}
+
+.velocity-help summary {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    list-style: none;
+    user-select: none;
+}
+
+.velocity-help summary::-webkit-details-marker {
+    display: none;
+}
+
+.velocity-help summary:hover {
+    background: var(--bg-tertiary);
+}
+
+.help-content {
+    padding: 1rem;
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.help-content p {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.help-content h5 {
+    margin: 1rem 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.help-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    list-style: disc;
+}
+
+.help-content li {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+/* Responsive Design for Velocity */
+@media (max-width: 768px) {
+    .rate-comparison {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .rate-divider {
+        display: none;
+    }
+    
+    .velocity-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .velocity-status {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .velocity-icon {
+        font-size: 3rem;
+    }
 }
 
 .velocity-projection {
@@ -1964,6 +3183,518 @@ body {
 [data-theme="dark"] .bill-urgency.upcoming {
     background: rgba(59, 130, 246, 0.2);
     color: #93c5fd;
+}
+
+/* ============================================
+   OVERDRAFT WARNING SYSTEM (COLOR-CODED ALERTS)
+   ============================================ */
+
+.alerts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* Main Overdraft Alert Card */
+.overdraft-alert-card {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid var(--alert-color);
+    transition: all 0.3s ease;
+}
+
+.overdraft-alert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Alert Status Variants */
+.overdraft-alert-card.alert-safe {
+    background: rgba(16, 185, 129, 0.05);
+    border-color: #10b981;
+}
+
+[data-theme="dark"] .overdraft-alert-card.alert-safe {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.overdraft-alert-card.alert-warning {
+    background: rgba(245, 158, 11, 0.05);
+    border-color: #f59e0b;
+}
+
+[data-theme="dark"] .overdraft-alert-card.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.overdraft-alert-card.alert-critical {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: #ef4444;
+    animation: pulse-border 2s ease-in-out infinite;
+}
+
+[data-theme="dark"] .overdraft-alert-card.alert-critical {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+@keyframes pulse-border {
+    0%, 100% {
+        border-color: #ef4444;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+    50% {
+        border-color: #dc2626;
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+    }
+}
+
+/* Overdraft Header */
+.overdraft-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.overdraft-icon {
+    font-size: 3rem;
+    line-height: 1;
+    animation: icon-pulse 2s ease-in-out infinite;
+}
+
+.alert-critical .overdraft-icon {
+    animation: shake 0.5s ease-in-out infinite;
+}
+
+.alert-safe .overdraft-icon {
+    animation: none;
+}
+
+@keyframes icon-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.overdraft-title h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.overdraft-subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Risk Indicator Bar */
+.risk-indicator-bar {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.risk-level {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.risk-level::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.risk-level.safe::after {
+    width: 33.33%;
+    left: 0;
+    background: rgba(16, 185, 129, 0.5);
+}
+
+.risk-level.warning::after {
+    width: 33.33%;
+    left: 33.33%;
+    background: rgba(245, 158, 11, 0.5);
+}
+
+.risk-level.critical::after {
+    width: 33.33%;
+    left: 66.66%;
+    background: rgba(239, 68, 68, 0.5);
+    animation: critical-pulse 1s ease-in-out infinite;
+}
+
+@keyframes critical-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.risk-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.risk-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.risk-label.safe {
+    color: #10b981;
+}
+
+.risk-label.warning {
+    color: #f59e0b;
+}
+
+.risk-label.critical {
+    color: #ef4444;
+}
+
+/* Overdraft Metrics Grid */
+.overdraft-metrics {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.metric-row:last-child {
+    margin-bottom: 0;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-value.negative {
+    color: #ef4444;
+}
+
+.metric-value.warning {
+    color: #f59e0b;
+}
+
+/* Overdraft Warnings Section */
+.overdraft-warnings {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--alert-color);
+}
+
+.alert-critical .overdraft-warnings {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.alert-warning .overdraft-warnings {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.alert-safe .overdraft-warnings {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.section-heading {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.warning-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.warning-list li {
+    padding: 0.5rem 0;
+    color: var(--text-primary);
+    line-height: 1.5;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.warning-list li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.warning-list li:first-child {
+    padding-top: 0;
+}
+
+/* Overdraft Recommendations */
+.overdraft-recommendations {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #6366f1;
+}
+
+.recommendation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recommendation-list li {
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    position: relative;
+}
+
+.recommendation-list li::before {
+    content: '💡';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+}
+
+.recommendation-list li:last-child {
+    padding-bottom: 0;
+}
+
+.recommendation-list li:first-child {
+    padding-top: 0;
+}
+
+/* Overdraft Help Section */
+.overdraft-help {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.overdraft-help summary {
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 8px;
+    list-style: none;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.overdraft-help summary::-webkit-details-marker {
+    display: none;
+}
+
+.overdraft-help summary:hover {
+    background: var(--bg-secondary);
+}
+
+.overdraft-help .help-content {
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.75rem;
+}
+
+.overdraft-help .help-content p {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.overdraft-help .help-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.overdraft-help .help-content li {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.help-tip {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #6366f1;
+}
+
+[data-theme="dark"] .help-tip {
+    background: rgba(99, 102, 241, 0.15);
+}
+
+/* Alert Cards (for health score and bills) */
+.alert-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    border-left: 4px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.alert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.alert-card.alert-success {
+    border-left-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+[data-theme="dark"] .alert-card.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.alert-card.alert-info {
+    border-left-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+[data-theme="dark"] .alert-card.alert-info {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.alert-card.alert-danger {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+[data-theme="dark"] .alert-card.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.alert-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.alert-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.alert-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.bills-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0 0;
+}
+
+.bills-list li {
+    padding: 0.5rem 0;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bills-list li:last-child {
+    border-bottom: none;
+}
+
+.bills-list li.urgent {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.recommendations-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0 0;
+}
+
+.recommendations-list li {
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+    position: relative;
+}
+
+.recommendations-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+/* Responsive Design for Alerts */
+@media (max-width: 768px) {
+    .metric-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .overdraft-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .overdraft-icon {
+        font-size: 2.5rem;
+    }
+    
+    .risk-labels {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
 }
 
 /* ===== Spending Pattern Insights Widget ===== */
@@ -7013,6 +8744,451 @@ button:disabled:hover {
         align-items: flex-start;
     }
 }
+
+/* ===================================
+   Money Left Per Day Calculator Styles
+   =================================== */
+
+.money-per-day-status {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.money-per-day-status.status-success {
+    border-color: #22c55e;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, var(--bg-primary) 100%);
+}
+
+.money-per-day-status.status-warning {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-primary) 100%);
+}
+
+.money-per-day-status.status-danger {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--bg-primary) 100%);
+}
+
+.status-icon-large {
+    font-size: 4rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.status-content {
+    flex: 1;
+}
+
+.status-content h3 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.money-per-day-value {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    color: #22c55e;
+}
+
+.money-per-day-value.negative {
+    color: #ef4444;
+}
+
+.status-message {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin: 0.5rem 0 0 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.metric-value.positive {
+    color: #22c55e;
+}
+
+.metric-value.negative {
+    color: #ef4444;
+}
+
+.metric-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.calculation-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.calculation-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.calculation-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 100%;
+}
+
+.calc-step {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.calc-step.highlight {
+    border: 2px solid #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.calc-step.highlight-primary {
+    border: 2px solid #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.calc-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    word-wrap: break-word;
+    line-height: 1.3;
+}
+
+.calc-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.5rem 0;
+    word-wrap: break-word;
+}
+
+.calc-value.large {
+    font-size: 1.6rem;
+    color: #22c55e;
+}
+
+.calc-value.negative {
+    color: #ef4444;
+}
+
+.calc-value.positive {
+    color: #22c55e;
+}
+
+.calc-note {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+    line-height: 1.2;
+}
+
+.calc-operator {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.timeline-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.timeline-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.timeline-visual {
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+
+.timeline-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: min-content;
+}
+
+.timeline-today {
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.timeline-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 60px;
+}
+
+.day-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 50%;
+}
+
+.day-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.day-amount {
+    font-size: 0.75rem;
+    color: #22c55e;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.timeline-paycheck {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.paycheck-icon {
+    font-size: 2rem;
+}
+
+.paycheck-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.scenarios-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.scenarios-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.scenarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.scenario-card {
+    background: var(--bg-secondary);
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.scenario-card.success {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.scenario-card.warning {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.scenario-card.danger {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.scenario-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.scenario-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.scenario-amount {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.scenario-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Responsive Design for Money Per Day Calculator */
+@media (max-width: 1024px) {
+    .calculation-steps {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .calc-step {
+        padding: 1rem 0.75rem;
+        min-height: 110px;
+    }
+    
+    .calc-value {
+        font-size: 1.2rem;
+    }
+    
+    .calc-value.large {
+        font-size: 1.5rem;
+    }
+    
+    .calc-operator {
+        font-size: 1.5rem;
+        min-height: 110px;
+    }
+}
+
+@media (max-width: 768px) {
+    .money-per-day-status {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .status-icon-large {
+        font-size: 3rem;
+    }
+    
+    .money-per-day-value {
+        font-size: 2.5rem;
+    }
+    
+    .calculation-steps {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .calc-step {
+        min-height: 100px;
+        padding: 1rem;
+    }
+    
+    .calc-operator {
+        transform: rotate(90deg);
+        margin: 0.5rem 0;
+        min-height: 40px;
+    }
+    
+    .calc-value {
+        font-size: 1.5rem;
+    }
+    
+    .calc-value.large {
+        font-size: 2rem;
+    }
+    
+    .timeline-bar {
+        justify-content: flex-start;
+        padding-bottom: 1rem;
+    }
+    
+    .scenarios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+
+
+
 
 
 

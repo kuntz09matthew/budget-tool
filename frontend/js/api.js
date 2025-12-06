@@ -184,7 +184,7 @@ export async function getMoneyLeftPerDay() {
 }
 
 export async function getBudgetHealthScore() {
-    return apiRequest('/dashboard/health-score');
+    return apiRequest('/dashboard/budget-health-score');
 }
 
 export async function getMonthComparison() {

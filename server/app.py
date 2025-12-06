@@ -1868,44 +1868,62 @@ def get_year_over_year_income():
 
 @app.route('/api/dashboard/next-paycheck', methods=['GET'])
 def get_next_paycheck():
-    """Calculate days until next paycheck from all income sources"""
+    """
+    Calculate days until the next paycheck based on all income sources.
+    Returns the soonest upcoming paycheck and information about all upcoming paychecks.
+    """
     from datetime import datetime, timedelta
     
     try:
+        now = datetime.now()
         income_sources = budget_data.get('income_sources', [])
         
         if not income_sources:
             return jsonify({
-                'has_paycheck': False,
+                'has_paychecks': False,
                 'has_data': False,
-                'message': 'No income sources configured'
+                'message': 'No income sources configured. Please add income sources with payment dates.',
+                'next_paycheck': None,
+                'all_upcoming': []
             })
         
-        # Find the soonest paycheck from all income sources
-        next_paychecks = []
+        # Find all upcoming paychecks from all income sources
+        upcoming_paychecks = []
         
         for income in income_sources:
-            next_pay_date = income.get('next_pay_date')
+            next_pay_date_str = income.get('next_pay_date')
             frequency = income.get('frequency', 'monthly')
             
-            if not next_pay_date:
+            if not next_pay_date_str:
                 continue
             
             # Parse the date
             try:
-                pay_date = datetime.fromisoformat(next_pay_date.replace('Z', '+00:00'))
+                pay_date = datetime.fromisoformat(next_pay_date_str.replace('Z', '+00:00'))
                 if pay_date.tzinfo:
                     pay_date = pay_date.replace(tzinfo=None)
             except:
                 continue
             
             # If the pay date is in the past, calculate the next one based on frequency
-            now = datetime.now()
-            while pay_date < now:
+            while pay_date.date() < now.date():
                 if frequency == 'weekly':
                     pay_date += timedelta(days=7)
                 elif frequency == 'bi-weekly':
                     pay_date += timedelta(days=14)
+                elif frequency == 'semi-monthly':
+                    # Semi-monthly is typically 15th and last day of month
+                    if pay_date.day == 15:
+                        # Next is last day of current month
+                        from calendar import monthrange
+                        last_day = monthrange(pay_date.year, pay_date.month)[1]
+                        pay_date = pay_date.replace(day=last_day)
+                    else:
+                        # Next is 15th of next month
+                        if pay_date.month == 12:
+                            pay_date = pay_date.replace(year=pay_date.year + 1, month=1, day=15)
+                        else:
+                            pay_date = pay_date.replace(month=pay_date.month + 1, day=15)
                 elif frequency == 'monthly':
                     # Add one month
                     month = pay_date.month
@@ -1919,7 +1937,6 @@ def get_next_paycheck():
                         pay_date = pay_date.replace(month=month, year=year)
                     except ValueError:
                         # Handle day overflow (e.g., Jan 31 -> Feb 31)
-                        # Set to last day of month
                         import calendar
                         last_day = calendar.monthrange(year, month)[1]
                         pay_date = pay_date.replace(day=last_day, month=month, year=year)
@@ -1928,34 +1945,83 @@ def get_next_paycheck():
                 else:
                     break
             
-            if pay_date >= now:
-                next_paychecks.append({
-                    'date': pay_date,
-                    'source': income.get('name', 'Unknown'),
-                    'amount': income.get('amount', 0),
-                    'frequency': frequency
+            # Only include future or today's paychecks
+            if pay_date.date() >= now.date():
+                days_until = (pay_date.date() - now.date()).days
+                upcoming_paychecks.append({
+                    'name': income.get('name', 'Unknown Income'),
+                    'source_name': income.get('source_name', 'Unknown Source'),
+                    'earner_name': income.get('earner_name', 'Unknown Earner'),
+                    'amount': float(income.get('amount', 0)),
+                    'frequency': frequency,
+                    'next_pay_date': pay_date.strftime('%Y-%m-%d'),
+                    'next_pay_date_formatted': pay_date.strftime('%B %d, %Y'),
+                    'days_until': days_until
                 })
         
-        if not next_paychecks:
+        if not upcoming_paychecks:
             return jsonify({
-                'has_paycheck': False,
+                'has_paychecks': False,
                 'has_data': len(income_sources) > 0,
-                'message': 'No upcoming paychecks configured'
+                'message': 'No upcoming paychecks found. Please add income sources with payment dates.',
+                'next_paycheck': None,
+                'all_upcoming': []
             })
         
-        # Get the soonest paycheck
-        next_paycheck = min(next_paychecks, key=lambda x: x['date'])
-        days_until = (next_paycheck['date'] - datetime.now()).days
+        # Sort by days_until (soonest first)
+        upcoming_paychecks.sort(key=lambda x: x['days_until'])
+        
+        # Get the next (soonest) paycheck
+        next_paycheck = upcoming_paychecks[0]
+        days_until = next_paycheck['days_until']
+        
+        # Determine status and message based on days until paycheck
+        if days_until == 0:
+            status = 'success'
+            status_text = 'Payday!'
+            message = f"It's payday! {next_paycheck['earner_name']}'s {next_paycheck['source_name']} payment is today."
+            urgency = 'none'
+        elif days_until == 1:
+            status = 'success'
+            status_text = 'Tomorrow'
+            message = f"Your next paycheck is tomorrow! {next_paycheck['earner_name']} gets paid ${next_paycheck['amount']:,.2f}."
+            urgency = 'low'
+        elif days_until <= 3:
+            status = 'success'
+            status_text = 'Very Soon'
+            message = f"{days_until} days until your next paycheck from {next_paycheck['earner_name']}."
+            urgency = 'low'
+        elif days_until <= 7:
+            status = 'info'
+            status_text = 'This Week'
+            message = f"{days_until} days until your next paycheck. Budget wisely!"
+            urgency = 'medium'
+        elif days_until <= 14:
+            status = 'info'
+            status_text = 'Next Week'
+            message = f"{days_until} days until your next paycheck. Make your money last!"
+            urgency = 'medium'
+        else:
+            status = 'warning'
+            status_text = 'A While Away'
+            message = f"{days_until} days until your next paycheck. Careful with spending!"
+            urgency = 'high'
+        
+        # Calculate total amount from upcoming paychecks in next 30 days
+        next_30_days_total = sum(p['amount'] for p in upcoming_paychecks if p['days_until'] <= 30)
         
         return jsonify({
-            'has_paycheck': True,
+            'has_paychecks': True,
             'has_data': True,
-            'days_until': days_until,
-            'date': next_paycheck['date'].strftime('%Y-%m-%d'),
-            'formatted_date': next_paycheck['date'].strftime('%B %d, %Y'),
-            'source': next_paycheck['source'],
-            'amount': next_paycheck['amount'],
-            'frequency': next_paycheck['frequency']
+            'days_until_next': days_until,
+            'status': status,
+            'status_text': status_text,
+            'message': message,
+            'urgency': urgency,
+            'next_paycheck': next_paycheck,
+            'all_upcoming': upcoming_paychecks[:5],  # Return up to 5 upcoming paychecks
+            'next_30_days_count': len([p for p in upcoming_paychecks if p['days_until'] <= 30]),
+            'next_30_days_total': round(next_30_days_total, 2)
         })
         
     except Exception as e:
@@ -1963,8 +2029,11 @@ def get_next_paycheck():
         import traceback
         traceback.print_exc()
         return jsonify({
-            'has_paycheck': False,
-            'message': f'Error calculating paycheck: {str(e)}'
+            'has_paychecks': False,
+            'has_data': False,
+            'message': f'Error calculating paycheck: {str(e)}',
+            'next_paycheck': None,
+            'all_upcoming': []
         }), 500
 
 # Fixed Expenses endpoints
@@ -2235,12 +2304,32 @@ def get_spending_velocity():
             
         total_income += monthly_amount
     
-    total_expenses = 0
+    # Calculate total monthly fixed expenses
+    total_monthly_expenses = 0
     for expense in budget_data['fixed_expenses']:
         amount = float(expense.get('amount', 0))
-        total_expenses += amount
+        total_monthly_expenses += amount
     
-    available_for_month = total_income - total_expenses
+    # Calculate upcoming bills (bills due after today but before end of month)
+    upcoming_bills = 0
+    upcoming_bill_count = 0
+    upcoming_bills_list = []
+    
+    for expense in budget_data['fixed_expenses']:
+        due_date = expense.get('due_date', 1)
+        amount = float(expense.get('amount', 0))
+        
+        # If due date is after today and within this month, it's upcoming
+        if due_date > current_day:
+            upcoming_bills += amount
+            upcoming_bill_count += 1
+            upcoming_bills_list.append({
+                'name': expense.get('name', 'Unknown'),
+                'amount': amount,
+                'due_date': due_date
+            })
+    
+    available_for_month = total_income - total_monthly_expenses
     
     # Calculate month-to-date spending from transactions
     mtd_spent = 0
@@ -2263,8 +2352,11 @@ def get_spending_velocity():
     # Calculate remaining money after MTD spending
     remaining_money = available_for_month - mtd_spent
     
-    # Calculate safe daily rate (remaining money / remaining days)
-    safe_daily_rate = remaining_money / days_remaining if days_remaining > 0 else 0
+    # NEW: Subtract upcoming bills from remaining money to get TRUE available spending money
+    remaining_money_after_bills = remaining_money - upcoming_bills
+    
+    # Calculate safe daily rate using money AFTER accounting for upcoming bills
+    safe_daily_rate = remaining_money_after_bills / days_remaining if days_remaining > 0 else 0
     
     # If we're at the end of the month (last day), use a different calculation
     if days_remaining == 0:
@@ -2278,27 +2370,44 @@ def get_spending_velocity():
             status_text = 'Month Complete'
             message = f'Great job! You have ${remaining_money:.2f} left over.'
     else:
-        # Determine velocity status
-        if actual_daily_rate <= safe_daily_rate * 0.9:
+        # Determine velocity status (comparing against safe rate that accounts for bills)
+        if remaining_money_after_bills < 0:
+            # Already underwater with upcoming bills
+            status = 'danger'
+            status_text = 'Critical!'
+            message = f'Warning: You have ${upcoming_bills:.2f} in upcoming bills but only ${remaining_money:.2f} remaining. Reduce spending immediately!'
+        elif actual_daily_rate <= safe_daily_rate * 0.9:
             # Spending well under safe rate (10% buffer)
             status = 'success'
             status_text = 'On Track'
-            message = f'You\'re spending at a healthy pace! Keep it up.'
+            if upcoming_bills > 0:
+                message = f'You\'re spending at a healthy pace! You have ${upcoming_bills:.2f} in upcoming bills accounted for.'
+            else:
+                message = f'You\'re spending at a healthy pace! Keep it up.'
         elif actual_daily_rate <= safe_daily_rate * 1.1:
             # Within 10% of safe rate
             status = 'success'
             status_text = 'Good Pace'
-            message = f'You\'re right on track with your spending.'
+            if upcoming_bills > 0:
+                message = f'You\'re on track with your spending. ${upcoming_bills:.2f} set aside for upcoming bills.'
+            else:
+                message = f'You\'re right on track with your spending.'
         elif actual_daily_rate <= safe_daily_rate * 1.3:
             # 10-30% over safe rate
             status = 'warning'
             status_text = 'Spending Fast'
-            message = f'You\'re spending a bit fast. Try to slow down to ${safe_daily_rate:.2f}/day.'
+            if upcoming_bills > 0:
+                message = f'You\'re spending a bit fast. Remember, you have ${upcoming_bills:.2f} in bills coming up. Try to stay under ${safe_daily_rate:.2f}/day.'
+            else:
+                message = f'You\'re spending a bit fast. Try to slow down to ${safe_daily_rate:.2f}/day.'
         else:
             # More than 30% over safe rate
             status = 'danger'
             status_text = 'Too Fast!'
-            message = f'Warning: At this rate, you\'ll overspend by ${(actual_daily_rate - safe_daily_rate) * days_remaining:.2f} this month!'
+            if upcoming_bills > 0:
+                message = f'Danger: At this rate, you\'ll overspend by ${(actual_daily_rate - safe_daily_rate) * days_remaining:.2f}! You also have ${upcoming_bills:.2f} in upcoming bills!'
+            else:
+                message = f'Warning: At this rate, you\'ll overspend by ${(actual_daily_rate - safe_daily_rate) * days_remaining:.2f} this month!'
     
     # Calculate projected end-of-month balance
     projected_spending = actual_daily_rate * days_in_month
@@ -2314,6 +2423,10 @@ def get_spending_velocity():
         'days_remaining': days_remaining,
         'mtd_spent': round(mtd_spent, 2),
         'remaining_money': round(remaining_money, 2),
+        'remaining_money_after_bills': round(remaining_money_after_bills, 2),
+        'upcoming_bills': round(upcoming_bills, 2),
+        'upcoming_bill_count': upcoming_bill_count,
+        'upcoming_bills_list': upcoming_bills_list,
         'projected_remaining': round(projected_remaining, 2),
         'transaction_count': transaction_count
     })

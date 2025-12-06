@@ -335,7 +335,7 @@ Write-Host "`n📊 Current version: $currentVersion" -ForegroundColor Cyan
 if ([string]::IsNullOrWhiteSpace($Message)) {
     Write-Host "`n💬 Describe your changes (or press Enter to auto-generate):" -ForegroundColor Cyan
     Write-Host "   💡 Tip: Use 'feat:' for features, 'fix:' for bugs, 'breaking:' for breaking changes" -ForegroundColor DarkGray
-    Write-Host "   Examples: 'feat: add charts' | 'fix: calculation error' | 'improve: performance'" -ForegroundColor DarkGray
+    Write-Host "   Examples: 'feat: add charts', 'fix: calculation error', 'improve: performance'" -ForegroundColor DarkGray
     $Message = Read-Host "   Message"
 }
 
