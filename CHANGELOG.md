@@ -3,6 +3,24 @@
 All notable changes to Budget Tool.
 
 
+## [1.4.0] - Released
+*2025-12-06 02:21:43*
+
+Improved: Modified release.yml, Modified main.js, Modified package-lock.json
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+- Added new file: EFFICIENT_UPDATES.md
+- Added new file: EFFICIENT_UPDATES_QUICKREF.md
+- Added new file: EFFICIENT_UPDATES_VISUAL.md
+- Updated dependencies
+
+### 📝 Changes
+- Modified release.yml
+- Modified main.js
+- Modified package-lock.json
+
+
 ## [1.3.0] - Released
 *2025-12-06 01:59:09*
 
