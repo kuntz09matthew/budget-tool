@@ -119,19 +119,39 @@ if (window.electron) {
     const updateBanner = document.getElementById('update-banner');
     const updateMessage = document.getElementById('update-message');
     const updateButton = document.getElementById('update-button');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressSize = document.getElementById('progress-size');
     
     window.electron.onUpdateAvailable(() => {
         updateBanner.style.display = 'block';
-        updateMessage.textContent = '⏳ Update available! Downloading...';
+        updateMessage.textContent = '🎉 Update available! Preparing download...';
+    });
+    
+    window.electron.onUpdateDownloading(() => {
+        updateMessage.textContent = '⬇️ Downloading update...';
+        progressContainer.style.display = 'block';
+    });
+    
+    window.electron.onUpdateDownloadProgress((progress) => {
+        const percent = Math.round(progress.percent);
+        const transferred = (progress.transferred / 1024 / 1024).toFixed(2);
+        const total = (progress.total / 1024 / 1024).toFixed(2);
+        
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+        progressSize.textContent = `${transferred} MB / ${total} MB`;
     });
     
     window.electron.onUpdateDownloaded(() => {
+        progressContainer.style.display = 'none';
         updateMessage.textContent = '✅ Update downloaded! Click to restart and install.';
         updateButton.style.display = 'inline-block';
     });
     
     updateButton.addEventListener('click', () => {
-        window.electron.restartApp();
+        window.electron.installUpdate();
     });
 }
 
