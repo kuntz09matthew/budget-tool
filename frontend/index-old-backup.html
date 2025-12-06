@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Tool</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app" data-theme="dark">
+        <header class="app-header">
+            <h1>💰 Kuntz Family Budget App</h1>
+            <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="dashboard" data-tooltip="View your complete financial overview with key metrics and insights">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Dashboard</span>
+            </button>
+            <button class="tab-btn" data-tab="income" data-tooltip="Manage all income sources, track payments, and view income trends">
+                <span class="tab-icon">💵</span>
+                <span class="tab-label">Income</span>
+            </button>
+            <button class="tab-btn" data-tab="expenses" data-tooltip="Track fixed monthly bills, obligations, and recurring expenses">
+                <span class="tab-icon">📝</span>
+                <span class="tab-label">Monthly Expenses</span>
+            </button>
+            <button class="tab-btn" data-tab="spending" data-tooltip="Allocate and track spending in different categories like groceries, entertainment, and dining">
+                <span class="tab-icon">🛒</span>
+                <span class="tab-label">Spending Accounts</span>
+            </button>
+            <button class="tab-btn" data-tab="savings" data-tooltip="Monitor savings accounts, emergency funds, and contribution progress">
+                <span class="tab-icon">🏦</span>
+                <span class="tab-label">Savings</span>
+            </button>
+            <button class="tab-btn" data-tab="goals" data-tooltip="Set, track, and achieve your short-term and long-term financial goals">
+                <span class="tab-icon">🎯</span>
+                <span class="tab-label">Goals</span>
+            </button>
+            <button class="tab-btn" data-tab="reports" data-tooltip="Analyze spending patterns, trends, and generate comprehensive financial reports">
+                <span class="tab-icon">📈</span>
+                <span class="tab-label">Reports</span>
+            </button>
+        </nav>
+
+        <main class="app-main">
+            <!-- Update Banner (hidden by default) -->
+            <div id="update-banner" class="update-banner" style="display: none;">
+                <p id="update-message"></p>
+                <div id="progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-bar-wrapper">
+                        <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progress-percent">0%</span>
+                        <span id="progress-size">0 MB / 0 MB</span>
+                    </div>
+                </div>
+                <button id="update-button" class="update-button" style="display: none;">
+                    Restart & Update
+                </button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-header">
+                    <h2>Financial Overview</h2>
+                    <p class="dashboard-date" id="current-date"></p>
+                </div>
+                
+                <!-- Dashboard Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="dashboard-overview" data-tooltip="Quick view of all key financial metrics and account balances">
+                        <span class="sub-tab-icon">🏠</span>
+                        <span class="sub-tab-label">Overview</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="dashboard-insights" data-tooltip="Smart recommendations and spending pattern analysis">
+                        <span class="sub-tab-icon">💡</span>
+                        <span class="sub-tab-label">Insights</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="dashboard-alerts" data-tooltip="Overdraft warnings, upcoming bills, and budget health monitoring">
+                        <span class="sub-tab-icon">⚠️</span>
+                        <span class="sub-tab-label">Alerts & Warnings</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="dashboard-accounts" data-tooltip="Detailed view of all account balances and recent activity">
+                        <span class="sub-tab-icon">💳</span>
+                        <span class="sub-tab-label">Accounts</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="dashboard-velocity" data-tooltip="Track spending pace and countdown to next paycheck">
+                        <span class="sub-tab-icon">⚡</span>
+                        <span class="sub-tab-label">Spending Pace</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description" id="dashboard-overview-desc">
+                    📊 <strong>Overview:</strong> Get a complete snapshot of your financial health with key metrics, summary cards, and month-over-month comparisons.
+                </div>
+                
+                <!-- Dashboard Overview Sub-Tab -->
+                <div id="subtab-dashboard-overview" class="sub-tab-content active">
+                
+                <!-- Overdraft Warning System -->
+                <div id="overdraft-warning" class="overdraft-warning" style="display: none;">
+                    <div class="overdraft-header">
+                        <div class="overdraft-icon-container">
+                            <span class="overdraft-icon" id="overdraft-icon">⚠️</span>
+                        </div>
+                        <div class="overdraft-content">
+                            <h3 class="overdraft-title" id="overdraft-title">Overdraft Risk Assessment</h3>
+                            <div class="overdraft-warnings" id="overdraft-warnings">
+                                <!-- Warning messages will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overdraft-recommendations">
+                        <h4>💡 Recommendations:</h4>
+                        <ul id="overdraft-recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </ul>
+                    </div>
+                    <div class="overdraft-metrics" id="overdraft-metrics">
+                        <!-- Metrics will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Smart Recommendations -->
+                <div id="smart-recommendations" class="smart-recommendations" style="display: none;">
+                    <div class="recommendations-header">
+                        <div class="recommendations-icon">💡</div>
+                        <div class="recommendations-title">
+                            <h3>Smart Recommendations</h3>
+                            <p class="recommendations-subtitle">Personalized actions to improve your financial health</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Priority Actions (Critical/Urgent) -->
+                    <div id="priority-actions-container" class="priority-actions-container" style="display: none;">
+                        <div class="priority-actions-header">
+                            <span class="priority-badge critical">⚡ Priority Actions</span>
+                        </div>
+                        <div id="priority-actions-list" class="recommendations-list">
+                            <!-- Priority actions will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Regular Recommendations -->
+                    <div id="recommendations-container" class="recommendations-container">
+                        <div id="recommendations-list" class="recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card income-card">
+                        <h3>Total Monthly Income</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">All income sources</span>
+                    </div>
+                    <div class="summary-card expense-card">
+                        <h3>Fixed Expenses</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">Monthly bills & obligations</span>
+                    </div>
+                    <div class="summary-card available-card">
+                        <h3>Available to Spend</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">After expenses & savings</span>
+                    </div>
+                    <div class="summary-card savings-card">
+                        <h3>Total Savings</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">All savings accounts</span>
+                    </div>
+                </div>
+
+                <!-- Month Comparison Section -->
+                <div class="dashboard-section month-comparison-section" id="month-comparison-section" style="display: none;">
+                    <div class="section-header">
+                        <h3>📊 Month-over-Month Comparison</h3>
+                        <span class="section-subtitle" id="comparison-subtitle">Current vs. Previous Month</span>
+                    </div>
+                    
+                    <div class="comparison-grid" id="comparison-grid">
+                        <!-- Comparison cards will be dynamically inserted here -->
+                    </div>
+                    
+                    <div class="comparison-insights" id="comparison-insights">
+                        <!-- Insights will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Left Column -->
+                    <div class="dashboard-column-left">
+                        <!-- Account Balances Section -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💳 Account Balances</h3>
+                                <button class="btn-primary btn-sm" id="add-account-btn">+ Add Account</button>
+                            </div>
+                            <div id="accounts-container" class="accounts-grid">
+                                <p class="placeholder-text">No accounts added yet. Click "Add Account" to get started.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity Section -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📝 Recent Activity</h3>
+                            </div>
+                            <p class="placeholder-text">No recent transactions</p>
+                        </div>
+                        
+                        <!-- Spending Pattern Insights -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>🔍 Spending Pattern Insights</h3>
+                                <span class="section-subtitle">Compare with your history</span>
+                            </div>
+                            <div id="spending-patterns-container" class="spending-patterns-container">
+                                <div class="patterns-loading" id="patterns-loading">
+                                    <div class="loading-spinner">⏳</div>
+                                    <p>Analyzing your spending patterns...</p>
+                                </div>
+                                <div class="patterns-alerts" id="patterns-alerts" style="display: none;">
+                                    <!-- Alerts will be populated here -->
+                                </div>
+                                <div class="patterns-insights" id="patterns-insights" style="display: none;">
+                                    <!-- Insights will be populated here -->
+                                </div>
+                                <div class="patterns-placeholder" id="patterns-placeholder" style="display: none;">
+                                    <p class="placeholder-text">Add more transactions to see spending pattern analysis</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="dashboard-column-right">
+                        <!-- Month-to-Date Spending -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📊 Month-to-Date Spending</h3>
+                                <span class="section-subtitle" id="mtd-date-range"></span>
+                            </div>
+                            <div class="mtd-summary">
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Total Spent</span>
+                                    <span class="mtd-amount" id="mtd-total">$0.00</span>
+                                </div>
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Transactions</span>
+                                    <span class="mtd-count" id="mtd-count">0</span>
+                                </div>
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Average/Day</span>
+                                    <span class="mtd-average" id="mtd-average">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Spending Velocity Indicator -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>⚡ Spending Velocity</h3>
+                                <span class="section-subtitle">How fast are you spending?</span>
+                            </div>
+                            <div id="velocity-container" class="velocity-container">
+                                <div class="velocity-status" id="velocity-status">
+                                    <div class="velocity-icon" id="velocity-icon">⏱️</div>
+                                    <div class="velocity-status-text" id="velocity-status-text">Calculating...</div>
+                                </div>
+                                <div class="velocity-details">
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Current Pace:</span>
+                                        <span class="velocity-value" id="velocity-actual">$0.00/day</span>
+                                    </div>
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Target Pace:</span>
+                                        <span class="velocity-value" id="velocity-target">$0.00/day</span>
+                                    </div>
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Days Remaining:</span>
+                                        <span class="velocity-value" id="velocity-days">0 days</span>
+                                    </div>
+                                </div>
+                                <div class="velocity-message" id="velocity-message">
+                                    Add income and transactions to see your spending velocity
+                                </div>
+                                <div class="velocity-projection" id="velocity-projection" style="display: none;">
+                                    <div class="projection-label">Projected Month End:</div>
+                                    <div class="projection-value" id="velocity-projected">$0.00 remaining</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Next Paycheck Countdown -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💰 Next Paycheck</h3>
+                                <span class="section-subtitle">Days until payday</span>
+                            </div>
+                            <div id="paycheck-container" class="paycheck-container">
+                                <div class="paycheck-countdown" id="paycheck-countdown">
+                                    <div class="paycheck-days" id="paycheck-days">--</div>
+                                    <div class="paycheck-label">days</div>
+                                </div>
+                                <div class="paycheck-details" id="paycheck-details">
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Date:</span>
+                                        <span class="paycheck-value" id="paycheck-date">--</span>
+                                    </div>
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Source:</span>
+                                        <span class="paycheck-value" id="paycheck-source">--</span>
+                                    </div>
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Amount:</span>
+                                        <span class="paycheck-value" id="paycheck-amount">$0.00</span>
+                                    </div>
+                                </div>
+                                <div class="paycheck-message" id="paycheck-message">
+                                    Add income sources with pay dates to see your next paycheck countdown
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Money Left Per Day -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💵 Money Left Per Day</h3>
+                                <span class="section-subtitle">Daily spending budget</span>
+                            </div>
+                            <div id="money-per-day-container" class="money-per-day-container">
+                                <div class="money-per-day-display" id="money-per-day-display">
+                                    <div class="money-per-day-amount" id="money-per-day-amount">$0.00</div>
+                                    <div class="money-per-day-label">per day</div>
+                                </div>
+                                <div class="money-per-day-status" id="money-per-day-status">
+                                    <div class="status-indicator" id="money-per-day-indicator">
+                                        <span class="status-icon" id="money-per-day-icon">💰</span>
+                                        <span class="status-text" id="money-per-day-status-text">Calculating...</span>
+                                    </div>
+                                </div>
+                                <div class="money-per-day-details" id="money-per-day-details">
+                                    <div class="money-per-day-row">
+                                        <span class="money-per-day-label">Remaining:</span>
+                                        <span class="money-per-day-value" id="money-per-day-remaining">$0.00</span>
+                                    </div>
+                                    <div class="money-per-day-row">
+                                        <span class="money-per-day-label">Days Left:</span>
+                                        <span class="money-per-day-value" id="money-per-day-days">0 days</span>
+                                    </div>
+                                </div>
+                                <div class="money-per-day-message" id="money-per-day-message">
+                                    Add income and transactions to see your daily budget
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Budget Health Score -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💪 Budget Health Score</h3>
+                                <span class="section-subtitle">Overall financial health rating</span>
+                            </div>
+                            <div id="budget-health-container" class="budget-health-container">
+                                <div class="budget-health-score-display">
+                                    <div class="health-score-circle" id="health-score-circle">
+                                        <div class="health-score-number" id="health-score-number">--</div>
+                                        <div class="health-score-total">/100</div>
+                                    </div>
+                                    <div class="health-grade-display">
+                                        <div class="health-grade" id="health-grade">--</div>
+                                        <div class="health-grade-text" id="health-grade-text">Calculating...</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="health-breakdown" id="health-breakdown">
+                                    <h4>Score Breakdown:</h4>
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Account Health</span>
+                                            <span class="health-category-score" id="health-account-score">0/25</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-account-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-account-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Spending Adherence</span>
+                                            <span class="health-category-score" id="health-spending-score">0/25</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-spending-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-spending-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Savings Rate</span>
+                                            <span class="health-category-score" id="health-savings-score">0/20</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-savings-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-savings-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Bill Payment</span>
+                                            <span class="health-category-score" id="health-bill-score">0/20</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-bill-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-bill-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Setup Completeness</span>
+                                            <span class="health-category-score" id="health-setup-score">0/10</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-setup-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-setup-factors"></ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="health-recommendations" id="health-recommendations">
+                                    <h4>💡 Recommendations:</h4>
+                                    <ul id="health-recommendations-list"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upcoming Bills (Next 7 Days) -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📅 Bills Due Soon</h3>
+                                <span class="section-subtitle">Next 7 days</span>
+                            </div>
+                            <div id="upcoming-bills-container" class="upcoming-bills-container">
+                                <div class="upcoming-bills-summary" id="upcoming-bills-summary" style="display: none;">
+                                    <div class="bills-summary-stat">
+                                        <span class="bills-summary-label">Total Due:</span>
+                                        <span class="bills-summary-value" id="bills-total-due">$0.00</span>
+                                    </div>
+                                    <div class="bills-summary-stat">
+                                        <span class="bills-summary-label">Bills:</span>
+                                        <span class="bills-summary-value" id="bills-count">0</span>
+                                    </div>
+                                </div>
+                                <div class="upcoming-bills-list" id="upcoming-bills-list">
+                                    <p class="placeholder-text" id="bills-placeholder">No bills due in the next 7 days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <!-- End Dashboard Overview Sub-Tab -->
+                
+                <!-- Dashboard Insights Sub-Tab -->
+                <div id="subtab-dashboard-insights" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💡 Smart Insights</h3>
+                        <p>Personalized financial insights and recommendations</p>
+                        <ul>
+                            <li>Smart spending recommendations</li>
+                            <li>Budget optimization tips</li>
+                            <li>Unusual spending alerts</li>
+                            <li>Savings opportunities</li>
+                        </ul>
+                        <p class="placeholder-note">Smart insights are being integrated - check the Overview tab for current recommendations!</p>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Alerts Sub-Tab -->
+                <div id="subtab-dashboard-alerts" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>⚠️ Alerts & Warnings</h3>
+                        <p>Proactive alerts to keep your finances healthy</p>
+                        <ul>
+                            <li>Overdraft risk warnings</li>
+                            <li>Low balance alerts</li>
+                            <li>Upcoming bill reminders</li>
+                            <li>Budget health warnings</li>
+                        </ul>
+                        <p class="placeholder-note">Alert system is being enhanced - check the Overview tab for current alerts!</p>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Accounts Sub-Tab -->
+                <div id="subtab-dashboard-accounts" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💳 Account Details</h3>
+                        <p>Detailed view of all your accounts</p>
+                        <ul>
+                            <li>All account balances</li>
+                            <li>Recent transactions</li>
+                            <li>Account activity history</li>
+                            <li>Balance trends</li>
+                        </ul>
+                        <p class="placeholder-note">Detailed account view coming soon - check the Overview tab for current account balances!</p>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Velocity Sub-Tab -->
+                <div id="subtab-dashboard-velocity" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>⚡ Spending Pace</h3>
+                        <p>Monitor your spending velocity and budget remaining</p>
+                        <ul>
+                            <li>Current spending pace</li>
+                            <li>Daily budget remaining</li>
+                            <li>Paycheck countdown</li>
+                            <li>End-of-month projections</li>
+                        </ul>
+                        <p class="placeholder-note">Spending pace tracker coming soon - check the Overview tab for current velocity metrics!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Tab -->
+            <div id="tab-income" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>💵 Income Sources</h2>
+                        <p class="tab-description">Track all sources of income for your household</p>
+                    </div>
+                    <button class="btn-primary" id="add-income-btn">+ Add Income Source</button>
+                </div>
+                
+                <!-- Income Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="income-sources" data-tooltip="Manage all income sources including employment, freelance, and passive income">
+                        <span class="sub-tab-icon">💵</span>
+                        <span class="sub-tab-label">Sources</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="income-schedule" data-tooltip="View paycheck schedules, frequencies, and upcoming payment dates">
+                        <span class="sub-tab-icon">📅</span>
+                        <span class="sub-tab-label">Schedule</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="income-history" data-tooltip="Complete payment history showing received vs expected income">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Payment History</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="income-trends" data-tooltip="Analyze income trends, patterns, and year-over-year growth">
+                        <span class="sub-tab-icon">📈</span>
+                        <span class="sub-tab-label">Trends & Analytics</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="income-retirement" data-tooltip="Track retirement contributions, employer matches, and progress to annual limits">
+                        <span class="sub-tab-icon">🏦</span>
+                        <span class="sub-tab-label">Retirement</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    💵 <strong>Sources:</strong> Manage all your income sources including employment, freelance work, and passive income streams.
+                </div>
+                
+                <!-- Income Sources Sub-Tab -->
+                <div id="subtab-income-sources" class="sub-tab-content active">
+                
+                    <div class="income-summary">
+                        <div class="summary-box">
+                            <span class="summary-label">Total Monthly Income</span>
+                            <span class="summary-value" id="income-total-display">$0.00</span>
+                        </div>
+                        <div class="summary-box">
+                            <span class="summary-label">Active Income Sources</span>
+                            <span class="summary-value" id="income-count-display">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Income Earner Filter -->
+                    <div class="income-filter-section" id="income-filter-section" style="display: none;">
+                    <div class="filter-header">
+                        <h3>👥 Income by Household Member</h3>
+                        <div class="filter-controls">
+                            <button class="filter-btn active" data-filter="all">All Income</button>
+                            <div id="earner-filter-buttons"></div>
+                            <button class="filter-btn" data-filter="unassigned">Unassigned</button>
+                        </div>
+                    </div>
+                    <div id="earner-summary-cards" class="earner-summary-grid"></div>
+                    </div>
+                    
+                    <div id="income-list-container" class="income-list">
+                        <p class="placeholder-text">No income sources added yet. Click "Add Income Source" to get started.</p>
+                    </div>
+                </div>
+                <!-- End Income Sources Sub-Tab -->
+                
+                <!-- Income Schedule Sub-Tab -->
+                <div id="subtab-income-schedule" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📅 Payment Schedule</h3>
+                        <p>View all your upcoming income payments organized by date</p>
+                        <ul>
+                            <li>Calendar view of all paychecks</li>
+                            <li>Next paycheck countdown</li>
+                            <li>Monthly payment schedule</li>
+                            <li>Payment frequency analysis</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Income History Sub-Tab -->
+                <div id="subtab-income-history" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📊 Payment History</h3>
+                        <p>Track all received income payments and compare against expected amounts</p>
+                        <ul>
+                            <li>Complete payment history by source</li>
+                            <li>Expected vs actual income comparison</li>
+                            <li>Payment receipt tracking</li>
+                            <li>Variable income tracking</li>
+                            <li>Missing payment alerts</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Income Trends Sub-Tab -->
+                <div id="subtab-income-trends" class="sub-tab-content">
+                
+                <!-- Income Trends Section -->
+                <div class="income-trends-section" id="income-trends-section">
+                    <div class="trends-header">
+                        <h3>📈 Income Trends</h3>
+                        <div class="trends-controls">
+                            <select id="trends-period-select" class="trends-period-select">
+                                <option value="6">Last 6 Months</option>
+                                <option value="12" selected>Last 12 Months</option>
+                                <option value="24">Last 24 Months</option>
+                            </select>
+                            <button id="refresh-trends-btn" class="btn-icon" title="Refresh charts">
+                                🔄
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Trends Statistics Summary -->
+                    <div id="trends-stats-summary" class="trends-stats-summary" style="display: none;">
+                        <div class="stat-card">
+                            <span class="stat-label">Average Monthly</span>
+                            <span class="stat-value" id="trends-stat-average">$0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Highest Month</span>
+                            <span class="stat-value" id="trends-stat-max">$0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Lowest Month</span>
+                            <span class="stat-value" id="trends-stat-min">$0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Trend</span>
+                            <span class="stat-value trend-indicator" id="trends-stat-trend">Stable</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Grid -->
+                    <div class="trends-charts-grid">
+                        <!-- Total Income Over Time -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>💰 Total Income Over Time</h4>
+                                <p class="chart-description">Monthly income trends</p>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="total-income-chart"></canvas>
+                            </div>
+                            <div class="chart-empty" id="total-income-empty" style="display: none;">
+                                <p>📊 No income data available yet</p>
+                                <p class="chart-empty-hint">Record income payments to see trends</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Income by Source -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>📊 Income by Source</h4>
+                                <p class="chart-description">Income breakdown by source</p>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="income-by-source-chart"></canvas>
+                            </div>
+                            <div class="chart-empty" id="source-chart-empty" style="display: none;">
+                                <p>📊 No income data available yet</p>
+                                <p class="chart-empty-hint">Record income payments to see breakdown</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Income by Earner -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>👥 Income by Household Member</h4>
+                                <p class="chart-description">Compare income by earner</p>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="income-by-earner-chart"></canvas>
+                            </div>
+                            <div class="chart-empty" id="earner-chart-empty" style="display: none;">
+                                <p>📊 No income data available yet</p>
+                                <p class="chart-empty-hint">Record income payments to see comparison</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Year-over-Year Comparison Section -->
+                <div class="yoy-comparison-section" id="yoy-comparison-section" style="display: none;">
+                    <div class="yoy-header">
+                        <h3>📅 Year-over-Year Comparison</h3>
+                        <button id="refresh-yoy-btn" class="btn-icon" title="Refresh comparison">
+                            🔄
+                        </button>
+                    </div>
+                    
+                    <!-- Year-over-Year Statistics -->
+                    <div id="yoy-stats-summary" class="yoy-stats-summary" style="display: none;">
+                        <div class="stat-card">
+                            <span class="stat-label">Years of Data</span>
+                            <span class="stat-value" id="yoy-stat-years">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Average per Year</span>
+                            <span class="stat-value" id="yoy-stat-average">$0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Overall Trend</span>
+                            <span class="stat-value trend-indicator" id="yoy-stat-trend">Stable</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Total All Years</span>
+                            <span class="stat-value" id="yoy-stat-total">$0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Year Cards Grid -->
+                    <div id="yoy-years-grid" class="yoy-years-grid"></div>
+                    
+                    <!-- Year-over-Year Charts -->
+                    <div class="yoy-charts-grid">
+                        <!-- Annual Comparison Bar Chart -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>📊 Annual Income Comparison</h4>
+                                <p class="chart-description">Total income by year</p>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="yoy-annual-chart"></canvas>
+                            </div>
+                            <div class="chart-empty" id="yoy-annual-empty" style="display: none;">
+                                <p>📊 No data available for comparison</p>
+                                <p class="chart-empty-hint">Need at least 2 years of data</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Monthly Comparison Line Chart -->
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h4>📈 Monthly Breakdown by Year</h4>
+                                <p class="chart-description">Compare monthly patterns across years</p>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="yoy-monthly-chart"></canvas>
+                            </div>
+                            <div class="chart-empty" id="yoy-monthly-empty" style="display: none;">
+                                <p>📊 No data available for comparison</p>
+                                <p class="chart-empty-hint">Need at least 2 years of data</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="yoy-empty-state" id="yoy-empty-state" style="display: none;">
+                        <div class="empty-icon">📅</div>
+                        <h4>No Year-over-Year Data Yet</h4>
+                        <p>Record income from multiple years to see year-over-year comparisons.</p>
+                        <p class="empty-hint">You'll need income data from at least 2 different years to enable this feature.</p>
+                    </div>
+                </div>
+                
+                <!-- Tax Bracket Estimator Section -->
+                <div class="tax-estimator-section" id="tax-estimator-section">
+                    <div class="tax-header">
+                        <h3>🧾 Tax Bracket Estimator</h3>
+                        <div class="tax-controls">
+                            <select id="filing-status-select" class="filing-status-select">
+                                <option value="single">Single</option>
+                                <option value="married-joint" selected>Married Filing Jointly</option>
+                                <option value="married-separate">Married Filing Separately</option>
+                                <option value="head-of-household">Head of Household</option>
+                            </select>
+                            <label class="toggle-switch" title="Use actual income from last 12 months vs expected income">
+                                <input type="checkbox" id="use-actual-income-toggle">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Use Actual Income</span>
+                            </label>
+                            <button id="refresh-tax-estimate-btn" class="btn-icon" title="Refresh tax estimate">
+                                🔄
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tax Summary Cards -->
+                    <div id="tax-summary-cards" class="tax-summary-cards">
+                        <div class="tax-card">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">💰</span>
+                                <span class="tax-card-label">Annual Gross Income</span>
+                            </div>
+                            <div class="tax-card-value" id="tax-gross-income">$0</div>
+                            <div class="tax-card-sublabel" id="tax-gross-monthly">$0/month</div>
+                        </div>
+                        
+                        <div class="tax-card">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">📝</span>
+                                <span class="tax-card-label">Standard Deduction</span>
+                            </div>
+                            <div class="tax-card-value" id="tax-deduction">$0</div>
+                            <div class="tax-card-sublabel">Reduces taxable income</div>
+                        </div>
+                        
+                        <div class="tax-card">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">💸</span>
+                                <span class="tax-card-label">Estimated Federal Tax</span>
+                            </div>
+                            <div class="tax-card-value tax-amount" id="tax-total">$0</div>
+                            <div class="tax-card-sublabel" id="tax-monthly">$0/month</div>
+                        </div>
+                        
+                        <div class="tax-card">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">📊</span>
+                                <span class="tax-card-label">Effective Tax Rate</span>
+                            </div>
+                            <div class="tax-card-value" id="tax-effective-rate">0%</div>
+                            <div class="tax-card-sublabel">Average rate paid</div>
+                        </div>
+                        
+                        <div class="tax-card">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">📈</span>
+                                <span class="tax-card-label">Marginal Tax Rate</span>
+                            </div>
+                            <div class="tax-card-value" id="tax-marginal-rate">0%</div>
+                            <div class="tax-card-sublabel">Next dollar taxed at</div>
+                        </div>
+                        
+                        <div class="tax-card highlight">
+                            <div class="tax-card-header">
+                                <span class="tax-card-icon">✅</span>
+                                <span class="tax-card-label">After-Tax Income</span>
+                            </div>
+                            <div class="tax-card-value" id="tax-after-tax">$0</div>
+                            <div class="tax-card-sublabel" id="tax-after-tax-monthly">$0/month</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tax Brackets Breakdown -->
+                    <div class="tax-brackets-section">
+                        <div class="tax-brackets-header">
+                            <h4>📋 Your Tax Brackets Breakdown</h4>
+                            <p class="tax-brackets-description">How your income is taxed progressively across different brackets</p>
+                        </div>
+                        <div id="tax-brackets-list" class="tax-brackets-list">
+                            <!-- Tax brackets will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Paycheck Withholding Guide -->
+                    <div class="withholding-section">
+                        <div class="withholding-header">
+                            <h4>💼 Recommended Paycheck Withholding</h4>
+                            <p class="withholding-description">Ensure your employer withholds approximately this much per paycheck</p>
+                        </div>
+                        <div id="withholding-grid" class="withholding-grid">
+                            <div class="withholding-card">
+                                <span class="withholding-frequency">Weekly</span>
+                                <span class="withholding-amount" id="withholding-weekly">$0</span>
+                            </div>
+                            <div class="withholding-card">
+                                <span class="withholding-frequency">Bi-Weekly</span>
+                                <span class="withholding-amount" id="withholding-biweekly">$0</span>
+                            </div>
+                            <div class="withholding-card">
+                                <span class="withholding-frequency">Semi-Monthly</span>
+                                <span class="withholding-amount" id="withholding-semimonthly">$0</span>
+                            </div>
+                            <div class="withholding-card">
+                                <span class="withholding-frequency">Monthly</span>
+                                <span class="withholding-amount" id="withholding-monthly">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Income Breakdown -->
+                    <div class="income-breakdown-section" id="income-breakdown-section" style="display: none;">
+                        <div class="breakdown-header">
+                            <h4>💵 Income Sources Included</h4>
+                        </div>
+                        <div id="income-breakdown-list" class="income-breakdown-list">
+                            <!-- Income breakdown will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Tax Disclaimer -->
+                    <div class="tax-disclaimer">
+                        <p><strong>⚠️ Important:</strong> This is an estimate for federal income tax only and uses 2025 tax brackets. This calculation does not include:</p>
+                        <ul>
+                            <li>State and local income taxes</li>
+                            <li>FICA taxes (Social Security & Medicare - 7.65% for employees)</li>
+                            <li>Additional deductions (401k, HSA, FSA, etc.)</li>
+                            <li>Tax credits (Child Tax Credit, Earned Income Credit, etc.)</li>
+                            <li>Alternative Minimum Tax (AMT)</li>
+                        </ul>
+                        <p>For accurate tax planning, consult with a qualified tax professional or use official IRS tax calculators.</p>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="tax-empty-state" id="tax-empty-state" style="display: none;">
+                        <div class="empty-icon">🧾</div>
+                        <h4>No Income Data Available</h4>
+                        <p>Add income sources to see your estimated tax bracket and liability.</p>
+                    </div>
+                </div>
+                </div>
+                <!-- End Income Trends Sub-Tab -->
+                
+                <!-- Income Retirement Sub-Tab -->
+                <div id="subtab-income-retirement" class="sub-tab-content">
+                
+                <!-- Retirement Accounts Section -->
+                <div class="retirement-accounts-section" id="retirement-accounts-section">
+                    <div class="retirement-header">
+                        <div>
+                            <h3>🏦 Retirement Contribution Tracking</h3>
+                            <p class="section-description">Track your retirement accounts, contributions, and progress toward annual limits</p>
+                        </div>
+                        <div class="retirement-header-actions">
+                            <button class="btn-secondary" id="refresh-retirement-btn" title="Refresh retirement data">🔄 Refresh</button>
+                            <button class="btn-primary" id="add-retirement-account-btn">+ Add Retirement Account</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Retirement Summary Cards -->
+                    <div id="retirement-summary-cards" class="retirement-summary-cards" style="display: none;">
+                        <div class="summary-card">
+                            <div class="summary-card-header">
+                                <span class="summary-card-icon">💰</span>
+                                <span class="summary-card-label">Total Balance</span>
+                            </div>
+                            <div class="summary-card-value" id="retirement-total-balance">$0</div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="summary-card-header">
+                                <span class="summary-card-icon">📊</span>
+                                <span class="summary-card-label">YTD Contributions</span>
+                            </div>
+                            <div class="summary-card-value" id="retirement-ytd-contributions">$0</div>
+                            <div class="summary-card-sublabel" id="retirement-current-year"></div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="summary-card-header">
+                                <span class="summary-card-icon">👤</span>
+                                <span class="summary-card-label">Employee Contributions</span>
+                            </div>
+                            <div class="summary-card-value" id="retirement-ytd-employee">$0</div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="summary-card-header">
+                                <span class="summary-card-icon">🏢</span>
+                                <span class="summary-card-label">Employer Match</span>
+                            </div>
+                            <div class="summary-card-value" id="retirement-ytd-employer">$0</div>
+                        </div>
+                        
+                        <div class="summary-card">
+                            <div class="summary-card-header">
+                                <span class="summary-card-icon">🏦</span>
+                                <span class="summary-card-label">Active Accounts</span>
+                            </div>
+                            <div class="summary-card-value" id="retirement-total-accounts">0</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Retirement Accounts List -->
+                    <div id="retirement-accounts-list" class="retirement-accounts-list">
+                        <div class="retirement-empty-state">
+                            <div class="empty-icon">🏦</div>
+                            <h4>No Retirement Accounts Yet</h4>
+                            <p>Add a retirement account to start tracking your contributions and progress toward annual limits.</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <!-- End Income Retirement Sub-Tab -->
+            </div>
+
+            <!-- Monthly Expenses Tab -->
+            <div id="tab-expenses" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>📝 Monthly Expenses</h2>
+                        <p class="tab-description">Manage your fixed monthly bills and obligations</p>
+                    </div>
+                    <button class="btn-primary" id="add-expense-btn">+ Add Expense</button>
+                </div>
+                
+                <!-- Expenses Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="expenses-fixed" data-tooltip="Manage recurring monthly bills like rent, utilities, insurance, and subscriptions">
+                        <span class="sub-tab-icon">📝</span>
+                        <span class="sub-tab-label">Fixed Expenses</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="expenses-variable" data-tooltip="Track expenses that change month-to-month like groceries and entertainment">
+                        <span class="sub-tab-icon">💸</span>
+                        <span class="sub-tab-label">Variable Expenses</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="expenses-categories" data-tooltip="Organize and analyze expenses by category to identify spending patterns">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Categories</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="expenses-calendar" data-tooltip="View all upcoming bills on a calendar with due date reminders">
+                        <span class="sub-tab-icon">📅</span>
+                        <span class="sub-tab-label">Bill Calendar</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    📝 <strong>Fixed Expenses:</strong> Manage recurring monthly bills like rent, utilities, insurance, and subscriptions.
+                </div>
+                
+                <!-- Fixed Expenses Sub-Tab -->
+                <div id="subtab-expenses-fixed" class="sub-tab-content active">
+                
+                    <div class="expense-summary">
+                        <div class="summary-box">
+                            <span class="summary-label">Total Monthly Expenses</span>
+                            <span class="summary-value expense-total" id="expense-total-display">$0.00</span>
+                        </div>
+                        <div class="summary-box">
+                            <span class="summary-label">Active Expenses</span>
+                            <span class="summary-value" id="expense-count-display">0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="expense-list-container" class="expense-list">
+                        <p class="placeholder-text">No expenses added yet. Click "Add Expense" to get started.</p>
+                    </div>
+                </div>
+                <!-- End Fixed Expenses Sub-Tab -->
+                
+                <!-- Variable Expenses Sub-Tab -->
+                <div id="subtab-expenses-variable" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💸 Variable Expenses</h3>
+                        <p>Track and budget for expenses that change each month</p>
+                        <ul>
+                            <li>Groceries and household items</li>
+                            <li>Entertainment and dining out</li>
+                            <li>Variable utilities (usage-based)</li>
+                            <li>Shopping and personal expenses</li>
+                            <li>Monthly budget vs actual comparison</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Expenses Categories Sub-Tab -->
+                <div id="subtab-expenses-categories" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📊 Expense Categories</h3>
+                        <p>Analyze your spending by category</p>
+                        <ul>
+                            <li>Housing & utilities breakdown</li>
+                            <li>Transportation costs</li>
+                            <li>Insurance & healthcare</li>
+                            <li>Debt payments</li>
+                            <li>Subscriptions & memberships</li>
+                            <li>Category spending trends</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Bill Calendar Sub-Tab -->
+                <div id="subtab-expenses-calendar" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📅 Bill Payment Calendar</h3>
+                        <p>Visual calendar showing all bills and due dates</p>
+                        <ul>
+                            <li>Monthly calendar view</li>
+                            <li>Due date reminders</li>
+                            <li>Payment status tracking</li>
+                            <li>Upcoming bills alerts</li>
+                            <li>Payment history</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spending Accounts Tab -->
+            <div id="tab-spending" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>🛒 Spending Accounts</h2>
+                        <p class="tab-description">Allocate money to different spending categories</p>
+                    </div>
+                </div>
+                
+                <!-- Spending Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="spending-accounts" data-tooltip="Create and manage spending accounts for different categories like groceries and entertainment">
+                        <span class="sub-tab-icon">🛒</span>
+                        <span class="sub-tab-label">Accounts</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="spending-transactions" data-tooltip="Record and categorize all spending transactions with detailed notes">
+                        <span class="sub-tab-icon">💳</span>
+                        <span class="sub-tab-label">Transactions</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="spending-categories" data-tooltip="Analyze spending by category and compare against budgets">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Category Breakdown</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="spending-trends" data-tooltip="View spending patterns, identify trends, and spot unusual spending">
+                        <span class="sub-tab-icon">📈</span>
+                        <span class="sub-tab-label">Trends</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    🛒 <strong>Accounts:</strong> Allocate funds to different spending categories and track account balances.
+                </div>
+                
+                <!-- Spending Accounts Sub-Tab -->
+                <div id="subtab-spending-accounts" class="sub-tab-content active">
+                    <div class="content-placeholder">
+                        <h3>🛒 Spending Account Management</h3>
+                        <p>Create virtual accounts for different spending categories</p>
+                        <ul>
+                            <li>Groceries account</li>
+                            <li>Entertainment budget</li>
+                            <li>Dining out fund</li>
+                            <li>Personal care allocation</li>
+                            <li>Clothing budget</li>
+                            <li>Transportation expenses</li>
+                            <li>Track remaining balance per account</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Spending Transactions Sub-Tab -->
+                <div id="subtab-spending-transactions" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💳 Transaction Tracking</h3>
+                        <p>Record all spending transactions with detailed categorization</p>
+                        <ul>
+                            <li>Quick transaction entry</li>
+                            <li>Category assignment</li>
+                            <li>Receipt photo uploads</li>
+                            <li>Notes and tags</li>
+                            <li>Split transactions</li>
+                            <li>Transaction search and filtering</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Spending Categories Sub-Tab -->
+                <div id="subtab-spending-categories" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📊 Category Analysis</h3>
+                        <p>Deep dive into spending by category</p>
+                        <ul>
+                            <li>Spending by category charts</li>
+                            <li>Budget vs actual comparison</li>
+                            <li>Category percentage breakdown</li>
+                            <li>Over/under budget alerts</li>
+                            <li>Category spending history</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Spending Trends Sub-Tab -->
+                <div id="subtab-spending-trends" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📈 Spending Trends & Patterns</h3>
+                        <p>Identify and analyze your spending behaviors</p>
+                        <ul>
+                            <li>Monthly spending trends</li>
+                            <li>Day-of-week spending patterns</li>
+                            <li>Unusual spending alerts</li>
+                            <li>Merchant frequency analysis</li>
+                            <li>Seasonal spending patterns</li>
+                            <li>Spending forecasts</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Tab -->
+            <div id="tab-savings" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>🏦 Savings</h2>
+                        <p class="tab-description">Track your savings accounts and emergency funds</p>
+                    </div>
+                </div>
+                
+                <!-- Savings Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="savings-accounts" data-tooltip="Manage all savings accounts including emergency fund, vacation fund, and special savings">
+                        <span class="sub-tab-icon">🏦</span>
+                        <span class="sub-tab-label">Accounts</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="savings-goals" data-tooltip="Set and track progress toward specific savings targets and milestones">
+                        <span class="sub-tab-icon">🎯</span>
+                        <span class="sub-tab-label">Savings Goals</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="savings-contributions" data-tooltip="Record deposits, track contribution history, and monitor savings growth">
+                        <span class="sub-tab-icon">💰</span>
+                        <span class="sub-tab-label">Contributions</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="savings-analysis" data-tooltip="Analyze savings rate, growth trends, and project future balances">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Analysis</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    🏦 <strong>Accounts:</strong> Track all savings accounts including emergency fund, vacation fund, and special savings.
+                </div>
+                
+                <!-- Savings Accounts Sub-Tab -->
+                <div id="subtab-savings-accounts" class="sub-tab-content active">
+                    <div class="content-placeholder">
+                        <h3>🏦 Savings Account Management</h3>
+                        <p>Track all your savings accounts and balances</p>
+                        <ul>
+                            <li>Emergency fund tracker</li>
+                            <li>Vacation savings</li>
+                            <li>Home improvement fund</li>
+                            <li>Vehicle fund</li>
+                            <li>Education savings</li>
+                            <li>General savings accounts</li>
+                            <li>Interest earned tracking</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Savings Goals Sub-Tab -->
+                <div id="subtab-savings-goals" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>🎯 Savings Goals & Targets</h3>
+                        <p>Set specific savings targets and track your progress</p>
+                        <ul>
+                            <li>Emergency fund goal (3-6 months expenses)</li>
+                            <li>Down payment savings goals</li>
+                            <li>Vacation fund targets</li>
+                            <li>Progress bars and milestones</li>
+                            <li>Target date tracking</li>
+                            <li>Goal completion celebrations</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Savings Contributions Sub-Tab -->
+                <div id="subtab-savings-contributions" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💰 Contribution History</h3>
+                        <p>Track all deposits and withdrawals to savings accounts</p>
+                        <ul>
+                            <li>Record manual contributions</li>
+                            <li>Automatic transfer tracking</li>
+                            <li>Contribution frequency analysis</li>
+                            <li>Withdrawal history</li>
+                            <li>Monthly contribution totals</li>
+                            <li>Contribution source tracking</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Savings Analysis Sub-Tab -->
+                <div id="subtab-savings-analysis" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📊 Savings Analysis & Projections</h3>
+                        <p>Analyze your savings rate and project future growth</p>
+                        <ul>
+                            <li>Savings rate calculation</li>
+                            <li>Growth trend analysis</li>
+                            <li>Future balance projections</li>
+                            <li>Interest earned tracking</li>
+                            <li>Savings vs income ratio</li>
+                            <li>Comparison with recommended targets</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Tab -->
+            <div id="tab-goals" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>🎯 Financial Goals</h2>
+                        <p class="tab-description">Set and track progress toward your financial goals</p>
+                    </div>
+                </div>
+                
+                <!-- Goals Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="goals-active" data-tooltip="View and manage all your current financial goals in one place">
+                        <span class="sub-tab-icon">🎯</span>
+                        <span class="sub-tab-label">Active Goals</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="goals-progress" data-tooltip="Monitor progress toward each goal with visual progress bars and timelines">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Progress Tracking</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="goals-planning" data-tooltip="Create new goals, set targets, and plan actionable steps to achieve them">
+                        <span class="sub-tab-icon">📝</span>
+                        <span class="sub-tab-label">Goal Planning</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="goals-achievements" data-tooltip="Celebrate completed goals and review your financial accomplishments">
+                        <span class="sub-tab-icon">🏆</span>
+                        <span class="sub-tab-label">Achievements</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    🎯 <strong>Active Goals:</strong> View and manage all your current financial goals in one place.
+                </div>
+                
+                <!-- Active Goals Sub-Tab -->
+                <div id="subtab-goals-active" class="sub-tab-content active">
+                    <div class="content-placeholder">
+                        <h3>🎯 Active Financial Goals</h3>
+                        <p>All your current goals at a glance</p>
+                        <ul>
+                            <li>Short-term goals (< 1 year)</li>
+                            <li>Medium-term goals (1-5 years)</li>
+                            <li>Long-term goals (5+ years)</li>
+                            <li>Debt payoff plans</li>
+                            <li>Savings milestones</li>
+                            <li>Quick status overview</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Goals Progress Sub-Tab -->
+                <div id="subtab-goals-progress" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📊 Progress Tracking</h3>
+                        <p>Detailed progress toward each goal</p>
+                        <ul>
+                            <li>Visual progress bars</li>
+                            <li>Timeline view</li>
+                            <li>Milestone tracking</li>
+                            <li>On-track vs behind schedule indicators</li>
+                            <li>Projected completion dates</li>
+                            <li>Progress history charts</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Goal Planning Sub-Tab -->
+                <div id="subtab-goals-planning" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📝 Goal Planning & Creation</h3>
+                        <p>Plan and create new financial goals</p>
+                        <ul>
+                            <li>Goal templates (emergency fund, vacation, etc.)</li>
+                            <li>Custom goal creation</li>
+                            <li>Target amount and date setting</li>
+                            <li>Action plan development</li>
+                            <li>Automatic savings recommendations</li>
+                            <li>Goal feasibility analysis</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Achievements Sub-Tab -->
+                <div id="subtab-goals-achievements" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>🏆 Completed Goals & Achievements</h3>
+                        <p>Celebrate your financial success</p>
+                        <ul>
+                            <li>Completed goals history</li>
+                            <li>Achievement badges and milestones</li>
+                            <li>Success timeline</li>
+                            <li>Total saved/paid off amounts</li>
+                            <li>Time to completion stats</li>
+                            <li>Share your achievements</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="tab-reports" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>📈 Financial Reports</h2>
+                        <p class="tab-description">Analyze your spending patterns and trends</p>
+                    </div>
+                </div>
+                
+                <!-- Reports Sub-Tabs -->
+                <nav class="sub-tab-nav">
+                    <button class="sub-tab-btn active" data-subtab="reports-overview" data-tooltip="Comprehensive view of all key financial metrics and summaries">
+                        <span class="sub-tab-icon">📊</span>
+                        <span class="sub-tab-label">Overview</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="reports-spending" data-tooltip="Detailed breakdown of spending by category, trends, and comparisons">
+                        <span class="sub-tab-icon">💸</span>
+                        <span class="sub-tab-label">Spending Analysis</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="reports-income" data-tooltip="Analyze income sources, growth patterns, and income stability">
+                        <span class="sub-tab-icon">💵</span>
+                        <span class="sub-tab-label">Income Analysis</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="reports-trends" data-tooltip="Identify financial trends, seasonal patterns, and spending behaviors">
+                        <span class="sub-tab-icon">📈</span>
+                        <span class="sub-tab-label">Trends & Patterns</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="reports-networth" data-tooltip="Track your net worth over time including assets, liabilities, and growth">
+                        <span class="sub-tab-icon">💎</span>
+                        <span class="sub-tab-label">Net Worth</span>
+                    </button>
+                    <button class="sub-tab-btn" data-subtab="reports-export" data-tooltip="Generate PDF reports and export data for external analysis">
+                        <span class="sub-tab-icon">📄</span>
+                        <span class="sub-tab-label">Export & Print</span>
+                    </button>
+                </nav>
+                
+                <div class="sub-tab-description">
+                    📊 <strong>Overview:</strong> Get a comprehensive view of all key financial metrics and summaries.
+                </div>
+                
+                <!-- Reports Overview Sub-Tab -->
+                <div id="subtab-reports-overview" class="sub-tab-content active">
+                    <div class="content-placeholder">
+                        <h3>📊 Financial Overview Report</h3>
+                        <p>Complete snapshot of your financial health</p>
+                        <ul>
+                            <li>Income summary</li>
+                            <li>Expense breakdown</li>
+                            <li>Savings rate</li>
+                            <li>Net cash flow</li>
+                            <li>Account balances</li>
+                            <li>Budget adherence score</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Spending Analysis Sub-Tab -->
+                <div id="subtab-reports-spending" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💸 Spending Analysis Report</h3>
+                        <p>Deep dive into your spending habits</p>
+                        <ul>
+                            <li>Monthly spending breakdown</li>
+                            <li>Category spending charts</li>
+                            <li>Top spending categories</li>
+                            <li>Budget vs actual comparison</li>
+                            <li>Spending trends over time</li>
+                            <li>Unusual spending alerts</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Income Analysis Sub-Tab -->
+                <div id="subtab-reports-income" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💵 Income Analysis Report</h3>
+                        <p>Analyze your income sources and growth</p>
+                        <ul>
+                            <li>Income by source breakdown</li>
+                            <li>Income growth trends</li>
+                            <li>Year-over-year comparison</li>
+                            <li>Income stability analysis</li>
+                            <li>Variable income tracking</li>
+                            <li>Income projections</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Trends & Patterns Sub-Tab -->
+                <div id="subtab-reports-trends" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📈 Financial Trends & Patterns</h3>
+                        <p>Identify patterns in your financial behavior</p>
+                        <ul>
+                            <li>Month-over-month trends</li>
+                            <li>Year-over-year comparison</li>
+                            <li>Seasonal spending patterns</li>
+                            <li>Day-of-week spending habits</li>
+                            <li>Income vs expenses trends</li>
+                            <li>Savings rate trends</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Net Worth Sub-Tab -->
+                <div id="subtab-reports-networth" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>💎 Net Worth Tracking</h3>
+                        <p>Track your overall financial position</p>
+                        <ul>
+                            <li>Total assets calculation</li>
+                            <li>Total liabilities tracking</li>
+                            <li>Net worth over time</li>
+                            <li>Asset allocation breakdown</li>
+                            <li>Debt-to-asset ratio</li>
+                            <li>Net worth growth projections</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+                
+                <!-- Export & Print Sub-Tab -->
+                <div id="subtab-reports-export" class="sub-tab-content">
+                    <div class="content-placeholder">
+                        <h3>📄 Export & Print Reports</h3>
+                        <p>Generate and export your financial data</p>
+                        <ul>
+                            <li>PDF report generation</li>
+                            <li>CSV data export</li>
+                            <li>Excel spreadsheet export</li>
+                            <li>Custom date range selection</li>
+                            <li>Printable monthly statements</li>
+                            <li>Tax preparation exports</li>
+                        </ul>
+                        <p class="placeholder-note">This feature is coming soon!</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>Budget Tool <strong id="footer-version">v1.5.10</strong></p>
+        </footer>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="account-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-modal-title">Add Account</h3>
+                <button class="modal-close" id="close-account-modal">&times;</button>
+            </div>
+            <form id="account-form">
+                <div class="form-group">
+                    <label for="account-type">Account Type</label>
+                    <select id="account-type" required>
+                        <option value="">Select account type...</option>
+                        <option value="checking">💵 Checking Account</option>
+                        <option value="savings">🏦 Savings Account</option>
+                        <option value="credit">💳 Credit Card</option>
+                        <option value="investment">📈 Investment Account</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="account-name">Account Name</label>
+                    <input type="text" id="account-name" placeholder="e.g., Chase Checking, Wells Fargo Savings" required>
+                </div>
+                <div class="form-group">
+                    <label for="account-balance">Current Balance</label>
+                    <input type="number" id="account-balance" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-account-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-account-btn">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Income Modal -->
+    <div id="income-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="income-modal-title">Add Income Source</h3>
+                <button class="modal-close" id="close-income-modal">&times;</button>
+            </div>
+            <form id="income-form">
+                <div class="form-group">
+                    <label for="income-type">Income Type</label>
+                    <select id="income-type" required>
+                        <option value="">Select income type...</option>
+                        <option value="salary">💼 Primary Salary</option>
+                        <option value="secondary-salary">💼 Secondary Salary</option>
+                        <option value="freelance">💻 Freelance/Side Hustle</option>
+                        <option value="investment">📈 Investment Income</option>
+                        <option value="rental">🏠 Rental Income</option>
+                        <option value="other">💰 Other Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="income-name">Source Name</label>
+                    <input type="text" id="income-name" placeholder="e.g., Acme Corp Salary, Freelance Design" required>
+                </div>
+                <div class="form-group">
+                    <label for="income-earner-name">Income Earner (Optional)</label>
+                    <input type="text" id="income-earner-name" placeholder="e.g., John, Sarah" list="earner-suggestions">
+                    <datalist id="earner-suggestions"></datalist>
+                    <small class="form-help">Track income by person in your household</small>
+                </div>
+                <div class="form-group">
+                    <label for="income-amount">Amount</label>
+                    <input type="number" id="income-amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="income-frequency">Frequency</label>
+                    <select id="income-frequency" required>
+                        <option value="weekly">Weekly</option>
+                        <option value="bi-weekly">Bi-weekly (Every 2 weeks)</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="annual">Annual</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="income-next-pay-date">Next Pay Date (Optional)</label>
+                    <input type="date" id="income-next-pay-date" title="When is your next paycheck? This helps calculate days until payday">
+                    <small class="form-help">Set your next expected pay date to see a countdown on your dashboard</small>
+                </div>
+                
+                <!-- Variable Income Toggle -->
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="income-is-variable" name="is-variable">
+                        <label for="income-is-variable" class="checkbox-label">
+                            <span class="checkbox-text">📊 This is variable income (amount varies month-to-month)</span>
+                        </label>
+                    </div>
+                    <small class="form-help">Check this for commission, freelance, or any income that changes regularly. We'll track your average and help you budget safely.</small>
+                </div>
+                
+                <!-- Tax Withholding Section -->
+                <div class="form-section">
+                    <h4 class="form-section-title">💰 Tax Withholding & Deductions</h4>
+                    <p class="form-section-description">Enter pre-tax deductions to calculate your net (take-home) income</p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="income-federal-tax">Federal Income Tax (%)</label>
+                            <input type="number" id="income-federal-tax" placeholder="0.00" step="0.01" min="0" max="100" value="0">
+                            <small class="form-help">Percentage withheld for federal taxes</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="income-state-tax">State Income Tax (%)</label>
+                            <input type="number" id="income-state-tax" placeholder="0.00" step="0.01" min="0" max="100" value="0">
+                            <small class="form-help">Percentage withheld for state taxes</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="income-social-security">Social Security (6.2%)</label>
+                            <input type="number" id="income-social-security" placeholder="6.2" step="0.01" min="0" max="100" value="6.2">
+                            <small class="form-help">FICA Social Security tax (typically 6.2%)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="income-medicare">Medicare (1.45%)</label>
+                            <input type="number" id="income-medicare" placeholder="1.45" step="0.01" min="0" max="100" value="1.45">
+                            <small class="form-help">FICA Medicare tax (typically 1.45%)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="income-other-deductions">Other Deductions ($)</label>
+                        <input type="number" id="income-other-deductions" placeholder="0.00" step="0.01" min="0" value="0">
+                        <small class="form-help">401k, HSA, health insurance, etc. (flat dollar amount per payment)</small>
+                    </div>
+                    
+                    <!-- Net Income Display -->
+                    <div class="net-income-calculator">
+                        <div class="calc-row">
+                            <span class="calc-label">Gross Income:</span>
+                            <span class="calc-value" id="calc-gross-income">$0.00</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Total Taxes & Deductions:</span>
+                            <span class="calc-value expense" id="calc-total-deductions">-$0.00</span>
+                        </div>
+                        <div class="calc-row calc-total">
+                            <span class="calc-label">Net Income (Take-Home):</span>
+                            <span class="calc-value income" id="calc-net-income">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="income-notes">Notes (Optional)</label>
+                    <textarea id="income-notes" placeholder="Additional details about this income source..." rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-income-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-income-btn">Save Income Source</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Retirement Account Modal -->
+    <div id="retirement-account-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="retirement-account-modal-title">Add Retirement Account</h3>
+                <button class="modal-close" id="close-retirement-account-modal">&times;</button>
+            </div>
+            <form id="retirement-account-form">
+                <div class="form-group">
+                    <label for="retirement-account-name">Account Name <span class="required">*</span></label>
+                    <input type="text" id="retirement-account-name" placeholder="e.g., Company 401(k), Vanguard IRA" required>
+                    <small class="form-help">A descriptive name for this retirement account</small>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="retirement-account-type">Account Type <span class="required">*</span></label>
+                        <select id="retirement-account-type" required>
+                            <option value="">Select type...</option>
+                            <option value="401k">401(k)</option>
+                            <option value="403b">403(b)</option>
+                            <option value="traditional_ira">Traditional IRA</option>
+                            <option value="roth_ira">Roth IRA</option>
+                            <option value="sep_ira">SEP IRA</option>
+                            <option value="simple_ira">SIMPLE IRA</option>
+                        </select>
+                        <small class="form-help">Type of retirement account</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="retirement-contribution-type">Contribution Type <span class="required">*</span></label>
+                        <select id="retirement-contribution-type" required>
+                            <option value="">Select type...</option>
+                            <option value="pre_tax">Pre-Tax (Traditional)</option>
+                            <option value="post_tax">Post-Tax (Roth)</option>
+                            <option value="both">Both Pre & Post-Tax</option>
+                        </select>
+                        <small class="form-help">How contributions are taxed</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="retirement-annual-limit">Annual Contribution Limit ($)</label>
+                        <input type="number" id="retirement-annual-limit" placeholder="0" step="1" min="0">
+                        <small class="form-help">IRS annual limit (auto-filled based on type)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="retirement-current-balance">Current Balance ($)</label>
+                        <input type="number" id="retirement-current-balance" placeholder="0.00" step="0.01" min="0" value="0">
+                        <small class="form-help">Current total account value</small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="retirement-linked-income">Linked Income Source (Optional)</label>
+                    <select id="retirement-linked-income">
+                        <option value="">None - Not linked to income</option>
+                        <!-- Will be populated dynamically with income sources -->
+                    </select>
+                    <small class="form-help">Link to income source for automatic contribution tracking</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="retirement-contribution-per-paycheck">Contribution per Paycheck ($)</label>
+                    <input type="number" id="retirement-contribution-per-paycheck" placeholder="0.00" step="0.01" min="0" value="0">
+                    <small class="form-help">Amount contributed each paycheck</small>
+                </div>
+                
+                <div class="employer-match-section">
+                    <h4 class="section-subtitle">🏢 Employer Matching</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="retirement-employer-match-percent">Employer Match Percentage (%)</label>
+                            <input type="number" id="retirement-employer-match-percent" placeholder="0" step="0.1" min="0" max="100" value="0">
+                            <small class="form-help">Percentage employer matches (e.g., 50% or 100%)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-employer-match-limit">Match Limit (% of Salary)</label>
+                            <input type="number" id="retirement-employer-match-limit" placeholder="0" step="0.1" min="0" max="100" value="0">
+                            <small class="form-help">Max % of salary employer will match (e.g., 6%)</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="retirement-notes">Notes (Optional)</label>
+                    <textarea id="retirement-notes" placeholder="Additional details about this account..." rows="3"></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-retirement-account-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-retirement-account-btn">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contribution Modal -->
+    <div id="contribution-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="contribution-modal-title">Add Contribution</h3>
+                <button class="modal-close" id="close-contribution-modal">&times;</button>
+            </div>
+            <form id="contribution-form">
+                <input type="hidden" id="contribution-account-id">
+                
+                <div class="form-group">
+                    <label>Contributing to:</label>
+                    <div class="account-display" id="contribution-account-display">Account Name</div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contribution-date">Contribution Date <span class="required">*</span></label>
+                        <input type="date" id="contribution-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contribution-amount">Amount ($) <span class="required">*</span></label>
+                        <input type="number" id="contribution-amount" placeholder="0.00" step="0.01" min="0.01" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contribution-type">Contribution Type <span class="required">*</span></label>
+                    <select id="contribution-type" required>
+                        <option value="employee">Employee Contribution</option>
+                        <option value="employer_match">Employer Match</option>
+                        <option value="bonus">Bonus Contribution</option>
+                        <option value="rollover">Rollover</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contribution-note">Note (Optional)</label>
+                    <input type="text" id="contribution-note" placeholder="e.g., Paycheck 12/15, Annual bonus contribution">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-contribution-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-contribution-btn">Add Contribution</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expense-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="expense-modal-title">Add Fixed Expense</h3>
+                <button class="modal-close" id="close-expense-modal">&times;</button>
+            </div>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label for="expense-category">Category</label>
+                    <select id="expense-category" required>
+                        <option value="">Select category...</option>
+                        <option value="housing">🏠 Housing (Rent/Mortgage)</option>
+                        <option value="utilities">💡 Utilities (Electric, Gas, Water)</option>
+                        <option value="internet">🌐 Internet & Phone</option>
+                        <option value="insurance">🛡️ Insurance</option>
+                        <option value="transportation">🚗 Transportation (Car Payment, Gas)</option>
+                        <option value="debt">💳 Debt Payments</option>
+                        <option value="subscriptions">📺 Subscriptions & Memberships</option>
+                        <option value="childcare">👶 Childcare & Education</option>
+                        <option value="other">📝 Other Fixed Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expense-name">Expense Name</label>
+                    <input type="text" id="expense-name" placeholder="e.g., Mortgage Payment, Electric Bill" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-amount">Monthly Amount</label>
+                    <input type="number" id="expense-amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-due-date">Due Date (Day of Month)</label>
+                    <input type="number" id="expense-due-date" placeholder="e.g., 15" min="1" max="31">
+                </div>
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="expense-autopay">
+                        <span>Auto-pay enabled</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="expense-notes">Notes (Optional)</label>
+                    <textarea id="expense-notes" placeholder="Additional details about this expense..." rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-expense-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-expense-btn">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

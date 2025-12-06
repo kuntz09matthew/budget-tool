@@ -76,8 +76,108 @@ function setupTabs() {
             // Add active class to clicked button and corresponding content
             button.classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // Setup sub-tabs for the newly activated tab
+            setupSubTabs(tabName);
         });
     });
+    
+    // Setup sub-tabs for the initially active tab (dashboard)
+    setupSubTabs('dashboard');
+}
+
+// Setup sub-tab navigation
+function setupSubTabs(parentTab) {
+    const parentTabElement = document.getElementById(`tab-${parentTab}`);
+    if (!parentTabElement) return;
+    
+    const subTabButtons = parentTabElement.querySelectorAll('.sub-tab-btn');
+    const subTabContents = parentTabElement.querySelectorAll('.sub-tab-content');
+    const descriptionElement = parentTabElement.querySelector('.sub-tab-description');
+    
+    if (subTabButtons.length === 0) return; // No sub-tabs in this tab
+    
+    subTabButtons.forEach(button => {
+        // Remove any existing listeners by cloning the button
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', () => {
+            const subTabName = newButton.getAttribute('data-subtab');
+            
+            // Remove active class from all sub-tab buttons and contents in this parent tab
+            subTabButtons.forEach(btn => {
+                const actualBtn = parentTabElement.querySelector(`[data-subtab="${btn.getAttribute('data-subtab')}"]`);
+                if (actualBtn) actualBtn.classList.remove('active');
+            });
+            subTabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked sub-tab button and corresponding content
+            newButton.classList.add('active');
+            const targetContent = document.getElementById(`subtab-${subTabName}`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+            
+            // Update description
+            if (descriptionElement) {
+                updateSubTabDescription(subTabName, descriptionElement);
+            }
+        });
+    });
+}
+
+// Update sub-tab description based on active sub-tab
+function updateSubTabDescription(subTabName, descriptionElement) {
+    const descriptions = {
+        // Dashboard sub-tabs
+        'dashboard-overview': '📊 <strong>Overview:</strong> Get a complete snapshot of your financial health with key metrics, summary cards, and month-over-month comparisons.',
+        'dashboard-insights': '💡 <strong>Insights:</strong> Receive personalized recommendations and spending pattern analysis to improve your financial decisions.',
+        'dashboard-alerts': '⚠️ <strong>Alerts & Warnings:</strong> Stay informed about overdraft risks, upcoming bills, and budget health with proactive alerts.',
+        'dashboard-accounts': '💳 <strong>Accounts:</strong> View detailed balances and recent activity across all your financial accounts in one place.',
+        'dashboard-velocity': '⚡ <strong>Spending Pace:</strong> Monitor your spending velocity, daily budget remaining, and countdown to your next paycheck.',
+        
+        // Income sub-tabs
+        'income-sources': '💵 <strong>Sources:</strong> Manage all your income sources including employment, freelance work, and passive income streams.',
+        'income-schedule': '📅 <strong>Schedule:</strong> Track paycheck schedules, payment frequencies, and upcoming income deposits.',
+        'income-history': '📊 <strong>Payment History:</strong> View complete income payment history and track received vs. expected income.',
+        'income-trends': '📈 <strong>Trends & Analytics:</strong> Analyze income patterns, growth trends, and year-over-year comparisons.',
+        'income-retirement': '🏦 <strong>Retirement:</strong> Track retirement account contributions, employer matches, and progress toward annual limits.',
+        
+        // Expenses sub-tabs
+        'expenses-fixed': '📝 <strong>Fixed Expenses:</strong> Manage recurring monthly bills like rent, utilities, insurance, and subscriptions.',
+        'expenses-variable': '💸 <strong>Variable Expenses:</strong> Track expenses that change month-to-month like groceries and entertainment.',
+        'expenses-categories': '📊 <strong>Categories:</strong> Organize and analyze expenses by category to identify spending patterns.',
+        'expenses-calendar': '📅 <strong>Bill Calendar:</strong> See all upcoming bills on a calendar view with due date reminders.',
+        
+        // Spending sub-tabs
+        'spending-accounts': '🛒 <strong>Spending Accounts:</strong> Allocate funds to different spending categories and track account balances.',
+        'spending-transactions': '💳 <strong>Transactions:</strong> Record and categorize all spending transactions with detailed notes.',
+        'spending-categories': '📊 <strong>Category Breakdown:</strong> Analyze spending by category and compare against budgets.',
+        'spending-trends': '📈 <strong>Spending Trends:</strong> View spending patterns, identify trends, and spot unusual spending.',
+        
+        // Savings sub-tabs
+        'savings-accounts': '🏦 <strong>Savings Accounts:</strong> Track all savings accounts including emergency fund, vacation fund, and special savings.',
+        'savings-goals': '🎯 <strong>Savings Goals:</strong> Set and track progress toward specific savings targets and milestones.',
+        'savings-contributions': '💰 <strong>Contributions:</strong> Record deposits, track contribution history, and monitor savings growth.',
+        'savings-analysis': '📊 <strong>Savings Analysis:</strong> Analyze savings rate, growth trends, and project future balances.',
+        
+        // Goals sub-tabs
+        'goals-active': '🎯 <strong>Active Goals:</strong> View and manage all your current financial goals in one place.',
+        'goals-progress': '📊 <strong>Progress Tracking:</strong> Monitor progress toward each goal with visual progress bars and timelines.',
+        'goals-planning': '📝 <strong>Goal Planning:</strong> Create new goals, set targets, and plan actionable steps to achieve them.',
+        'goals-achievements': '🏆 <strong>Achievements:</strong> Celebrate completed goals and review your financial accomplishments.',
+        
+        // Reports sub-tabs
+        'reports-overview': '📊 <strong>Overview:</strong> Get a comprehensive view of all key financial metrics and summaries.',
+        'reports-spending': '💸 <strong>Spending Analysis:</strong> Detailed breakdown of spending by category, trends, and comparisons.',
+        'reports-income': '💵 <strong>Income Analysis:</strong> Analyze income sources, growth patterns, and income stability.',
+        'reports-trends': '📈 <strong>Trends & Patterns:</strong> Identify financial trends, seasonal patterns, and spending behaviors.',
+        'reports-networth': '💎 <strong>Net Worth:</strong> Track your net worth over time including assets, liabilities, and growth.',
+        'reports-export': '📄 <strong>Export & Print:</strong> Generate PDF reports and export data for external analysis.'
+    };
+    
+    descriptionElement.innerHTML = descriptions[subTabName] || '📊 <strong>Loading...</strong> Preparing your financial information.';
 }
 
 // Update dashboard date
@@ -1930,6 +2030,12 @@ async function loadIncomeSources() {
             countDisplay.textContent = incomeSources.length;
         }
         
+        // Load earner filter if there are earners
+        loadIncomeEarnerFilter();
+        
+        // Populate earner name suggestions for autocomplete
+        populateEarnerSuggestions(incomeSources);
+        
         // Refresh total
         loadTotalIncome();
         
@@ -1938,6 +2044,138 @@ async function loadIncomeSources() {
     } catch (error) {
         console.error('Failed to load income sources:', error);
     }
+}
+
+// Populate earner name autocomplete suggestions
+function populateEarnerSuggestions(sources) {
+    const datalist = document.getElementById('earner-suggestions');
+    if (!datalist) return;
+    
+    // Get unique earner names
+    const earnerNames = new Set();
+    sources.forEach(source => {
+        if (source.earner_name) {
+            earnerNames.add(source.earner_name);
+        }
+    });
+    
+    // Populate datalist
+    datalist.innerHTML = Array.from(earnerNames)
+        .map(name => `<option value="${name}">`)
+        .join('');
+}
+
+// Load and display earner filter section
+async function loadIncomeEarnerFilter() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/by-earner`);
+        const data = await response.json();
+        
+        const filterSection = document.getElementById('income-filter-section');
+        const earnerFilterButtons = document.getElementById('earner-filter-buttons');
+        const earnerSummaryCards = document.getElementById('earner-summary-cards');
+        
+        if (!filterSection || !earnerFilterButtons || !earnerSummaryCards) return;
+        
+        // Show filter section only if there are earners
+        if (data.earners.length > 0) {
+            filterSection.style.display = 'block';
+            
+            // Create filter buttons for each earner
+            earnerFilterButtons.innerHTML = data.earners.map(earner => 
+                `<button class="filter-btn" data-filter="${earner.name}">${earner.name}</button>`
+            ).join('');
+            
+            // Create summary cards for each earner
+            earnerSummaryCards.innerHTML = data.earners.map(earner => `
+                <div class="earner-summary-card">
+                    <div class="earner-header">
+                        <h4>👤 ${earner.name}</h4>
+                        <span class="earner-income-count">${earner.income_sources.length} source${earner.income_sources.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="earner-total">
+                        <span class="total-label">Monthly Income</span>
+                        <span class="total-amount">$${formatCurrency(earner.total_monthly)}</span>
+                    </div>
+                    <ul class="earner-income-list">
+                        ${earner.income_sources.map(income => `
+                            <li class="earner-income-item">
+                                <span class="income-item-name">${getIncomeIcon(income.type)} ${income.name}</span>
+                                <span class="income-item-amount">$${formatCurrency(calculateMonthlyAmount(income.amount, income.frequency))}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+            
+            // Add unassigned card if there are unassigned incomes
+            if (data.unassigned.length > 0) {
+                const unassignedTotal = data.unassigned.reduce((sum, income) => {
+                    return sum + calculateMonthlyAmount(income.amount, income.frequency);
+                }, 0);
+                
+                earnerSummaryCards.innerHTML += `
+                    <div class="earner-summary-card unassigned-card">
+                        <div class="earner-header">
+                            <h4>📋 Unassigned</h4>
+                            <span class="earner-income-count">${data.unassigned.length} source${data.unassigned.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="earner-total">
+                            <span class="total-label">Monthly Income</span>
+                            <span class="total-amount">$${formatCurrency(unassignedTotal)}</span>
+                        </div>
+                        <ul class="earner-income-list">
+                            ${data.unassigned.map(income => `
+                                <li class="earner-income-item">
+                                    <span class="income-item-name">${getIncomeIcon(income.type)} ${income.name}</span>
+                                    <span class="income-item-amount">$${formatCurrency(calculateMonthlyAmount(income.amount, income.frequency))}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Setup filter button event listeners
+            setupEarnerFilterListeners();
+        } else {
+            filterSection.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Failed to load earner filter:', error);
+    }
+}
+
+// Setup event listeners for earner filter buttons
+function setupEarnerFilterListeners() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            const filter = button.dataset.filter;
+            
+            // Load and filter income sources
+            const response = await fetch(`${API_BASE_URL}/api/income`);
+            const allIncome = await response.json();
+            
+            let filteredIncome;
+            if (filter === 'all') {
+                filteredIncome = allIncome;
+            } else if (filter === 'unassigned') {
+                filteredIncome = allIncome.filter(income => !income.earner_name);
+            } else {
+                filteredIncome = allIncome.filter(income => income.earner_name === filter);
+            }
+            
+            displayIncomeSources(filteredIncome);
+        });
+    });
 }
 
 // Display income sources in the income tab
@@ -1956,6 +2194,36 @@ function displayIncomeSources(sources) {
         const monthlyAmount = calculateMonthlyAmount(source.amount, source.frequency);
         const actualPayments = source.actual_payments || [];
         const hasPayments = actualPayments.length > 0;
+        
+        // Variable income detection
+        const isVariable = source.is_variable || false;
+        const averageMonthly = source.average_monthly || monthlyAmount;
+        const incomeVariance = source.income_variance || 0;
+        const paymentCount = source.payment_count || 0;
+        
+        // Determine variability level
+        let variabilityBadge = '';
+        if (isVariable && paymentCount >= 2) {
+            let variabilityClass = '';
+            let variabilityText = '';
+            let variabilityIcon = '';
+            
+            if (incomeVariance < 10) {
+                variabilityClass = 'stable';
+                variabilityText = 'Stable';
+                variabilityIcon = '✅';
+            } else if (incomeVariance < 25) {
+                variabilityClass = 'moderate';
+                variabilityText = 'Variable';
+                variabilityIcon = '⚠️';
+            } else {
+                variabilityClass = 'high';
+                variabilityText = 'Highly Variable';
+                variabilityIcon = '🔴';
+            }
+            
+            variabilityBadge = `<span class="variability-badge ${variabilityClass}" title="Income varies by ${incomeVariance.toFixed(1)}% month-to-month">${variabilityIcon} ${variabilityText}</span>`;
+        }
         
         // Calculate net income if tax withholding is set
         const hasTaxInfo = source.federal_tax_percent || source.state_tax_percent || 
@@ -1990,10 +2258,27 @@ function displayIncomeSources(sources) {
                     <span class="income-icon">${icon}</span>
                     <div class="income-info">
                         <h4>${source.name}</h4>
-                        <span class="income-type-label">${formatIncomeType(source.type)}</span>
+                        <div class="income-meta">
+                            <span class="income-type-label">${formatIncomeType(source.type)}</span>
+                            ${source.earner_name ? `<span class="income-earner-badge">👤 ${source.earner_name}</span>` : ''}
+                            ${variabilityBadge}
+                        </div>
                     </div>
                     <div class="income-amount-section">
-                        <p class="income-amount">$${formatCurrency(source.amount)}</p>
+                        ${isVariable && paymentCount >= 2 ? `
+                            <div class="variable-income-display">
+                                <div class="expected-income">
+                                    <span class="income-label">Expected:</span>
+                                    <p class="income-amount">$${formatCurrency(source.amount)}</p>
+                                </div>
+                                <div class="average-income">
+                                    <span class="income-label">Avg (${paymentCount} payments):</span>
+                                    <p class="income-amount average">$${formatCurrency(averageMonthly)}</p>
+                                </div>
+                            </div>
+                        ` : `
+                            <p class="income-amount">$${formatCurrency(source.amount)}</p>
+                        `}
                         <span class="income-frequency">${formatFrequency(source.frequency)}</span>
                         ${netIncome !== null ? `
                             <div class="net-income-badge">
@@ -2048,7 +2333,11 @@ function displayIncomeSources(sources) {
                                 </ul>
                             </div>
                         ` : '<p class="no-payments-text">No payments recorded this month yet.</p>'}
-                        <button class="btn-link" onclick="viewIncomeAnalysis(${source.id})">📈 View Detailed Analysis</button>
+                        ${isVariable || paymentCount >= 2 ? `
+                            <button class="btn-link" onclick="viewVariableIncomeAnalysis(${source.id})">� View Variable Income Analysis</button>
+                        ` : `
+                            <button class="btn-link" onclick="viewIncomeAnalysis(${source.id})">�📈 View Detailed Analysis</button>
+                        `}
                     </div>
                 </div>
                 <div class="income-item-footer">
@@ -2191,6 +2480,20 @@ function showIncomeModal(incomeId = null) {
     
     modal.style.display = 'flex';
     
+    // Setup income type change listener for auto-suggesting variable income
+    const incomeTypeSelect = document.getElementById('income-type');
+    const variableCheckbox = document.getElementById('income-is-variable');
+    
+    if (!incomeTypeSelect.hasVariableListener) {
+        incomeTypeSelect.addEventListener('change', function() {
+            const variableTypes = ['freelance', 'investment', 'other'];
+            if (variableTypes.includes(this.value)) {
+                variableCheckbox.checked = true;
+            }
+        });
+        incomeTypeSelect.hasVariableListener = true;
+    }
+    
     // Attach event listeners for real-time calculation (only once)
     if (!window.incomeCalculatorInitialized) {
         const calculatorInputs = [
@@ -2231,9 +2534,11 @@ async function loadIncomeData(incomeId) {
         if (income) {
             document.getElementById('income-type').value = income.type;
             document.getElementById('income-name').value = income.name;
+            document.getElementById('income-earner-name').value = income.earner_name || '';
             document.getElementById('income-amount').value = income.amount;
             document.getElementById('income-frequency').value = income.frequency;
             document.getElementById('income-next-pay-date').value = income.next_pay_date || '';
+            document.getElementById('income-is-variable').checked = income.is_variable || false;
             document.getElementById('income-notes').value = income.notes || '';
             
             // Load tax withholding fields
@@ -2258,9 +2563,11 @@ async function saveIncome(event) {
     // Get and validate form data
     const type = document.getElementById('income-type').value;
     const name = document.getElementById('income-name').value.trim();
+    const earnerName = document.getElementById('income-earner-name').value.trim();
     const amountInput = document.getElementById('income-amount').value;
     const frequency = document.getElementById('income-frequency').value;
     const nextPayDate = document.getElementById('income-next-pay-date').value || null;
+    const isVariable = document.getElementById('income-is-variable').checked;
     const notes = document.getElementById('income-notes').value.trim();
     
     // Client-side validation
@@ -2317,9 +2624,11 @@ async function saveIncome(event) {
     const incomeData = {
         type,
         name,
+        earner_name: earnerName || null,
         amount,
         frequency,
         next_pay_date: nextPayDate,
+        is_variable: isVariable,
         notes: notes || '',
         federal_tax_percent: federalTax,
         state_tax_percent: stateTax,
@@ -2495,6 +2804,216 @@ ${analysis.payments.length > 0 ? 'Recent Payments:\n' + analysis.payments.map(p 
     } catch (error) {
         console.error('Failed to load analysis:', error);
         alert('Failed to load income analysis. Please try again.');
+    }
+}
+
+// View variable income analysis (for commission/freelance income)
+async function viewVariableIncomeAnalysis(incomeId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/${incomeId}/variable-analysis`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            alert(`Error: ${data.error || 'Failed to load analysis'}`);
+            return;
+        }
+        
+        if (!data.has_data) {
+            alert(data.message || 'No payment history available yet.');
+            return;
+        }
+        
+        // Show detailed variable income analysis modal
+        showVariableIncomeAnalysisModal(data);
+    } catch (error) {
+        console.error('Failed to load variable income analysis:', error);
+        alert('Failed to load analysis. Please try again.');
+    }
+}
+
+// Show variable income analysis in a modal
+function showVariableIncomeAnalysisModal(analysis) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="variable-income-modal" class="modal" style="display: flex;">
+            <div class="modal-content large-modal">
+                <div class="modal-header">
+                    <h3>📊 Variable Income Analysis: ${analysis.income_name}</h3>
+                    <button class="modal-close" onclick="closeVariableIncomeModal()">&times;</button>
+                </div>
+                <div class="modal-body variable-income-analysis">
+                    
+                    <!-- Stability Assessment -->
+                    <div class="analysis-section">
+                        <h4>Income Stability</h4>
+                        <div class="stability-card" style="border-color: ${analysis.stability.color}">
+                            <div class="stability-header">
+                                <span class="stability-icon">${analysis.stability.icon}</span>
+                                <span class="stability-level">${analysis.stability.level}</span>
+                            </div>
+                            <p class="stability-description">${analysis.stability.description}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Key Statistics -->
+                    <div class="analysis-section">
+                        <h4>Income Statistics (${analysis.months_tracked} months)</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <span class="stat-label">Average Monthly</span>
+                                <span class="stat-value">$${formatCurrency(analysis.statistics.average_monthly)}</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Median Monthly</span>
+                                <span class="stat-value">$${formatCurrency(analysis.statistics.median_monthly)}</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Minimum</span>
+                                <span class="stat-value minimum">$${formatCurrency(analysis.statistics.minimum_monthly)}</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Maximum</span>
+                                <span class="stat-value maximum">$${formatCurrency(analysis.statistics.maximum_monthly)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trend Analysis -->
+                    <div class="analysis-section">
+                        <h4>Income Trend</h4>
+                        <div class="trend-card">
+                            <div class="trend-header">
+                                <span class="trend-icon">${analysis.trend.icon}</span>
+                                <span class="trend-direction">${analysis.trend.direction}</span>
+                                ${analysis.trend.percent_change !== 0 ? `
+                                    <span class="trend-percent ${analysis.trend.percent_change > 0 ? 'positive' : 'negative'}">
+                                        ${analysis.trend.percent_change > 0 ? '+' : ''}${analysis.trend.percent_change.toFixed(1)}%
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <p class="trend-description">${analysis.trend.description}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Month -->
+                    <div class="analysis-section">
+                        <h4>Current Month Performance</h4>
+                        <div class="current-month-card">
+                            <div class="stat-row">
+                                <span class="stat-label">Total Received:</span>
+                                <span class="stat-value">$${formatCurrency(analysis.current_month.total)}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Payments:</span>
+                                <span class="stat-value">${analysis.current_month.payment_count}</span>
+                            </div>
+                            <div class="stat-row ${analysis.current_month.vs_average >= 0 ? 'positive' : 'negative'}">
+                                <span class="stat-label">vs. Average:</span>
+                                <span class="stat-value">
+                                    ${analysis.current_month.vs_average >= 0 ? '+' : ''}$${formatCurrency(Math.abs(analysis.current_month.vs_average))}
+                                    (${analysis.current_month.vs_average_percent >= 0 ? '+' : ''}${analysis.current_month.vs_average_percent.toFixed(1)}%)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Forecast -->
+                    <div class="analysis-section">
+                        <h4>Income Forecast</h4>
+                        <div class="forecast-card">
+                            <div class="forecast-row main-forecast">
+                                <span class="forecast-label">Expected Next Month:</span>
+                                <span class="forecast-value">$${formatCurrency(analysis.forecast.next_month)}</span>
+                            </div>
+                            <div class="forecast-range">
+                                <div class="forecast-row">
+                                    <span class="forecast-label">Conservative (Min):</span>
+                                    <span class="forecast-value">$${formatCurrency(analysis.forecast.conservative_estimate)}</span>
+                                </div>
+                                <div class="forecast-row">
+                                    <span class="forecast-label">Optimistic (Max):</span>
+                                    <span class="forecast-value">$${formatCurrency(analysis.forecast.optimistic_estimate)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Monthly Breakdown Chart -->
+                    <div class="analysis-section">
+                        <h4>Monthly Income History</h4>
+                        <div class="monthly-chart">
+                            ${analysis.monthly_breakdown.map(month => {
+                                const percentage = (month.total / analysis.statistics.maximum_monthly) * 100;
+                                const isAboveAvg = month.total >= analysis.statistics.average_monthly;
+                                return `
+                                    <div class="chart-bar-container">
+                                        <div class="chart-bar-wrapper">
+                                            <div class="chart-bar ${isAboveAvg ? 'above-avg' : 'below-avg'}" 
+                                                 style="height: ${percentage}%"
+                                                 title="$${formatCurrency(month.total)}">
+                                            </div>
+                                        </div>
+                                        <div class="chart-label">
+                                            <div class="chart-month">${month.month_short}</div>
+                                            <div class="chart-amount">$${formatCurrency(month.total)}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-color above-avg"></span>
+                                <span>Above Average</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color below-avg"></span>
+                                <span>Below Average</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-line"></span>
+                                <span>Average: $${formatCurrency(analysis.statistics.average_monthly)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recommendations -->
+                    ${analysis.recommendations.length > 0 ? `
+                        <div class="analysis-section">
+                            <h4>💡 Recommendations</h4>
+                            <div class="recommendations-list">
+                                ${analysis.recommendations.map(rec => `
+                                    <div class="recommendation-item ${rec.type}">
+                                        <span class="rec-icon">${rec.icon}</span>
+                                        <span class="rec-message">${rec.message}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeVariableIncomeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    const existingModal = document.getElementById('variable-income-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Close variable income analysis modal
+function closeVariableIncomeModal() {
+    const modal = document.getElementById('variable-income-modal');
+    if (modal) {
+        modal.remove();
     }
 }
 
@@ -2812,12 +3331,800 @@ function setupExpenseListeners() {
     }
 }
 
+// ==========================================
+// INCOME TRENDS CHARTS
+// ==========================================
+
+// Store chart instances for cleanup
+let totalIncomeChart = null;
+let incomeBySourceChart = null;
+let incomeByEarnerChart = null;
+
+// Get theme-aware colors
+function getChartColors() {
+    const theme = document.querySelector('.app').getAttribute('data-theme');
+    const isDark = theme === 'dark';
+    
+    return {
+        text: isDark ? '#e0e0e0' : '#333333',
+        grid: isDark ? '#404040' : '#e0e0e0',
+        background: isDark ? 'rgba(66, 133, 244, 0.2)' : 'rgba(66, 133, 244, 0.1)',
+        border: isDark ? 'rgba(66, 133, 244, 0.8)' : 'rgba(66, 133, 244, 1)',
+        // Color palette for multiple datasets
+        palette: [
+            { bg: 'rgba(66, 133, 244, 0.2)', border: 'rgba(66, 133, 244, 1)' },
+            { bg: 'rgba(52, 168, 83, 0.2)', border: 'rgba(52, 168, 83, 1)' },
+            { bg: 'rgba(251, 188, 4, 0.2)', border: 'rgba(251, 188, 4, 1)' },
+            { bg: 'rgba(234, 67, 53, 0.2)', border: 'rgba(234, 67, 53, 1)' },
+            { bg: 'rgba(156, 39, 176, 0.2)', border: 'rgba(156, 39, 176, 1)' },
+            { bg: 'rgba(255, 112, 67, 0.2)', border: 'rgba(255, 112, 67, 1)' },
+            { bg: 'rgba(0, 172, 193, 0.2)', border: 'rgba(0, 172, 193, 1)' },
+            { bg: 'rgba(233, 30, 99, 0.2)', border: 'rgba(233, 30, 99, 1)' }
+        ]
+    };
+}
+
+// Load and display income trends
+async function loadIncomeTrends() {
+    const periodSelect = document.getElementById('trends-period-select');
+    const months = periodSelect ? periodSelect.value : 12;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/trends?months=${months}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update statistics
+            updateTrendsStatistics(data.statistics);
+            
+            // Render charts
+            renderTotalIncomeChart(data.total_income);
+            renderIncomeBySourceChart(data.by_source);
+            renderIncomeByEarnerChart(data.by_earner);
+            
+            // Show trends section
+            const trendsSection = document.getElementById('income-trends-section');
+            if (trendsSection) {
+                trendsSection.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading income trends:', error);
+    }
+}
+
+// Update trends statistics display
+function updateTrendsStatistics(stats) {
+    const statsContainer = document.getElementById('trends-stats-summary');
+    if (!statsContainer) return;
+    
+    // Show stats if there's data
+    if (stats.months_with_income > 0) {
+        statsContainer.style.display = 'grid';
+        
+        // Update values
+        const avgEl = document.getElementById('trends-stat-average');
+        const maxEl = document.getElementById('trends-stat-max');
+        const minEl = document.getElementById('trends-stat-min');
+        const trendEl = document.getElementById('trends-stat-trend');
+        
+        if (avgEl) avgEl.textContent = `$${stats.average.toLocaleString()}`;
+        if (maxEl) maxEl.textContent = `$${stats.max.toLocaleString()}`;
+        if (minEl) minEl.textContent = `$${stats.min.toLocaleString()}`;
+        
+        if (trendEl) {
+            let trendText = '';
+            let trendClass = '';
+            
+            switch(stats.trend) {
+                case 'increasing':
+                    trendText = '📈 Increasing';
+                    trendClass = 'trend-up';
+                    break;
+                case 'decreasing':
+                    trendText = '📉 Decreasing';
+                    trendClass = 'trend-down';
+                    break;
+                default:
+                    trendText = '➡️ Stable';
+                    trendClass = 'trend-stable';
+            }
+            
+            trendEl.textContent = trendText;
+            trendEl.className = `stat-value trend-indicator ${trendClass}`;
+        }
+    } else {
+        statsContainer.style.display = 'none';
+    }
+}
+
+// Render total income over time chart
+function renderTotalIncomeChart(data) {
+    const canvas = document.getElementById('total-income-chart');
+    const emptyState = document.getElementById('total-income-empty');
+    
+    if (!canvas) return;
+    
+    // Check if there's any data
+    const hasData = data.data && data.data.some(val => val > 0);
+    
+    if (!hasData) {
+        canvas.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+        return;
+    }
+    
+    canvas.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Destroy existing chart
+    if (totalIncomeChart) {
+        totalIncomeChart.destroy();
+    }
+    
+    const colors = getChartColors();
+    const ctx = canvas.getContext('2d');
+    
+    totalIncomeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Total Income',
+                data: data.data,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Income: $${context.parsed.y.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: colors.text,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: colors.text
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render income by source chart (stacked area)
+function renderIncomeBySourceChart(data) {
+    const canvas = document.getElementById('income-by-source-chart');
+    const emptyState = document.getElementById('source-chart-empty');
+    
+    if (!canvas) return;
+    
+    // Check if there's any data
+    const hasData = data.datasets && data.datasets.length > 0 && 
+                    data.datasets.some(ds => ds.data.some(val => val > 0));
+    
+    if (!hasData) {
+        canvas.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+        return;
+    }
+    
+    canvas.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Destroy existing chart
+    if (incomeBySourceChart) {
+        incomeBySourceChart.destroy();
+    }
+    
+    const colors = getChartColors();
+    const ctx = canvas.getContext('2d');
+    
+    // Apply colors to datasets
+    const coloredDatasets = data.datasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: colors.palette[index % colors.palette.length].bg,
+        borderColor: colors.palette[index % colors.palette.length].border,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+    }));
+    
+    incomeBySourceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: coloredDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: colors.text,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        color: colors.text,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                },
+                x: {
+                    stacked: true,
+                    ticks: {
+                        color: colors.text
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render income by earner chart (grouped bars)
+function renderIncomeByEarnerChart(data) {
+    const canvas = document.getElementById('income-by-earner-chart');
+    const emptyState = document.getElementById('earner-chart-empty');
+    
+    if (!canvas) return;
+    
+    // Check if there's any data
+    const hasData = data.datasets && data.datasets.length > 0 && 
+                    data.datasets.some(ds => ds.data.some(val => val > 0));
+    
+    if (!hasData) {
+        canvas.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+        return;
+    }
+    
+    canvas.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Destroy existing chart
+    if (incomeByEarnerChart) {
+        incomeByEarnerChart.destroy();
+    }
+    
+    const colors = getChartColors();
+    const ctx = canvas.getContext('2d');
+    
+    // Apply colors to datasets
+    const coloredDatasets = data.datasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: colors.palette[index % colors.palette.length].bg,
+        borderColor: colors.palette[index % colors.palette.length].border,
+        borderWidth: 2
+    }));
+    
+    incomeByEarnerChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: coloredDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: colors.text,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: colors.text,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: colors.text
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ==================== Year-over-Year Comparison Functions ====================
+
+// Global chart variables for YoY
+let yoyAnnualChart = null;
+let yoyMonthlyChart = null;
+
+// Load and display year-over-year comparison
+async function loadYearOverYearComparison() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/year-over-year`);
+        const data = await response.json();
+        
+        if (data.success && data.has_data) {
+            // Show the YoY section
+            const yoySection = document.getElementById('yoy-comparison-section');
+            if (yoySection) {
+                yoySection.style.display = 'block';
+            }
+            
+            // Hide empty state, show content
+            const emptyState = document.getElementById('yoy-empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            
+            // Update statistics
+            updateYoYStatistics(data.statistics);
+            
+            // Render year cards
+            renderYearCards(data.years);
+            
+            // Render charts
+            renderYoYAnnualChart(data.years);
+            renderYoYMonthlyChart(data.years);
+            
+        } else {
+            // Show empty state
+            const yoySection = document.getElementById('yoy-comparison-section');
+            const emptyState = document.getElementById('yoy-empty-state');
+            
+            if (yoySection) {
+                yoySection.style.display = 'block';
+            }
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+            }
+            
+            // Hide other elements
+            const statsEl = document.getElementById('yoy-stats-summary');
+            const gridEl = document.getElementById('yoy-years-grid');
+            const chartsEl = document.querySelector('.yoy-charts-grid');
+            
+            if (statsEl) statsEl.style.display = 'none';
+            if (gridEl) gridEl.innerHTML = '';
+            if (chartsEl) chartsEl.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading year-over-year comparison:', error);
+    }
+}
+
+// Update YoY statistics display
+function updateYoYStatistics(stats) {
+    const statsContainer = document.getElementById('yoy-stats-summary');
+    if (!statsContainer) return;
+    
+    statsContainer.style.display = 'grid';
+    
+    // Update values
+    const yearsEl = document.getElementById('yoy-stat-years');
+    const avgEl = document.getElementById('yoy-stat-average');
+    const trendEl = document.getElementById('yoy-stat-trend');
+    const totalEl = document.getElementById('yoy-stat-total');
+    
+    if (yearsEl) yearsEl.textContent = stats.total_years;
+    if (avgEl) avgEl.textContent = `$${stats.average_per_year.toLocaleString()}`;
+    if (totalEl) totalEl.textContent = `$${stats.total_all_years.toLocaleString()}`;
+    
+    if (trendEl) {
+        let trendText = '';
+        let trendClass = '';
+        
+        switch(stats.overall_trend) {
+            case 'increasing':
+                trendText = '📈 Increasing';
+                trendClass = 'trend-up';
+                break;
+            case 'decreasing':
+                trendText = '📉 Decreasing';
+                trendClass = 'trend-down';
+                break;
+            default:
+                trendText = '➡️ Stable';
+                trendClass = 'trend-stable';
+        }
+        
+        trendEl.textContent = trendText;
+        trendEl.className = `stat-value trend-indicator ${trendClass}`;
+    }
+}
+
+// Render year cards
+function renderYearCards(years) {
+    const grid = document.getElementById('yoy-years-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    years.forEach((yearData, index) => {
+        const card = document.createElement('div');
+        card.className = 'yoy-year-card';
+        if (index === 0) {
+            card.classList.add('latest-year');
+        }
+        
+        // Build change indicator HTML
+        let changeHTML = '';
+        if (yearData.change_from_previous) {
+            const change = yearData.change_from_previous;
+            const icon = change.direction === 'increase' ? '📈' : 
+                        change.direction === 'decrease' ? '📉' : '➡️';
+            const cssClass = change.direction === 'increase' ? 'positive' :
+                           change.direction === 'decrease' ? 'negative' : 'neutral';
+            const sign = change.amount > 0 ? '+' : '';
+            
+            changeHTML = `
+                <div class="yoy-change-indicator ${cssClass}">
+                    <span class="yoy-change-icon">${icon}</span>
+                    <div class="yoy-change-text">
+                        <span class="yoy-change-amount">${sign}$${Math.abs(change.amount).toLocaleString()}</span>
+                        <span class="yoy-change-percent">${sign}${change.percent.toFixed(1)}% from ${yearData.year - 1}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Build top sources HTML
+        let topSourcesHTML = '';
+        if (yearData.top_sources && yearData.top_sources.length > 0) {
+            const sourcesItems = yearData.top_sources.slice(0, 3).map(source => `
+                <div class="yoy-source-item">
+                    <span class="yoy-source-name">${source.name}</span>
+                    <span class="yoy-source-amount">$${source.amount.toLocaleString()}</span>
+                </div>
+            `).join('');
+            
+            topSourcesHTML = `
+                <div class="yoy-top-sources">
+                    <div class="yoy-top-sources-title">Top Income Sources</div>
+                    ${sourcesItems}
+                </div>
+            `;
+        }
+        
+        card.innerHTML = `
+            <div class="yoy-year-header">
+                <h3 class="yoy-year-title">${yearData.year}</h3>
+                ${index === 0 ? '<span class="yoy-year-badge">Latest</span>' : ''}
+            </div>
+            <div class="yoy-year-total">$${yearData.total.toLocaleString()}</div>
+            <div class="yoy-year-stats">
+                <div class="yoy-stat-row">
+                    <span class="yoy-stat-label">Monthly Average</span>
+                    <span class="yoy-stat-value">$${yearData.monthly_average.toLocaleString()}</span>
+                </div>
+                <div class="yoy-stat-row">
+                    <span class="yoy-stat-label">Months with Income</span>
+                    <span class="yoy-stat-value">${yearData.months_with_income}</span>
+                </div>
+                <div class="yoy-stat-row">
+                    <span class="yoy-stat-label">Total Payments</span>
+                    <span class="yoy-stat-value">${yearData.payment_count}</span>
+                </div>
+            </div>
+            ${changeHTML}
+            ${topSourcesHTML}
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// Render annual comparison bar chart
+function renderYoYAnnualChart(years) {
+    const canvas = document.getElementById('yoy-annual-chart');
+    const emptyState = document.getElementById('yoy-annual-empty');
+    const chartsGrid = document.querySelector('.yoy-charts-grid');
+    
+    if (!canvas) return;
+    
+    if (years.length === 0) {
+        canvas.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+        if (chartsGrid) chartsGrid.style.display = 'none';
+        return;
+    }
+    
+    canvas.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    if (chartsGrid) chartsGrid.style.display = 'grid';
+    
+    // Destroy existing chart
+    if (yoyAnnualChart) {
+        yoyAnnualChart.destroy();
+    }
+    
+    const colors = getChartColors();
+    const ctx = canvas.getContext('2d');
+    
+    // Sort years chronologically for display
+    const sortedYears = [...years].reverse();
+    
+    yoyAnnualChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedYears.map(y => y.year.toString()),
+            datasets: [{
+                label: 'Total Annual Income',
+                data: sortedYears.map(y => y.total),
+                backgroundColor: colors.palette[0].bg,
+                borderColor: colors.palette[0].border,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Total: $${context.parsed.y.toLocaleString()}`;
+                        },
+                        afterLabel: function(context) {
+                            const yearData = sortedYears[context.dataIndex];
+                            return `Avg/Month: $${yearData.monthly_average.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: colors.text,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: colors.text
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Render monthly breakdown by year
+function renderYoYMonthlyChart(years) {
+    const canvas = document.getElementById('yoy-monthly-chart');
+    const emptyState = document.getElementById('yoy-monthly-empty');
+    
+    if (!canvas) return;
+    
+    if (years.length === 0) {
+        canvas.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
+        return;
+    }
+    
+    canvas.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Destroy existing chart
+    if (yoyMonthlyChart) {
+        yoyMonthlyChart.destroy();
+    }
+    
+    const colors = getChartColors();
+    const ctx = canvas.getContext('2d');
+    
+    // Month labels
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Create datasets for each year
+    const datasets = years.map((yearData, index) => {
+        const monthlyData = Array(12).fill(0);
+        
+        // Fill in the data for months that have income
+        Object.entries(yearData.by_month).forEach(([month, amount]) => {
+            const monthIndex = parseInt(month) - 1;
+            if (monthIndex >= 0 && monthIndex < 12) {
+                monthlyData[monthIndex] = amount;
+            }
+        });
+        
+        return {
+            label: yearData.year.toString(),
+            data: monthlyData,
+            backgroundColor: colors.palette[index % colors.palette.length].bg,
+            borderColor: colors.palette[index % colors.palette.length].border,
+            borderWidth: 2,
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 5
+        };
+    });
+    
+    yoyMonthlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthNames,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: colors.text,
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: $${context.parsed.y.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: colors.text,
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: colors.text
+                    },
+                    grid: {
+                        color: colors.grid
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Setup YoY event listeners
+function setupYoYListeners() {
+    const refreshBtn = document.getElementById('refresh-yoy-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadYearOverYearComparison);
+    }
+}
+
+// Setup trends event listeners
+function setupTrendsListeners() {
+    // Period selector
+    const periodSelect = document.getElementById('trends-period-select');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', loadIncomeTrends);
+    }
+    
+    // Refresh button
+    const refreshBtn = document.getElementById('refresh-trends-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadIncomeTrends);
+    }
+}
+
+// Refresh charts when theme changes
+function refreshChartsOnThemeChange() {
+    if (totalIncomeChart || incomeBySourceChart || incomeByEarnerChart) {
+        loadIncomeTrends();
+    }
+    if (yoyAnnualChart || yoyMonthlyChart) {
+        loadYearOverYearComparison();
+    }
+}
+
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupAccountListeners();
     setupIncomeListeners();
     setupExpenseListeners();
+    setupTrendsListeners();
+    setupYoYListeners();
     loadAccounts();
     loadIncomeSources();
     loadExpenses();
@@ -2826,6 +4133,732 @@ document.addEventListener('DOMContentLoaded', () => {
     calculateAvailableSpending();
     loadMonthToDateSpending();
     loadSpendingVelocity();
+    loadIncomeTrends();
+    loadYearOverYearComparison();
+    loadTaxEstimate();
+    setupTaxEstimatorListeners();
+    initRetirementAccounts();
+    
+    // Add listener to refresh charts when theme changes
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            setTimeout(refreshChartsOnThemeChange, 100);
+        });
+    }
 });
+
+// ============================================
+// TAX BRACKET ESTIMATOR
+// ============================================
+
+// Setup tax estimator event listeners
+function setupTaxEstimatorListeners() {
+    // Filing status change
+    const filingStatusSelect = document.getElementById('filing-status-select');
+    if (filingStatusSelect) {
+        filingStatusSelect.addEventListener('change', loadTaxEstimate);
+    }
+    
+    // Use actual income toggle
+    const useActualToggle = document.getElementById('use-actual-income-toggle');
+    if (useActualToggle) {
+        useActualToggle.addEventListener('change', loadTaxEstimate);
+    }
+    
+    // Refresh button
+    const refreshBtn = document.getElementById('refresh-tax-estimate-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadTaxEstimate);
+    }
+}
+
+// Load and display tax estimate
+async function loadTaxEstimate() {
+    try {
+        const filingStatus = document.getElementById('filing-status-select')?.value || 'married-joint';
+        const useActual = document.getElementById('use-actual-income-toggle')?.checked || false;
+        
+        const response = await fetch(`${API_BASE_URL}/api/income/tax-estimate?filing_status=${filingStatus}&use_actual=${useActual}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Failed to load tax estimate:', data.error);
+            showTaxEmptyState();
+            return;
+        }
+        
+        // Check if there's any income data
+        if (data.income.annual_gross === 0) {
+            showTaxEmptyState();
+            return;
+        }
+        
+        // Hide empty state and show content
+        const emptyState = document.getElementById('tax-empty-state');
+        const summaryCards = document.getElementById('tax-summary-cards');
+        const bracketsSection = document.querySelector('.tax-brackets-section');
+        const withholdingSection = document.querySelector('.withholding-section');
+        
+        if (emptyState) emptyState.style.display = 'none';
+        if (summaryCards) summaryCards.style.display = 'grid';
+        if (bracketsSection) bracketsSection.style.display = 'block';
+        if (withholdingSection) withholdingSection.style.display = 'block';
+        
+        // Update summary cards
+        updateElement('tax-gross-income', formatCurrency(data.income.annual_gross));
+        updateElement('tax-gross-monthly', `$${formatCurrency(data.income.monthly_gross)}/month`);
+        updateElement('tax-deduction', formatCurrency(data.deductions.standard_deduction));
+        updateElement('tax-total', formatCurrency(data.tax.total_annual));
+        updateElement('tax-monthly', `$${formatCurrency(data.tax.total_monthly)}/month`);
+        updateElement('tax-effective-rate', `${data.tax.effective_rate_percent}%`);
+        updateElement('tax-marginal-rate', `${data.tax.marginal_rate_percent}%`);
+        updateElement('tax-after-tax', formatCurrency(data.after_tax.annual));
+        updateElement('tax-after-tax-monthly', `$${formatCurrency(data.after_tax.monthly)}/month`);
+        
+        // Update withholding recommendations
+        updateElement('withholding-weekly', `$${formatCurrency(data.paycheck_withholding.weekly)}`);
+        updateElement('withholding-biweekly', `$${formatCurrency(data.paycheck_withholding.bi_weekly)}`);
+        updateElement('withholding-semimonthly', `$${formatCurrency(data.paycheck_withholding.semi_monthly)}`);
+        updateElement('withholding-monthly', `$${formatCurrency(data.paycheck_withholding.monthly)}`);
+        
+        // Update tax brackets breakdown
+        displayTaxBrackets(data.tax.by_bracket);
+        
+        // Update income breakdown
+        if (data.income.breakdown && data.income.breakdown.length > 0) {
+            displayIncomeBreakdown(data.income.breakdown);
+        }
+        
+    } catch (error) {
+        console.error('Error loading tax estimate:', error);
+        showTaxEmptyState();
+    }
+}
+
+// Display tax brackets breakdown
+function displayTaxBrackets(brackets) {
+    const container = document.getElementById('tax-brackets-list');
+    if (!container) return;
+    
+    if (!brackets || brackets.length === 0) {
+        container.innerHTML = '<p class="placeholder-text">No tax bracket data available</p>';
+        return;
+    }
+    
+    container.innerHTML = brackets.map((bracket, index) => {
+        const rangeText = bracket.bracket_max 
+            ? `$${formatCurrency(bracket.bracket_min)} - $${formatCurrency(bracket.bracket_max)}`
+            : `Over $${formatCurrency(bracket.bracket_min)}`;
+        
+        return `
+            <div class="tax-bracket-item">
+                <div class="tax-bracket-header">
+                    <span class="tax-bracket-rate">${bracket.rate_percent}%</span>
+                    <span class="tax-bracket-range">${rangeText}</span>
+                </div>
+                <div class="tax-bracket-details">
+                    <div class="tax-bracket-detail">
+                        <span class="tax-bracket-detail-label">Income in Bracket</span>
+                        <span class="tax-bracket-detail-value">$${formatCurrency(bracket.income_in_bracket)}</span>
+                    </div>
+                    <div class="tax-bracket-detail">
+                        <span class="tax-bracket-detail-label">Tax Amount</span>
+                        <span class="tax-bracket-detail-value">$${formatCurrency(bracket.tax_amount)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Display income breakdown
+function displayIncomeBreakdown(breakdown) {
+    const container = document.getElementById('income-breakdown-list');
+    const section = document.getElementById('income-breakdown-section');
+    
+    if (!container || !section) return;
+    
+    if (!breakdown || breakdown.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    container.innerHTML = breakdown.map(income => {
+        const typeLabel = income.type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const earnerLabel = income.earner || income.earner_name || 'Unassigned';
+        
+        return `
+            <div class="income-breakdown-item">
+                <div class="income-breakdown-info">
+                    <span class="income-breakdown-name">${income.name}</span>
+                    <span class="income-breakdown-meta">${typeLabel} • ${earnerLabel}</span>
+                </div>
+                <span class="income-breakdown-amount">$${formatCurrency(income.annual_amount)}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Show empty state for tax estimator
+function showTaxEmptyState() {
+    const emptyState = document.getElementById('tax-empty-state');
+    const summaryCards = document.getElementById('tax-summary-cards');
+    const bracketsSection = document.querySelector('.tax-brackets-section');
+    const withholdingSection = document.querySelector('.withholding-section');
+    const breakdownSection = document.getElementById('income-breakdown-section');
+    
+    if (emptyState) emptyState.style.display = 'block';
+    if (summaryCards) summaryCards.style.display = 'none';
+    if (bracketsSection) bracketsSection.style.display = 'none';
+    if (withholdingSection) withholdingSection.style.display = 'none';
+    if (breakdownSection) breakdownSection.style.display = 'none';
+}
+
+// Helper function to update element text content
+function updateElement(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+// ============================================================================
+// RETIREMENT ACCOUNTS FUNCTIONALITY
+// ============================================================================
+
+let currentRetirementAccountId = null;
+let currentEditingAccountId = null;
+
+// Initialize retirement accounts functionality
+function initRetirementAccounts() {
+    const addAccountBtn = document.getElementById('add-retirement-account-btn');
+    const refreshBtn = document.getElementById('refresh-retirement-btn');
+    const closeModalBtn = document.getElementById('close-retirement-account-modal');
+    const cancelBtn = document.getElementById('cancel-retirement-account-btn');
+    const accountForm = document.getElementById('retirement-account-form');
+    const accountTypeSelect = document.getElementById('retirement-account-type');
+    
+    // Refresh button
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            console.log('Refresh button clicked - reloading retirement accounts');
+            loadRetirementAccounts();
+        });
+    }
+    
+    // Add account button
+    if (addAccountBtn) {
+        addAccountBtn.addEventListener('click', () => {
+            currentEditingAccountId = null;
+            document.getElementById('retirement-account-modal-title').textContent = 'Add Retirement Account';
+            document.getElementById('save-retirement-account-btn').textContent = 'Save Account';
+            accountForm.reset();
+            showModal('retirement-account-modal');
+            loadIncomeSourcesForDropdown();
+        });
+    }
+    
+    // Close modal buttons
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => hideModal('retirement-account-modal'));
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => hideModal('retirement-account-modal'));
+    }
+    
+    // Account type change - auto-fill limits
+    if (accountTypeSelect) {
+        accountTypeSelect.addEventListener('change', (e) => {
+            const limitInput = document.getElementById('retirement-annual-limit');
+            const limits = {
+                '401k': 23500,
+                '403b': 23500,
+                'traditional_ira': 7000,
+                'roth_ira': 7000,
+                'sep_ira': 69000,
+                'simple_ira': 16000
+            };
+            if (limitInput) {
+                limitInput.value = limits[e.target.value] || 0;
+            }
+        });
+    }
+    
+    // Form submission
+    if (accountForm) {
+        accountForm.addEventListener('submit', handleSaveRetirementAccount);
+    }
+    
+    // Load retirement accounts
+    loadRetirementAccounts();
+    
+    // Initialize contribution modal
+    initContributionModal();
+}
+
+// Load income sources for dropdown
+async function loadIncomeSourcesForDropdown() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income`);
+        const data = await response.json();
+        
+        const select = document.getElementById('retirement-linked-income');
+        if (!select) return;
+        
+        // Clear existing options except the first one
+        select.innerHTML = '<option value="">None - Not linked to income</option>';
+        
+        // Add income sources
+        if (data && Array.isArray(data)) {
+            data.forEach(income => {
+                const option = document.createElement('option');
+                option.value = income.id;
+                option.textContent = `${income.name} (${income.earner_name || 'Unassigned'})`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading income sources:', error);
+    }
+}
+
+// Handle save retirement account
+async function handleSaveRetirementAccount(e) {
+    e.preventDefault();
+    
+    const accountData = {
+        account_name: document.getElementById('retirement-account-name').value,
+        account_type: document.getElementById('retirement-account-type').value,
+        contribution_type: document.getElementById('retirement-contribution-type').value,
+        annual_limit: parseFloat(document.getElementById('retirement-annual-limit').value) || 0,
+        current_balance: parseFloat(document.getElementById('retirement-current-balance').value) || 0,
+        linked_income_id: document.getElementById('retirement-linked-income').value || null,
+        contribution_per_paycheck: parseFloat(document.getElementById('retirement-contribution-per-paycheck').value) || 0,
+        employer_match_percent: parseFloat(document.getElementById('retirement-employer-match-percent').value) || 0,
+        employer_match_limit: parseFloat(document.getElementById('retirement-employer-match-limit').value) || 0,
+        notes: document.getElementById('retirement-notes').value
+    };
+    
+    try {
+        let response;
+        if (currentEditingAccountId) {
+            // Update existing account
+            response = await fetch(`${API_BASE_URL}/api/retirement-accounts/${currentEditingAccountId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(accountData)
+            });
+        } else {
+            // Create new account
+            response = await fetch(`${API_BASE_URL}/api/retirement-accounts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(accountData)
+            });
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            hideModal('retirement-account-modal');
+            loadRetirementAccounts();
+            showNotification(currentEditingAccountId ? 'Retirement account updated successfully!' : 'Retirement account added successfully!', 'success');
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving retirement account:', error);
+        showNotification('Failed to save retirement account', 'error');
+    }
+}
+
+// Load all retirement accounts
+async function loadRetirementAccounts() {
+    console.log('===== LOAD RETIREMENT ACCOUNTS CALLED =====');
+    
+    // Show loading state on refresh button if it exists
+    const refreshBtn = document.getElementById('refresh-retirement-btn');
+    const originalText = refreshBtn ? refreshBtn.textContent : null;
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = '⏳ Loading...';
+    }
+    
+    try {
+        console.log('Loading retirement accounts from:', `${API_BASE_URL}/api/retirement-accounts`);
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts`);
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Received data:', JSON.stringify(data, null, 2));
+        console.log('Success:', data.success);
+        console.log('Accounts:', data.accounts);
+        console.log('Accounts length:', data.accounts ? data.accounts.length : 'undefined');
+        
+        if (!data.success) {
+            console.error('Failed to load retirement accounts:', data.error);
+            return;
+        }
+        
+        console.log('About to call displayRetirementAccounts with', data.accounts.length, 'accounts');
+        displayRetirementAccounts(data.accounts);
+        
+        // Load summary
+        console.log('About to call loadRetirementSummary');
+        loadRetirementSummary();
+    } catch (error) {
+        console.error('Error loading retirement accounts:', error);
+        console.error('Stack trace:', error.stack);
+    } finally {
+        // Restore refresh button state
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.textContent = originalText || '🔄 Refresh';
+        }
+    }
+}
+
+// Display retirement accounts
+function displayRetirementAccounts(accounts) {
+    console.log('displayRetirementAccounts called with:', accounts);
+    const listContainer = document.getElementById('retirement-accounts-list');
+    console.log('List container element:', listContainer);
+    if (!listContainer) {
+        console.error('retirement-accounts-list element not found!');
+        return;
+    }
+    
+    if (!accounts || accounts.length === 0) {
+        console.log('No accounts to display, showing empty state');
+        listContainer.innerHTML = `
+            <div class="retirement-empty-state">
+                <div class="empty-icon">🏦</div>
+                <h4>No Retirement Accounts Yet</h4>
+                <p>Add a retirement account to start tracking your contributions and progress toward annual limits.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    console.log(`Displaying ${accounts.length} retirement accounts`);
+    
+    listContainer.innerHTML = accounts.map(account => {
+        const accountTypes = {
+            '401k': '401(k)',
+            '403b': '403(b)',
+            'traditional_ira': 'Traditional IRA',
+            'roth_ira': 'Roth IRA',
+            'sep_ira': 'SEP IRA',
+            'simple_ira': 'SIMPLE IRA'
+        };
+        
+        const contributionTypes = {
+            'pre_tax': 'Pre-Tax',
+            'post_tax': 'Post-Tax (Roth)',
+            'both': 'Pre & Post-Tax'
+        };
+        
+        const progressPercent = account.limit_percentage || 0;
+        const isNearLimit = progressPercent >= 80;
+        const isAtLimit = progressPercent >= 100;
+        
+        return `
+            <div class="retirement-account-card" data-account-id="${account.id}">
+                <div class="retirement-account-header">
+                    <div class="retirement-account-title">
+                        <h4>${account.account_name}</h4>
+                        <div class="retirement-account-type">
+                            <span class="retirement-account-badge">${accountTypes[account.account_type] || account.account_type}</span>
+                            <span>${contributionTypes[account.contribution_type] || account.contribution_type}</span>
+                        </div>
+                    </div>
+                    <div class="retirement-account-actions">
+                        <button class="btn-add-contribution" onclick="openContributionModal(${account.id}, '${account.account_name}')">
+                            💰 Add Contribution
+                        </button>
+                        <button class="btn-edit-account" onclick="editRetirementAccount(${account.id})">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn-delete-account" onclick="deleteRetirementAccount(${account.id}, '${account.account_name}')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="retirement-account-stats">
+                    <div class="retirement-stat">
+                        <span class="retirement-stat-label">Current Balance</span>
+                        <span class="retirement-stat-value">$${formatNumber(account.current_balance)}</span>
+                    </div>
+                    <div class="retirement-stat">
+                        <span class="retirement-stat-label">YTD Employee</span>
+                        <span class="retirement-stat-value positive">$${formatNumber(account.ytd_employee)}</span>
+                    </div>
+                    <div class="retirement-stat">
+                        <span class="retirement-stat-label">YTD Employer</span>
+                        <span class="retirement-stat-value positive">$${formatNumber(account.ytd_employer)}</span>
+                    </div>
+                    <div class="retirement-stat">
+                        <span class="retirement-stat-label">Annual Limit</span>
+                        <span class="retirement-stat-value">$${formatNumber(account.annual_limit)}</span>
+                    </div>
+                    <div class="retirement-stat">
+                        <span class="retirement-stat-label">Remaining</span>
+                        <span class="retirement-stat-value ${isAtLimit ? 'danger' : isNearLimit ? 'warning' : 'positive'}">
+                            $${formatNumber(account.remaining_limit)}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="retirement-progress-bar">
+                    <div class="retirement-progress-fill" style="width: ${Math.min(progressPercent, 100)}%">
+                        ${progressPercent > 10 ? `<span class="retirement-progress-text">${progressPercent.toFixed(1)}%</span>` : ''}
+                    </div>
+                </div>
+                
+                ${account.contributions && account.contributions.length > 0 ? `
+                    <div class="retirement-contributions-list">
+                        <div class="retirement-contributions-header">
+                            <h5>Recent Contributions (${account.contributions.length})</h5>
+                            <button class="contributions-toggle-btn" onclick="toggleContributions(${account.id})">
+                                View All
+                            </button>
+                        </div>
+                        <div class="contributions-list" id="contributions-list-${account.id}" style="display: none;">
+                            ${account.contributions.slice().reverse().slice(0, 10).map(contrib => `
+                                <div class="contribution-item">
+                                    <div class="contribution-info">
+                                        <span class="contribution-date">${formatDate(contrib.date)}</span>
+                                        <span class="contribution-amount">$${formatNumber(contrib.amount)}</span>
+                                        <span class="contribution-type">${contrib.contribution_type === 'employer_match' ? 'Employer Match' : contrib.contribution_type === 'employee' ? 'Employee' : contrib.contribution_type}</span>
+                                        ${contrib.note ? `<span class="contribution-note">${contrib.note}</span>` : ''}
+                                    </div>
+                                    <div class="contribution-actions">
+                                        <button class="btn-delete-contribution" onclick="deleteContribution(${account.id}, ${contrib.id})">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${account.notes ? `<p class="account-notes"><strong>Notes:</strong> ${account.notes}</p>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// Load retirement summary
+async function loadRetirementSummary() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts/summary`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Failed to load retirement summary');
+            return;
+        }
+        
+        const summary = data.summary;
+        const summaryCards = document.getElementById('retirement-summary-cards');
+        
+        if (summary.total_accounts === 0) {
+            if (summaryCards) summaryCards.style.display = 'none';
+            return;
+        }
+        
+        if (summaryCards) summaryCards.style.display = 'grid';
+        
+        updateElement('retirement-total-balance', `$${formatNumber(summary.total_balance)}`);
+        updateElement('retirement-ytd-contributions', `$${formatNumber(summary.ytd_contributions)}`);
+        updateElement('retirement-ytd-employee', `$${formatNumber(summary.ytd_employee_contributions)}`);
+        updateElement('retirement-ytd-employer', `$${formatNumber(summary.ytd_employer_contributions)}`);
+        updateElement('retirement-total-accounts', summary.total_accounts);
+        updateElement('retirement-current-year', summary.current_year);
+    } catch (error) {
+        console.error('Error loading retirement summary:', error);
+    }
+}
+
+// Edit retirement account
+async function editRetirementAccount(accountId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts`);
+        const data = await response.json();
+        
+        if (!data.success) return;
+        
+        const account = data.accounts.find(acc => acc.id === accountId);
+        if (!account) return;
+        
+        currentEditingAccountId = accountId;
+        document.getElementById('retirement-account-modal-title').textContent = 'Edit Retirement Account';
+        document.getElementById('save-retirement-account-btn').textContent = 'Update Account';
+        
+        // Fill form with existing data
+        document.getElementById('retirement-account-name').value = account.account_name;
+        document.getElementById('retirement-account-type').value = account.account_type;
+        document.getElementById('retirement-contribution-type').value = account.contribution_type;
+        document.getElementById('retirement-annual-limit').value = account.annual_limit;
+        document.getElementById('retirement-current-balance').value = account.current_balance;
+        document.getElementById('retirement-contribution-per-paycheck').value = account.contribution_per_paycheck || 0;
+        document.getElementById('retirement-employer-match-percent').value = account.employer_match_percent || 0;
+        document.getElementById('retirement-employer-match-limit').value = account.employer_match_limit || 0;
+        document.getElementById('retirement-notes').value = account.notes || '';
+        
+        await loadIncomeSourcesForDropdown();
+        if (account.linked_income_id) {
+            document.getElementById('retirement-linked-income').value = account.linked_income_id;
+        }
+        
+        showModal('retirement-account-modal');
+    } catch (error) {
+        console.error('Error loading account for editing:', error);
+    }
+}
+
+// Delete retirement account
+async function deleteRetirementAccount(accountId, accountName) {
+    if (!confirm(`Are you sure you want to delete the retirement account "${accountName}"? This will also delete all contribution history.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts/${accountId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadRetirementAccounts();
+            showNotification('Retirement account deleted successfully', 'success');
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting retirement account:', error);
+        showNotification('Failed to delete retirement account', 'error');
+    }
+}
+
+// Toggle contributions visibility
+function toggleContributions(accountId) {
+    const list = document.getElementById(`contributions-list-${accountId}`);
+    if (list) {
+        list.style.display = list.style.display === 'none' ? 'flex' : 'none';
+    }
+}
+
+// Initialize contribution modal
+function initContributionModal() {
+    const closeModalBtn = document.getElementById('close-contribution-modal');
+    const cancelBtn = document.getElementById('cancel-contribution-btn');
+    const contributionForm = document.getElementById('contribution-form');
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => hideModal('contribution-modal'));
+    }
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => hideModal('contribution-modal'));
+    }
+    
+    if (contributionForm) {
+        contributionForm.addEventListener('submit', handleSaveContribution);
+    }
+    
+    // Set default date to today
+    const dateInput = document.getElementById('contribution-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+}
+
+// Open contribution modal
+function openContributionModal(accountId, accountName) {
+    currentRetirementAccountId = accountId;
+    document.getElementById('contribution-account-id').value = accountId;
+    document.getElementById('contribution-account-display').textContent = accountName;
+    document.getElementById('contribution-form').reset();
+    
+    // Set default date to today
+    const dateInput = document.getElementById('contribution-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    showModal('contribution-modal');
+}
+
+// Handle save contribution
+async function handleSaveContribution(e) {
+    e.preventDefault();
+    
+    const accountId = parseInt(document.getElementById('contribution-account-id').value);
+    const contributionData = {
+        date: document.getElementById('contribution-date').value,
+        amount: parseFloat(document.getElementById('contribution-amount').value),
+        contribution_type: document.getElementById('contribution-type').value,
+        note: document.getElementById('contribution-note').value
+    };
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts/${accountId}/contributions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(contributionData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            hideModal('contribution-modal');
+            loadRetirementAccounts();
+            showNotification('Contribution added successfully!', 'success');
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error saving contribution:', error);
+        showNotification('Failed to save contribution', 'error');
+    }
+}
+
+// Delete contribution
+async function deleteContribution(accountId, contributionId) {
+    if (!confirm('Are you sure you want to delete this contribution?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/retirement-accounts/${accountId}/contributions/${contributionId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadRetirementAccounts();
+            showNotification('Contribution deleted successfully', 'success');
+        } else {
+            showNotification('Error: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting contribution:', error);
+        showNotification('Failed to delete contribution', 'error');
+    }
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+
 
 

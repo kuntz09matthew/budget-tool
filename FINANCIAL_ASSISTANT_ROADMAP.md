@@ -121,58 +121,130 @@ A feature is only complete when:
 ## 📊 Core Features Breakdown
 
 ### 1. **Dashboard (Smart Overview)**
-**Current Status:** Phase 1 Complete ✅
+**Current Status:** Ready for verification
 **What Needs to Be Built:**
 
 #### Phase 1: Basic Metrics
-- [x] Real-time account balances (checking, savings, credit cards) ✅
-- [x] Total monthly income display ✅
-- [x] Total fixed expenses display ✅
-- [x] Available spending money calculation ✅
-- [x] Month-to-date spending summary ✅
+- [x] Real-time account balances (checking, savings, credit cards)
+- [x] Total monthly income display
+- [x] Total fixed expenses display
+- [x] Available spending money calculation
+- [x] Month-to-date spending summary
 
 #### Phase 2: Intelligent Insights
-- [x] Spending velocity indicator (how fast you're spending) ✅
-- [x] Days until next paycheck countdown ✅
-- [x] "Money left per day" calculator ✅
-- [x] Overdraft warning system (color-coded alerts) ✅
-- [x] Budget health score (0-100) ✅
-- [x] Comparison to previous months ✅
+- [ ] Spending velocity indicator (how fast you're spending)
+- [ ] Days until next paycheck countdown
+- [ ] "Money left per day" calculator
+- [ ] Overdraft warning system (color-coded alerts)
+- [ ] Budget health score (0-100)
+- [ ] Comparison to previous months
 
 #### Phase 3: Predictive Analytics
-**Current Status:** Phase 3 Complete ✅
-- [x] Projected end-of-month balance ✅
-- [x] Upcoming bill reminders (next 7 days) ✅
-- [x] Spending pattern alerts ("You usually spend more on groceries this week") ✅
-- [x] Smart AI-powered recommendations ✅
+**Current Status:** Ready for verification
+- [ ] Projected end-of-month balance
+- [ ] Upcoming bill reminders (next 7 days)
+- [ ] Spending pattern alerts ("You usually spend more on groceries this week")
+- [ ] Smart AI-powered recommendations
 
 ---
 
 ### 2. **Income Tracking**
-**Current Status:** Phase 1 Complete ✅
+**Current Status:** Ready for verification
 **What Needs to Be Built:**
 
 #### Phase 1: Basic Income Management
-- [x] Add/edit/delete income sources ✅
-- [x] Income source types: ✅
+- [ ] Add/edit/delete income sources
+- [ ] Income source types:
   - Primary salary
   - Secondary salary
   - Freelance/side hustle
   - Investment income
   - Rental income
   - Other income
-- [x] Frequency settings (weekly, bi-weekly, monthly, annual) ✅
-- [x] Expected vs actual income tracking ✅
-- [x] Tax withholding calculations ✅
-- [x] Net income calculator (after taxes/deductions) ✅
+- [ ] Frequency settings (weekly, bi-weekly, monthly, annual)
+- [ ] Expected vs actual income tracking
+- [ ] Tax withholding calculations
+- [ ] Net income calculator (after taxes/deductions)
 
 #### Phase 2: Advanced Features
 - [ ] Multiple income earners in household
 - [ ] Variable income tracking (for commission/freelance)
+  - Auto-detection of variable income types
+  - Real-time average calculation from payment history
+  - Variability metrics (coefficient of variation)
+  - Stability assessment (Stable/Variable/Highly Variable)
+  - Comprehensive analysis modal with:
+    - Monthly statistics (avg, median, min, max)
+    - Trend analysis (increasing/decreasing/stable)
+    - Current month performance tracking
+    - Next month forecast (conservative/expected/optimistic)
+    - 12-month interactive bar chart
+    - Personalized recommendations
+  - Smart budgeting suggestions based on patterns
 - [ ] Income trend charts
+  - Total income over time line chart with gradient fill
+  - Income by source stacked area chart
+  - Income by household member grouped bar chart
+  - Trend statistics (average, min, max, trend direction)
+  - Interactive period selector (6, 12, 24 months)
+  - Theme-aware chart colors (light/dark mode support)
+  - Empty state handling for no data scenarios
+  - Responsive design for all screen sizes
+  - Chart.js integration with hover tooltips
+  - Backend API with comprehensive data aggregation
+  - Automatic trend analysis with pattern detection
 - [ ] Year-over-year income comparison
+  - Backend API endpoint for year-over-year data aggregation
+  - Comprehensive statistics by year (total, monthly average, payment count)
+  - Year-over-year change calculations (amount and percentage)
+  - Individual year cards with detailed breakdowns
+  - Top income sources per year display
+  - Annual comparison bar chart showing total income by year
+  - Monthly breakdown line chart comparing patterns across years
+  - Automatic growth/decline indicators with visual styling
+  - Overall trend analysis (increasing/decreasing/stable)
+  - Responsive grid layout for year cards
+  - Empty state handling for insufficient data
+  - Theme-aware styling for light/dark modes
+  - Integration with existing income tracking system
+  - Test data generator spanning multiple years
 - [ ] Tax bracket estimator
+  - 2025 Federal tax brackets for all filing statuses (Single, Married Joint, Married Separate, Head of Household)
+  - Standard deduction calculations per filing status
+  - Progressive tax bracket calculations with detailed breakdown
+  - Effective tax rate vs marginal tax rate display
+  - Total annual and monthly tax liability estimates
+  - Tax calculation by bracket with income and tax amounts per bracket
+  - After-tax income calculations (annual and monthly)
+  - Paycheck withholding recommendations (weekly, bi-weekly, semi-monthly, monthly)
+  - Option to calculate based on expected income vs actual payments from last 12 months
+  - Filing status selector with all IRS filing statuses
+  - Income sources breakdown showing all sources included in calculation
+  - Visual summary cards with key tax information
+  - Comprehensive tax disclaimer noting limitations (state taxes, FICA, deductions, credits not included)
+  - Theme-aware styling for light/dark modes
+  - Responsive design for mobile devices
+  - Empty state handling when no income data exists
+  - Real-time updates when income or filing status changes
+  - Integration with existing income tracking system
 - [ ] Retirement contribution tracking
+  - Multiple retirement account types (401k, 403b, Traditional IRA, Roth IRA, SEP IRA, SIMPLE IRA)
+  - 2025 IRS contribution limits auto-filled
+  - Employer matching support with percentage and salary limit tracking
+  - Comprehensive contribution tracking (employee, employer match, bonus, rollover)
+  - Year-to-date progress tracking with visual progress bars
+  - Remaining contribution limit calculations
+  - Warning indicators when approaching or at annual limit
+  - Link retirement accounts to income sources
+  - Per-paycheck contribution amount tracking
+  - Contribution history with date, amount, type, and notes
+  - Full CRUD operations (add, edit, delete accounts and contributions)
+  - Summary dashboard with total balance and YTD breakdowns
+  - Pre-tax and post-tax contribution type support
+  - Backend API endpoints for all retirement operations
+  - Beautiful UI with theme-aware design and responsive layout
+  - Test data with multi-year contribution history
+  - Integrated into Income tab for easy access
 
 ---
 
@@ -276,6 +348,41 @@ This is the CORE INTELLIGENCE feature that makes this tool special!
 - [ ] Recurring transaction detection
 - [ ] Transaction search & filtering
 - [ ] Export transactions to CSV/Excel
+
+#### Phase 5: Personal Wish List System
+**Individual Family Member Spending Goals**
+
+- [ ] **Personal Wish List Management:**
+  - Create wish list items for individual family members
+  - Set target amounts for each wish list item
+  - Track multiple wish list items per person simultaneously
+  - Set priority levels for each wish list item
+  - Target date tracking for wish list items
+
+- [ ] **Smart Fund Allocation System:**
+  - Automatically allocate personal spending money between general spending and wish list funds
+  - Create sub-funds within personal spending accounts dedicated to specific wish list items
+  - Intelligent algorithm determines optimal allocation percentages based on:
+    - Wish list priority levels
+    - Target dates and urgency
+    - Available personal spending money
+    - Historical spending patterns
+  - Real-time balance tracking for both general spending and wish list sub-funds
+  
+- [ ] **Intelligent Overflow Protection:**
+  - Automatic fund reallocation when general spending exceeds available balance
+  - Pull from wish list funds when personal spending account runs low
+  - Priority-based deduction system (lower priority wish list items depleted first)
+  - Alert system to notify user when wish list funds are being tapped
+  - Recommendation system to help prevent over-spending and protect wish list goals
+  - Visual indicators showing fund health and risk levels
+
+- [ ] **Progress Tracking & Visualization:**
+  - Progress bars for each wish list item
+  - Projected completion dates based on current allocation rates
+  - Historical contribution tracking
+  - Milestone celebrations when wish list items are fully funded
+  - Comparison view showing all family members' wish list progress
 
 ---
 
@@ -489,6 +596,69 @@ This is the CORE INTELLIGENCE feature that makes this tool special!
 - [ ] One-click fund transfers
 - [ ] Reallocation history tracking
 - [ ] "What if" reallocation simulator
+
+### 3a. **Smart Budget Flex System**
+**Priority: MEDIUM** ⭐⭐
+**Intelligent Budget Optimization for Special Purchases**
+
+#### How It Works:
+1. User specifies desired purchase or expense (vacation, special item, event)
+2. System analyzes all budget categories and available funds
+3. Generates multiple reallocation scenarios showing safe moves
+4. Ensures no budget category goes into negative territory
+5. Provides risk assessment for each scenario
+6. User selects preferred option or combines suggestions
+
+#### Features to Build:
+- [ ] **Special Purchase Analyzer:**
+  - Input interface for special purchases (amount, date needed, description)
+  - Category for purchase type (vacation, home improvement, special event, etc.)
+  - Importance/priority rating
+  - Flexibility indicators (must-have vs. nice-to-have)
+
+- [ ] **Multi-Scenario Generator:**
+  - Algorithm to identify all available funds across budget categories
+  - Generate 3-5 different reallocation scenarios
+  - Calculate safety margins for each scenario
+  - Predict impact on each affected budget category
+  - Show projected end-of-month balances for all scenarios
+  
+- [ ] **Intelligent Constraint System:**
+  - Identify "untouchable" categories (bills, debt payments, minimum groceries)
+  - Calculate minimum safe balances for each category based on historical usage
+  - Ensure no reallocation causes overdraft risk
+  - Consider upcoming bills and obligations in calculations
+  - Factor in number of days left in month and typical spending velocity
+  
+- [ ] **Risk Assessment & Visualization:**
+  - Risk score for each scenario (Low/Medium/High risk)
+  - Color-coded indicators showing category health after reallocation
+  - Visual comparison of scenarios side-by-side
+  - Impact timeline showing how reallocation affects daily spending limits
+  - "What could go wrong" analysis for each scenario
+  
+- [ ] **Interactive Scenario Builder:**
+  - Allow user to modify suggested scenarios
+  - Mix-and-match features from different scenarios
+  - Real-time recalculation as user adjusts amounts
+  - Lock/unlock specific categories from being touched
+  - Set custom minimum thresholds for categories
+  - Save custom scenarios for future reference
+  
+- [ ] **Smart Recommendations:**
+  - Suggest optimal scenario based on user's historical preferences
+  - Identify categories with excess funds that can be safely reallocated
+  - Recommend timing adjustments ("Wait 5 days and you can afford this with less risk")
+  - Alternative funding suggestions (use savings goal instead, spread across multiple months)
+  - Cost-saving alternatives or compromises to reduce needed amount
+
+- [ ] **Execution & Tracking:**
+  - One-click scenario implementation
+  - Create temporary budget adjustments for the month
+  - Track reallocation results vs. predictions
+  - Alert system if reallocated categories are being depleted faster than expected
+  - Ability to reverse reallocation if plans change
+  - Learning system that improves scenario suggestions based on past outcomes
 
 ### 4. **Price Intelligence**
 **Priority: MEDIUM** ⭐⭐

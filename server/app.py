@@ -91,6 +91,65 @@ def save_data():
 # Load data on startup
 load_data()
 
+# Helper function for variable income statistics
+def _update_variable_income_stats(income):
+    """Calculate and update statistics for variable income sources"""
+    from datetime import datetime, timedelta
+    from statistics import mean, stdev
+    
+    payments = income.get('actual_payments', [])
+    if not payments:
+        return
+    
+    # Initialize fields if they don't exist (backwards compatibility)
+    if 'is_variable' not in income:
+        income['is_variable'] = income.get('type') in ['freelance', 'investment', 'other']
+    if 'payment_count' not in income:
+        income['payment_count'] = 0
+    
+    income['payment_count'] = len(payments)
+    
+    # Only calculate if we have enough data (at least 2 payments)
+    if income['payment_count'] < 2:
+        income['average_monthly'] = income.get('amount', 0)
+        income['income_variance'] = 0
+        return
+    
+    # Get payments from last 6 months
+    six_months_ago = datetime.now() - timedelta(days=180)
+    recent_payments = [
+        p for p in payments
+        if datetime.strptime(p['date'], '%Y-%m-%d') >= six_months_ago
+    ]
+    
+    if not recent_payments:
+        return
+    
+    # Group payments by month to calculate monthly totals
+    from collections import defaultdict
+    monthly_totals = defaultdict(float)
+    
+    for payment in recent_payments:
+        payment_date = datetime.strptime(payment['date'], '%Y-%m-%d')
+        month_key = f"{payment_date.year}-{payment_date.month:02d}"
+        monthly_totals[month_key] += payment['amount']
+    
+    # Calculate average and variance
+    if monthly_totals:
+        monthly_amounts = list(monthly_totals.values())
+        income['average_monthly'] = mean(monthly_amounts)
+        
+        # Calculate coefficient of variation (standard deviation / mean * 100)
+        if len(monthly_amounts) > 1 and income['average_monthly'] > 0:
+            std_dev = stdev(monthly_amounts)
+            income['income_variance'] = (std_dev / income['average_monthly']) * 100
+        else:
+            income['income_variance'] = 0
+    
+    # Mark as variable if variance is high (>15%)
+    if income['income_variance'] > 15:
+        income['is_variable'] = True
+
 # Add test data for demonstration (only in development mode)
 def load_test_data():
     """Load sample data for testing Phase 3 features"""
@@ -103,6 +162,16 @@ def load_test_data():
     
     print("Loading test data for demonstration...")
     today = datetime.now()
+    
+    # Generate dates for the past 6 months
+    def get_month_dates(months_ago):
+        """Get a date from X months ago"""
+        target_month = today.month - months_ago
+        target_year = today.year
+        while target_month <= 0:
+            target_month += 12
+            target_year -= 1
+        return datetime(target_year, target_month, 15)
     
     # Sample Accounts
     budget_data['accounts'] = [
@@ -129,39 +198,181 @@ def load_test_data():
         }
     ]
     
-    # Sample Income Sources
+    # Sample Income Sources with Variable Income Examples
     budget_data['income_sources'] = [
+        # FIXED INCOME: Stable salary with consistent payments (12 months)
         {
             'id': 1,
-            'name': 'Primary Job Salary',
+            'name': 'Software Developer Salary',
             'type': 'salary',
+            'earner_name': 'John',
             'amount': 5500.00,
             'frequency': 'monthly',
-            'created_at': datetime.now().isoformat(),
+            'is_variable': False,
+            'average_monthly': 5500.00,
+            'income_variance': 0,
+            'payment_count': 12,
+            'created_at': (today - timedelta(days=365)).isoformat(),
             'actual_payments': [
-                {
-                    'id': 1001,
-                    'date': datetime.now().strftime('%Y-%m-%d'),
-                    'amount': 5500.00,
-                    'notes': 'Monthly salary payment',
-                    'recorded_at': datetime.now().isoformat()
-                }
+                {'id': 1001, 'date': get_month_dates(11).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'January salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1002, 'date': get_month_dates(10).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'February salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1003, 'date': get_month_dates(9).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'March salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1004, 'date': get_month_dates(8).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'April salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1005, 'date': get_month_dates(7).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'May salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1006, 'date': get_month_dates(6).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'June salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1007, 'date': get_month_dates(5).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'July salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1008, 'date': get_month_dates(4).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'August salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1009, 'date': get_month_dates(3).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'September salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1010, 'date': get_month_dates(2).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'October salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1011, 'date': get_month_dates(1).strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'November salary', 'recorded_at': datetime.now().isoformat()},
+                {'id': 1012, 'date': today.strftime('%Y-%m-%d'), 'amount': 5500.00, 'notes': 'December salary', 'recorded_at': datetime.now().isoformat()},
             ],
-            'expected_next_payment': None
+            'expected_next_payment': None,
+            'federal_tax_percent': 12.0,
+            'state_tax_percent': 5.0,
+            'social_security_percent': 6.2,
+            'medicare_percent': 1.45,
+            'other_deductions': 300.00
         },
+        
+        # MODERATELY VARIABLE: Freelance work with some variation (12 months)
         {
             'id': 2,
-            'name': 'Freelance Work',
+            'name': 'Freelance Web Design',
             'type': 'freelance',
+            'earner_name': 'John',
+            'amount': 1200.00,
+            'frequency': 'monthly',
+            'is_variable': True,
+            'average_monthly': 1383.33,  # Will be recalculated
+            'income_variance': 28.5,  # Will be recalculated
+            'payment_count': 12,
+            'created_at': (today - timedelta(days=365)).isoformat(),
+            'actual_payments': [
+                {'id': 2001, 'date': get_month_dates(11).strftime('%Y-%m-%d'), 'amount': 850.00, 'notes': 'Slow month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2002, 'date': get_month_dates(10).strftime('%Y-%m-%d'), 'amount': 1300.00, 'notes': 'Regular work', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2003, 'date': get_month_dates(9).strftime('%Y-%m-%d'), 'amount': 1450.00, 'notes': 'Good month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2004, 'date': get_month_dates(8).strftime('%Y-%m-%d'), 'amount': 1100.00, 'notes': 'Average', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2005, 'date': get_month_dates(7).strftime('%Y-%m-%d'), 'amount': 1650.00, 'notes': 'Busy month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2006, 'date': get_month_dates(6).strftime('%Y-%m-%d'), 'amount': 1200.00, 'notes': 'Normal', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2007, 'date': get_month_dates(5).strftime('%Y-%m-%d'), 'amount': 950.00, 'notes': 'Small project', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2008, 'date': get_month_dates(4).strftime('%Y-%m-%d'), 'amount': 1800.00, 'notes': 'Large client project', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2009, 'date': get_month_dates(3).strftime('%Y-%m-%d'), 'amount': 1100.00, 'notes': 'Two small projects', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2010, 'date': get_month_dates(2).strftime('%Y-%m-%d'), 'amount': 1600.00, 'notes': 'Medium project', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2011, 'date': get_month_dates(1).strftime('%Y-%m-%d'), 'amount': 1250.00, 'notes': 'Website redesign', 'recorded_at': datetime.now().isoformat()},
+                {'id': 2012, 'date': today.strftime('%Y-%m-%d'), 'amount': 1600.00, 'notes': 'E-commerce site', 'recorded_at': datetime.now().isoformat()},
+            ],
+            'expected_next_payment': None,
+            'federal_tax_percent': 0,
+            'state_tax_percent': 0,
+            'social_security_percent': 0,
+            'medicare_percent': 0,
+            'other_deductions': 0
+        },
+        
+        # HIGHLY VARIABLE: Real estate commissions with big swings (12 months)
+        {
+            'id': 3,
+            'name': 'Real Estate Sales Commission',
+            'type': 'other',
+            'earner_name': 'Sarah',
+            'amount': 2500.00,
+            'frequency': 'monthly',
+            'is_variable': True,
+            'average_monthly': 2583.33,  # Will be recalculated
+            'income_variance': 67.2,  # Will be recalculated (high!)
+            'payment_count': 12,
+            'created_at': (today - timedelta(days=365)).isoformat(),
+            'actual_payments': [
+                {'id': 3001, 'date': get_month_dates(11).strftime('%Y-%m-%d'), 'amount': 3500.00, 'notes': 'Good start to year', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3002, 'date': get_month_dates(10).strftime('%Y-%m-%d'), 'amount': 1200.00, 'notes': 'Quiet month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3003, 'date': get_month_dates(9).strftime('%Y-%m-%d'), 'amount': 2800.00, 'notes': 'Spring market', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3004, 'date': get_month_dates(8).strftime('%Y-%m-%d'), 'amount': 4200.00, 'notes': 'Great month!', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3005, 'date': get_month_dates(7).strftime('%Y-%m-%d'), 'amount': 2500.00, 'notes': 'Average', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3006, 'date': get_month_dates(6).strftime('%Y-%m-%d'), 'amount': 1800.00, 'notes': 'Summer slowdown', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3007, 'date': get_month_dates(5).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Slow month, one small sale', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3008, 'date': get_month_dates(4).strftime('%Y-%m-%d'), 'amount': 4500.00, 'notes': 'Big sale! Luxury home', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3009, 'date': get_month_dates(3).strftime('%Y-%m-%d'), 'amount': 1500.00, 'notes': 'One condo sale', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3010, 'date': get_month_dates(2).strftime('%Y-%m-%d'), 'amount': 3200.00, 'notes': 'Two sales', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3011, 'date': get_month_dates(1).strftime('%Y-%m-%d'), 'amount': 2800.00, 'notes': 'Average month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 3012, 'date': today.strftime('%Y-%m-%d'), 'amount': 2700.00, 'notes': 'December sales', 'recorded_at': datetime.now().isoformat()},
+            ],
+            'expected_next_payment': None,
+            'federal_tax_percent': 0,
+            'state_tax_percent': 0,
+            'social_security_percent': 0,
+            'medicare_percent': 0,
+            'other_deductions': 0
+        },
+        
+        # STABLE VARIABLE: Part-time job marked as variable but actually stable (12 months)
+        {
+            'id': 4,
+            'name': 'Part-Time Consulting',
+            'type': 'other',
+            'earner_name': 'Sarah',
             'amount': 800.00,
             'frequency': 'monthly',
-            'created_at': datetime.now().isoformat(),
-            'actual_payments': [],
-            'expected_next_payment': None
+            'is_variable': True,
+            'average_monthly': 825.00,  # Will be recalculated
+            'income_variance': 8.5,  # Will be recalculated (low variance)
+            'payment_count': 12,
+            'created_at': (today - timedelta(days=365)).isoformat(),
+            'actual_payments': [
+                {'id': 4001, 'date': get_month_dates(11).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4002, 'date': get_month_dates(10).strftime('%Y-%m-%d'), 'amount': 850.00, 'notes': 'Extra hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4003, 'date': get_month_dates(9).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4004, 'date': get_month_dates(8).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4005, 'date': get_month_dates(7).strftime('%Y-%m-%d'), 'amount': 850.00, 'notes': 'Extra hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4006, 'date': get_month_dates(6).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4007, 'date': get_month_dates(5).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4008, 'date': get_month_dates(4).strftime('%Y-%m-%d'), 'amount': 900.00, 'notes': 'Extra hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4009, 'date': get_month_dates(3).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4010, 'date': get_month_dates(2).strftime('%Y-%m-%d'), 'amount': 850.00, 'notes': 'Slightly more hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4011, 'date': get_month_dates(1).strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+                {'id': 4012, 'date': today.strftime('%Y-%m-%d'), 'amount': 800.00, 'notes': 'Regular hours', 'recorded_at': datetime.now().isoformat()},
+            ],
+            'expected_next_payment': None,
+            'federal_tax_percent': 0,
+            'state_tax_percent': 0,
+            'social_security_percent': 0,
+            'medicare_percent': 0,
+            'other_deductions': 0
+        },
+        
+        # NEW VARIABLE INCOME: Only 2 payments (minimal data)
+        {
+            'id': 5,
+            'name': 'YouTube Ad Revenue',
+            'type': 'other',
+            'earner_name': None,
+            'amount': 300.00,
+            'frequency': 'monthly',
+            'is_variable': True,
+            'average_monthly': 300.00,  # Will be recalculated
+            'income_variance': 0,  # Will be recalculated (needs more data)
+            'payment_count': 2,
+            'created_at': (today - timedelta(days=60)).isoformat(),
+            'actual_payments': [
+                {'id': 5001, 'date': get_month_dates(1).strftime('%Y-%m-%d'), 'amount': 180.00, 'notes': 'First month', 'recorded_at': datetime.now().isoformat()},
+                {'id': 5002, 'date': today.strftime('%Y-%m-%d'), 'amount': 420.00, 'notes': 'Viral video!', 'recorded_at': datetime.now().isoformat()},
+            ],
+            'expected_next_payment': None,
+            'federal_tax_percent': 0,
+            'state_tax_percent': 0,
+            'social_security_percent': 0,
+            'medicare_percent': 0,
+            'other_deductions': 0
         }
     ]
     
+    # Recalculate statistics for all variable income sources
+    for income in budget_data['income_sources']:
+        if income.get('is_variable') and len(income.get('actual_payments', [])) > 0:
+            _update_variable_income_stats(income)
+    
     # Sample Fixed Expenses with various due dates
+    # Realistic expenses for a family making ~$60k/year (~$5k/month)
     budget_data['fixed_expenses'] = [
         {
             'id': 1,
@@ -220,6 +431,66 @@ def load_test_data():
             'amount': 95.00,
             'due_day': today.day + 20,
             'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 7,
+            'name': 'Water/Sewer',
+            'category': 'Utilities',
+            'amount': 65.00,
+            'due_day': today.day + 12,
+            'is_autopay': False,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 8,
+            'name': 'Student Loan Payment',
+            'category': 'Debt',
+            'amount': 225.00,
+            'due_day': today.day + 8,
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 9,
+            'name': 'Netflix',
+            'category': 'Subscriptions',
+            'amount': 15.99,
+            'due_day': today.day + 14,
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 10,
+            'name': 'Spotify Family',
+            'category': 'Subscriptions',
+            'amount': 16.99,
+            'due_day': today.day + 18,
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 11,
+            'name': 'Health Insurance',
+            'category': 'Insurance',
+            'amount': 285.00,
+            'due_day': today.day + 3,
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 12,
+            'name': 'Childcare',
+            'category': 'Childcare',
+            'amount': 600.00,
+            'due_day': today.day + 1,
+            'is_autopay': False,
             'is_paid': False,
             'created_at': datetime.now().isoformat()
         }
@@ -308,9 +579,10 @@ def load_test_data():
     print(f"  - {len(budget_data['fixed_expenses'])} fixed expenses")
     print(f"  - {len(budget_data['transactions'])} transactions")
 
-# Load test data in development mode
-if not os.environ.get('BUDGET_APP_DATA_DIR') or os.environ.get('LOAD_TEST_DATA', 'true').lower() == 'true':
-    load_test_data()
+# Load test data in development mode - DISABLED TO START WITH CLEAN APP
+# Uncomment the line below if you want test data
+# if not os.environ.get('BUDGET_APP_DATA_DIR') or os.environ.get('LOAD_TEST_DATA', 'true').lower() == 'true':
+#     load_test_data()
 
 # Serve frontend
 @app.route('/')
@@ -539,7 +811,8 @@ def get_accounts_summary():
             'investment_total': 0,
             'net_worth': 0,
             'total_assets': 0,
-            'total_liabilities': 0
+            'total_liabilities': 0,
+            'has_data': len(budget_data['accounts']) > 0  # Flag to indicate if any accounts exist
         }
         
         for account in budget_data['accounts']:
@@ -563,19 +836,62 @@ def get_accounts_summary():
         # Calculate net worth (assets - liabilities)
         summary['net_worth'] = summary['total_assets'] - summary['total_liabilities']
         
-        # Round all values
+        # Round all values (except has_data flag)
         for key in summary:
-            summary[key] = round(summary[key], 2)
+            if key != 'has_data':
+                summary[key] = round(summary[key], 2)
         
         return jsonify(summary)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Helper function to update variable income statistics
 # Income endpoints
 @app.route('/api/income', methods=['GET'])
 def get_income_sources():
     """Get all income sources"""
     return jsonify(budget_data['income_sources'])
+
+@app.route('/api/income/by-earner', methods=['GET'])
+def get_income_by_earner():
+    """Get income sources grouped by earner"""
+    earners = {}
+    unassigned = []
+    
+    for income in budget_data['income_sources']:
+        earner_name = income.get('earner_name')
+        
+        if earner_name:
+            if earner_name not in earners:
+                earners[earner_name] = {
+                    'name': earner_name,
+                    'income_sources': [],
+                    'total_monthly': 0
+                }
+            
+            earners[earner_name]['income_sources'].append(income)
+            
+            # Calculate monthly amount
+            amount = income.get('amount', 0)
+            frequency = income.get('frequency', 'monthly')
+            
+            if frequency == 'weekly':
+                monthly = amount * 52 / 12
+            elif frequency == 'bi-weekly':
+                monthly = amount * 26 / 12
+            elif frequency == 'annual':
+                monthly = amount / 12
+            else:  # monthly
+                monthly = amount
+            
+            earners[earner_name]['total_monthly'] += monthly
+        else:
+            unassigned.append(income)
+    
+    return jsonify({
+        'earners': list(earners.values()),
+        'unassigned': unassigned
+    })
 
 @app.route('/api/income', methods=['POST'])
 def add_income_source():
@@ -611,6 +927,12 @@ def add_income_source():
     income['name'] = str(income['name']).strip()[:100]  # Limit to 100 characters
     if not income['name']:
         return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+    
+    # Sanitize earner_name (for multiple income earners in household)
+    if 'earner_name' in income and income['earner_name']:
+        income['earner_name'] = str(income['earner_name']).strip()[:100]  # Limit to 100 characters
+    else:
+        income['earner_name'] = None  # Optional field
     
     # Sanitize notes if present
     if 'notes' in income and income['notes']:
@@ -685,6 +1007,18 @@ def add_income_source():
     income['actual_payments'] = []  # List of actual payments received: [{date, amount, notes}]
     income['expected_next_payment'] = None  # When the next payment is expected
     
+    # Initialize variable income tracking fields
+    # If user explicitly set is_variable, use that; otherwise auto-detect based on type
+    if 'is_variable' not in income or income['is_variable'] is None:
+        income['is_variable'] = income['type'] in ['freelance', 'investment', 'other']  # Auto-detect variable income types
+    else:
+        # User explicitly set it, convert to boolean
+        income['is_variable'] = bool(income['is_variable'])
+    
+    income['average_monthly'] = income['amount']  # Start with expected amount, will update as payments come in
+    income['income_variance'] = 0  # Track variability percentage
+    income['payment_count'] = 0  # Number of payments received
+    
     budget_data['income_sources'].append(income)
     save_data()
     return jsonify({'success': True, 'data': income})
@@ -731,6 +1065,13 @@ def update_income_source(income_id):
         updated_data['name'] = str(updated_data['name']).strip()[:100]
         if not updated_data['name']:
             return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+    
+    # Sanitize earner_name if provided (for multiple income earners in household)
+    if 'earner_name' in updated_data:
+        if updated_data['earner_name']:
+            updated_data['earner_name'] = str(updated_data['earner_name']).strip()[:100]
+        else:
+            updated_data['earner_name'] = None
     
     # Sanitize notes if provided
     if 'notes' in updated_data and updated_data['notes']:
@@ -855,6 +1196,9 @@ def record_income_payment(income_id):
     income['actual_payments'].append(payment)
     income['updated_at'] = datetime.now().isoformat()
     
+    # Update variable income statistics
+    _update_variable_income_stats(income)
+    
     save_data()
     return jsonify({'success': True, 'data': payment, 'income': income})
 
@@ -878,6 +1222,10 @@ def delete_income_payment(income_id, payment_id):
             if p['id'] != payment_id
         ]
         income['updated_at'] = datetime.now().isoformat()
+        
+        # Update variable income statistics after deletion
+        _update_variable_income_stats(income)
+        
         save_data()
     
     return jsonify({'success': True})
@@ -964,6 +1312,238 @@ def get_income_analysis(income_id):
         'payments': sorted(current_month_payments, key=lambda x: x['date'], reverse=True)
     })
 
+@app.route('/api/income/<int:income_id>/variable-analysis', methods=['GET'])
+def get_variable_income_analysis(income_id):
+    """Get comprehensive analysis for variable income sources (commission, freelance)"""
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    from statistics import mean, median, stdev
+    
+    # Find the income source
+    income = None
+    for inc in budget_data['income_sources']:
+        if inc['id'] == income_id:
+            income = inc
+            break
+    
+    if not income:
+        return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    payments = income.get('actual_payments', [])
+    
+    if not payments:
+        return jsonify({
+            'success': True,
+            'income_id': income_id,
+            'income_name': income.get('name', ''),
+            'has_data': False,
+            'message': 'No payment history yet. Record payments to see analysis.',
+            'is_variable': income.get('is_variable', False)
+        })
+    
+    # Calculate historical statistics
+    six_months_ago = datetime.now() - timedelta(days=180)
+    three_months_ago = datetime.now() - timedelta(days=90)
+    
+    # Group payments by month
+    monthly_totals = defaultdict(float)
+    monthly_counts = defaultdict(int)
+    
+    for payment in payments:
+        payment_date = datetime.strptime(payment['date'], '%Y-%m-%d')
+        month_key = f"{payment_date.year}-{payment_date.month:02d}"
+        month_name = payment_date.strftime('%B %Y')
+        monthly_totals[month_key] = monthly_totals[month_key] + payment['amount']
+        monthly_counts[month_key] += 1
+    
+    # Get recent payments (last 6 months)
+    recent_payments = [
+        p for p in payments
+        if datetime.strptime(p['date'], '%Y-%m-%d') >= six_months_ago
+    ]
+    
+    # Get very recent payments (last 3 months)
+    very_recent_payments = [
+        p for p in payments
+        if datetime.strptime(p['date'], '%Y-%m-%d') >= three_months_ago
+    ]
+    
+    # Calculate monthly statistics
+    monthly_amounts = list(monthly_totals.values())
+    
+    if not monthly_amounts:
+        return jsonify({
+            'success': True,
+            'income_id': income_id,
+            'income_name': income.get('name', ''),
+            'has_data': False,
+            'message': 'No payment history yet. Record payments to see analysis.'
+        })
+    
+    # Basic statistics
+    avg_monthly = mean(monthly_amounts)
+    median_monthly = median(monthly_amounts)
+    min_monthly = min(monthly_amounts)
+    max_monthly = max(monthly_amounts)
+    
+    # Variability metrics
+    std_deviation = stdev(monthly_amounts) if len(monthly_amounts) > 1 else 0
+    coefficient_of_variation = (std_deviation / avg_monthly * 100) if avg_monthly > 0 else 0
+    
+    # Determine income stability
+    if coefficient_of_variation < 10:
+        stability = 'Stable'
+        stability_icon = '✅'
+        stability_color = 'green'
+    elif coefficient_of_variation < 25:
+        stability = 'Moderately Variable'
+        stability_icon = '⚠️'
+        stability_color = 'orange'
+    else:
+        stability = 'Highly Variable'
+        stability_icon = '🔴'
+        stability_color = 'red'
+    
+    # Calculate trends (last 3 months vs previous 3 months if available)
+    recent_monthly = [monthly_totals[k] for k in sorted(monthly_totals.keys())[-3:]]
+    previous_monthly = [monthly_totals[k] for k in sorted(monthly_totals.keys())[-6:-3]] if len(monthly_totals) >= 6 else []
+    
+    trend = 'Stable'
+    trend_icon = '→'
+    trend_percent = 0
+    
+    if recent_monthly and previous_monthly:
+        recent_avg = mean(recent_monthly)
+        previous_avg = mean(previous_monthly)
+        trend_percent = ((recent_avg - previous_avg) / previous_avg * 100) if previous_avg > 0 else 0
+        
+        if trend_percent > 10:
+            trend = 'Increasing'
+            trend_icon = '📈'
+        elif trend_percent < -10:
+            trend = 'Decreasing'
+            trend_icon = '📉'
+        else:
+            trend = 'Stable'
+            trend_icon = '→'
+    
+    # Build monthly breakdown for charts
+    monthly_breakdown = []
+    for month_key in sorted(monthly_totals.keys()):
+        date_obj = datetime.strptime(month_key + '-01', '%Y-%m-%d')
+        monthly_breakdown.append({
+            'month': date_obj.strftime('%B %Y'),
+            'month_short': date_obj.strftime('%b %y'),
+            'total': round(monthly_totals[month_key], 2),
+            'payment_count': monthly_counts[month_key]
+        })
+    
+    # Current month analysis
+    today = datetime.now()
+    current_month_key = f"{today.year}-{today.month:02d}"
+    current_month_total = monthly_totals.get(current_month_key, 0)
+    current_month_payments = monthly_counts.get(current_month_key, 0)
+    
+    # Forecast next month (use 3-month average)
+    if len(recent_monthly) >= 3:
+        forecast_next_month = mean(recent_monthly)
+    else:
+        forecast_next_month = avg_monthly
+    
+    # Recommendations
+    recommendations = []
+    
+    if coefficient_of_variation > 20:
+        recommendations.append({
+            'type': 'warning',
+            'icon': '⚠️',
+            'message': 'Your income varies significantly month-to-month. Consider building a larger emergency fund.'
+        })
+        recommendations.append({
+            'type': 'tip',
+            'icon': '💡',
+            'message': f'Budget based on your minimum income (${min_monthly:.2f}) or 3-month average (${forecast_next_month:.2f}) to avoid overspending.'
+        })
+    
+    if trend == 'Decreasing':
+        recommendations.append({
+            'type': 'warning',
+            'icon': '📉',
+            'message': 'Your income has been decreasing recently. Review your expenses and consider additional income sources.'
+        })
+    
+    if trend == 'Increasing':
+        recommendations.append({
+            'type': 'success',
+            'icon': '🎉',
+            'message': 'Your income has been increasing! Consider saving or investing the additional income.'
+        })
+    
+    if len(monthly_amounts) < 3:
+        recommendations.append({
+            'type': 'info',
+            'icon': 'ℹ️',
+            'message': 'Track at least 3 months of income to get more accurate insights and forecasts.'
+        })
+    
+    return jsonify({
+        'success': True,
+        'income_id': income_id,
+        'income_name': income.get('name', ''),
+        'income_type': income.get('type', ''),
+        'has_data': True,
+        'is_variable': income.get('is_variable', True),
+        'payment_count': len(payments),
+        'months_tracked': len(monthly_amounts),
+        
+        # Summary statistics
+        'statistics': {
+            'average_monthly': round(avg_monthly, 2),
+            'median_monthly': round(median_monthly, 2),
+            'minimum_monthly': round(min_monthly, 2),
+            'maximum_monthly': round(max_monthly, 2),
+            'std_deviation': round(std_deviation, 2),
+            'coefficient_of_variation': round(coefficient_of_variation, 2)
+        },
+        
+        # Stability assessment
+        'stability': {
+            'level': stability,
+            'icon': stability_icon,
+            'color': stability_color,
+            'description': f'Your income varies by approximately {coefficient_of_variation:.1f}% from month to month.'
+        },
+        
+        # Trend analysis
+        'trend': {
+            'direction': trend,
+            'icon': trend_icon,
+            'percent_change': round(trend_percent, 2),
+            'description': f'Income is {trend.lower()} compared to previous months.'
+        },
+        
+        # Current month
+        'current_month': {
+            'total': round(current_month_total, 2),
+            'payment_count': current_month_payments,
+            'vs_average': round(current_month_total - avg_monthly, 2),
+            'vs_average_percent': round(((current_month_total - avg_monthly) / avg_monthly * 100), 2) if avg_monthly > 0 else 0
+        },
+        
+        # Forecast
+        'forecast': {
+            'next_month': round(forecast_next_month, 2),
+            'conservative_estimate': round(min_monthly, 2),
+            'optimistic_estimate': round(max_monthly, 2)
+        },
+        
+        # Monthly breakdown for charts
+        'monthly_breakdown': monthly_breakdown[-12:],  # Last 12 months max
+        
+        # Recommendations
+        'recommendations': recommendations
+    })
+
 @app.route('/api/income/total', methods=['GET'])
 def get_total_monthly_income():
     """Calculate total monthly income from all sources"""
@@ -988,6 +1568,304 @@ def get_total_monthly_income():
     
     return jsonify({'total': round(total, 2)})
 
+@app.route('/api/income/trends', methods=['GET'])
+def get_income_trends():
+    """Get income trend data for the last 12 months"""
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    
+    # Get query parameters for customization
+    months_back = int(request.args.get('months', 12))  # Default 12 months
+    
+    try:
+        today = datetime.now()
+        
+        # Generate list of months for the specified period
+        months = []
+        for i in range(months_back - 1, -1, -1):
+            target_date = today - timedelta(days=i * 30)  # Approximate months
+            month_key = target_date.strftime('%Y-%m')
+            month_label = target_date.strftime('%b %Y')
+            months.append({
+                'key': month_key,
+                'label': month_label,
+                'year': target_date.year,
+                'month': target_date.month
+            })
+        
+        # Initialize data structures
+        income_by_month = {m['key']: 0 for m in months}
+        income_by_source = defaultdict(lambda: {m['key']: 0 for m in months})
+        income_by_earner = defaultdict(lambda: {m['key']: 0 for m in months})
+        
+        # Process each income source
+        for income_source in budget_data.get('income_sources', []):
+            source_name = income_source.get('source_name', 'Unknown')
+            earner = income_source.get('earner', 'Unassigned')
+            income_type = income_source.get('income_type', 'other')
+            
+            # Get actual payments for this income source
+            actual_payments = income_source.get('actual_payments', [])
+            
+            # Process actual payments
+            for payment in actual_payments:
+                try:
+                    payment_date = datetime.strptime(payment['date'], '%Y-%m-%d')
+                    month_key = payment_date.strftime('%Y-%m')
+                    
+                    # Only include if within our date range
+                    if month_key in income_by_month:
+                        amount = float(payment.get('amount', 0))
+                        
+                        # Add to totals
+                        income_by_month[month_key] += amount
+                        income_by_source[source_name][month_key] += amount
+                        income_by_earner[earner][month_key] += amount
+                        
+                except (ValueError, KeyError) as e:
+                    continue
+        
+        # Format data for charts
+        # Total income over time
+        total_income_data = {
+            'labels': [m['label'] for m in months],
+            'data': [round(income_by_month[m['key']], 2) for m in months]
+        }
+        
+        # Income by source (for stacked chart)
+        source_datasets = []
+        for source_name, monthly_data in income_by_source.items():
+            source_datasets.append({
+                'label': source_name,
+                'data': [round(monthly_data[m['key']], 2) for m in months]
+            })
+        
+        # Income by earner (for comparison chart)
+        earner_datasets = []
+        for earner_name, monthly_data in income_by_earner.items():
+            earner_datasets.append({
+                'label': earner_name,
+                'data': [round(monthly_data[m['key']], 2) for m in months]
+            })
+        
+        # Calculate statistics
+        monthly_totals = [income_by_month[m['key']] for m in months]
+        non_zero_months = [m for m in monthly_totals if m > 0]
+        
+        stats = {
+            'average': round(sum(monthly_totals) / len(monthly_totals), 2) if monthly_totals else 0,
+            'median': round(sorted(monthly_totals)[len(monthly_totals) // 2], 2) if monthly_totals else 0,
+            'min': round(min(non_zero_months), 2) if non_zero_months else 0,
+            'max': round(max(monthly_totals), 2) if monthly_totals else 0,
+            'total': round(sum(monthly_totals), 2),
+            'months_with_income': len(non_zero_months),
+            'total_months': len(months)
+        }
+        
+        # Calculate trend (simple linear trend)
+        trend = 'stable'
+        if len(non_zero_months) >= 3:
+            first_half = non_zero_months[:len(non_zero_months)//2]
+            second_half = non_zero_months[len(non_zero_months)//2:]
+            
+            if first_half and second_half:
+                first_avg = sum(first_half) / len(first_half)
+                second_avg = sum(second_half) / len(second_half)
+                
+                if second_avg > first_avg * 1.1:
+                    trend = 'increasing'
+                elif second_avg < first_avg * 0.9:
+                    trend = 'decreasing'
+        
+        stats['trend'] = trend
+        
+        return jsonify({
+            'success': True,
+            'total_income': total_income_data,
+            'by_source': {
+                'labels': [m['label'] for m in months],
+                'datasets': source_datasets
+            },
+            'by_earner': {
+                'labels': [m['label'] for m in months],
+                'datasets': earner_datasets
+            },
+            'statistics': stats,
+            'period': {
+                'months': months_back,
+                'start': months[0]['label'] if months else None,
+                'end': months[-1]['label'] if months else None
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error calculating income trends: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/income/year-over-year', methods=['GET'])
+def get_year_over_year_income():
+    """Get year-over-year income comparison data"""
+    from datetime import datetime
+    from collections import defaultdict
+    
+    try:
+        # Get available years from actual payments
+        available_years = set()
+        for income_source in budget_data.get('income_sources', []):
+            for payment in income_source.get('actual_payments', []):
+                try:
+                    payment_date = datetime.strptime(payment['date'], '%Y-%m-%d')
+                    available_years.add(payment_date.year)
+                except (ValueError, KeyError):
+                    continue
+        
+        if not available_years:
+            return jsonify({
+                'success': True,
+                'has_data': False,
+                'message': 'No income data available for comparison',
+                'years': []
+            })
+        
+        # Sort years (most recent first)
+        years = sorted(available_years, reverse=True)
+        
+        # Initialize data structures for each year
+        yearly_data = {}
+        for year in years:
+            yearly_data[year] = {
+                'total': 0,
+                'by_month': defaultdict(float),
+                'by_source': defaultdict(float),
+                'by_earner': defaultdict(float),
+                'payment_count': 0
+            }
+        
+        # Process each income source
+        for income_source in budget_data.get('income_sources', []):
+            source_name = income_source.get('source_name', 'Unknown')
+            earner = income_source.get('earner', 'Unassigned')
+            
+            # Process actual payments
+            for payment in income_source.get('actual_payments', []):
+                try:
+                    payment_date = datetime.strptime(payment['date'], '%Y-%m-%d')
+                    year = payment_date.year
+                    month = payment_date.month
+                    amount = float(payment.get('amount', 0))
+                    
+                    if year in yearly_data:
+                        yearly_data[year]['total'] += amount
+                        yearly_data[year]['by_month'][month] += amount
+                        yearly_data[year]['by_source'][source_name] += amount
+                        yearly_data[year]['by_earner'][earner] += amount
+                        yearly_data[year]['payment_count'] += 1
+                        
+                except (ValueError, KeyError) as e:
+                    continue
+        
+        # Format data for frontend
+        comparison_data = []
+        for year in years:
+            data = yearly_data[year]
+            
+            # Calculate monthly average
+            months_with_data = len([m for m in data['by_month'].values() if m > 0])
+            monthly_average = data['total'] / months_with_data if months_with_data > 0 else 0
+            
+            # Get top sources
+            top_sources = sorted(
+                data['by_source'].items(),
+                key=lambda x: x[1],
+                reverse=True
+            )[:5]
+            
+            comparison_data.append({
+                'year': year,
+                'total': round(data['total'], 2),
+                'monthly_average': round(monthly_average, 2),
+                'payment_count': data['payment_count'],
+                'months_with_income': months_with_data,
+                'by_month': {
+                    month: round(amount, 2) 
+                    for month, amount in sorted(data['by_month'].items())
+                },
+                'top_sources': [
+                    {'name': name, 'amount': round(amount, 2)}
+                    for name, amount in top_sources
+                ],
+                'by_earner': {
+                    earner: round(amount, 2)
+                    for earner, amount in data['by_earner'].items()
+                }
+            })
+        
+        # Calculate year-over-year changes
+        if len(comparison_data) >= 2:
+            for i in range(len(comparison_data) - 1):
+                current_year = comparison_data[i]
+                previous_year = comparison_data[i + 1]
+                
+                # Calculate percentage change
+                if previous_year['total'] > 0:
+                    change_amount = current_year['total'] - previous_year['total']
+                    change_percent = (change_amount / previous_year['total']) * 100
+                    
+                    current_year['change_from_previous'] = {
+                        'amount': round(change_amount, 2),
+                        'percent': round(change_percent, 2),
+                        'direction': 'increase' if change_amount > 0 else 'decrease' if change_amount < 0 else 'stable'
+                    }
+                else:
+                    current_year['change_from_previous'] = {
+                        'amount': current_year['total'],
+                        'percent': 100.0,
+                        'direction': 'increase'
+                    }
+        
+        # Overall statistics
+        total_all_years = sum(y['total'] for y in comparison_data)
+        average_per_year = total_all_years / len(comparison_data) if comparison_data else 0
+        
+        # Determine overall trend (comparing first and last year)
+        overall_trend = 'stable'
+        if len(comparison_data) >= 2:
+            first_year_total = comparison_data[0]['total']
+            last_year_total = comparison_data[-1]['total']
+            
+            if first_year_total > last_year_total * 1.1:
+                overall_trend = 'increasing'
+            elif first_year_total < last_year_total * 0.9:
+                overall_trend = 'decreasing'
+        
+        return jsonify({
+            'success': True,
+            'has_data': True,
+            'years': comparison_data,
+            'statistics': {
+                'total_years': len(years),
+                'total_all_years': round(total_all_years, 2),
+                'average_per_year': round(average_per_year, 2),
+                'overall_trend': overall_trend,
+                'earliest_year': years[-1] if years else None,
+                'latest_year': years[0] if years else None
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error calculating year-over-year income: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/dashboard/next-paycheck', methods=['GET'])
 def get_next_paycheck():
     """Calculate days until next paycheck from all income sources"""
@@ -999,6 +1877,7 @@ def get_next_paycheck():
         if not income_sources:
             return jsonify({
                 'has_paycheck': False,
+                'has_data': False,
                 'message': 'No income sources configured'
             })
         
@@ -1060,6 +1939,7 @@ def get_next_paycheck():
         if not next_paychecks:
             return jsonify({
                 'has_paycheck': False,
+                'has_data': len(income_sources) > 0,
                 'message': 'No upcoming paychecks configured'
             })
         
@@ -1069,6 +1949,7 @@ def get_next_paycheck():
         
         return jsonify({
             'has_paycheck': True,
+            'has_data': True,
             'days_until': days_until,
             'date': next_paycheck['date'].strftime('%Y-%m-%d'),
             'formatted_date': next_paycheck['date'].strftime('%B %d, %Y'),
@@ -1139,11 +2020,25 @@ def get_total_monthly_expenses():
 @app.route('/api/dashboard/available-spending', methods=['GET'])
 def get_available_spending():
     """
-    Calculate available spending money after fixed expenses.
-    Formula: Total Income - Fixed Expenses = Available for Spending
+    Calculate available spending money after fixed expenses and savings allocations.
+    Formula: Total Income - Fixed Expenses - Retirement Contributions - Savings Allocations = Available for Spending
+    
+    Returns comprehensive breakdown including:
+    - Total monthly income
+    - Fixed expenses
+    - Retirement contributions
+    - Savings allocations
+    - Available spending (monthly, per paycheck, per day)
+    - Status and recommendations
     """
+    from datetime import datetime, timedelta
+    
+    # Check if we have meaningful data
+    has_data = len(budget_data['income_sources']) > 0 or len(budget_data['fixed_expenses']) > 0
+    
     # Calculate total monthly income
     total_income = 0
+    income_breakdown = []
     for income in budget_data['income_sources']:
         amount = float(income.get('amount', 0))
         frequency = income.get('frequency', 'monthly')
@@ -1161,33 +2056,145 @@ def get_available_spending():
             monthly_amount = amount
             
         total_income += monthly_amount
+        income_breakdown.append({
+            'name': income.get('name', 'Unnamed Income'),
+            'earner': income.get('earner_name', 'Unknown'),
+            'monthly_amount': round(monthly_amount, 2)
+        })
     
     # Calculate total monthly fixed expenses
     total_expenses = 0
+    expense_breakdown = []
     for expense in budget_data['fixed_expenses']:
         amount = float(expense.get('amount', 0))
         total_expenses += amount
+        expense_breakdown.append({
+            'name': expense.get('name', 'Unnamed Expense'),
+            'category': expense.get('category', 'Other'),
+            'amount': round(amount, 2)
+        })
+    
+    # Calculate total monthly retirement contributions
+    total_retirement = 0
+    retirement_accounts = budget_data.get('retirement_accounts', [])
+    for account in retirement_accounts:
+        contribution = float(account.get('contribution_per_paycheck', 0))
+        linked_income_id = account.get('linked_income_id')
+        
+        # Find the linked income source to determine pay frequency
+        pay_frequency = 'monthly'  # default
+        for income in budget_data['income_sources']:
+            if income.get('id') == linked_income_id:
+                pay_frequency = income.get('frequency', 'monthly')
+                break
+        
+        # Convert to monthly contribution
+        if pay_frequency == 'weekly':
+            monthly_contribution = contribution * 52 / 12
+        elif pay_frequency == 'bi-weekly':
+            monthly_contribution = contribution * 26 / 12
+        elif pay_frequency == 'monthly':
+            monthly_contribution = contribution
+        elif pay_frequency == 'annual':
+            monthly_contribution = contribution / 12
+        else:
+            monthly_contribution = contribution
+            
+        total_retirement += monthly_contribution
+    
+    # Calculate total monthly savings allocations
+    # This would be for savings goals that have automatic monthly contributions
+    total_savings_allocations = 0
+    savings_goals = budget_data.get('savings_goals', [])
+    for goal in savings_goals:
+        monthly_contribution = float(goal.get('monthly_contribution', 0))
+        total_savings_allocations += monthly_contribution
     
     # Calculate available spending
-    available = total_income - total_expenses
+    available = total_income - total_expenses - total_retirement - total_savings_allocations
+    
+    # Calculate per-paycheck amount (assuming bi-weekly as most common)
+    # We'll use the most common pay frequency from income sources
+    pay_frequencies = {}
+    for income in budget_data['income_sources']:
+        freq = income.get('frequency', 'monthly')
+        pay_frequencies[freq] = pay_frequencies.get(freq, 0) + 1
+    
+    # Determine most common frequency
+    most_common_freq = 'bi-weekly'  # default
+    if pay_frequencies:
+        most_common_freq = max(pay_frequencies, key=pay_frequencies.get)
+    
+    # Calculate per paycheck
+    if most_common_freq == 'weekly':
+        available_per_paycheck = available * 12 / 52
+        paychecks_per_month = 52 / 12
+    elif most_common_freq == 'bi-weekly':
+        available_per_paycheck = available * 12 / 26
+        paychecks_per_month = 26 / 12
+    elif most_common_freq == 'monthly':
+        available_per_paycheck = available
+        paychecks_per_month = 1
+    else:
+        available_per_paycheck = available
+        paychecks_per_month = 1
+    
+    # Calculate per day (30 day month average)
+    available_per_day = available / 30
     
     # Determine status based on available amount
     if available < 0:
         status = 'danger'
-        message = 'Warning: Expenses exceed income!'
+        message = 'Critical: Expenses exceed income!'
+        recommendation = 'You need to reduce expenses or increase income immediately.'
+        color = '#dc3545'
+    elif available < 200:
+        status = 'danger'
+        message = 'Very tight budget - high risk'
+        recommendation = 'Consider finding ways to reduce expenses or increase income.'
+        color = '#dc3545'
     elif available < 500:
         status = 'warning'
-        message = 'Caution: Low available funds'
+        message = 'Caution: Limited discretionary funds'
+        recommendation = 'You have minimal room for unexpected expenses.'
+        color = '#ffc107'
+    elif available < 1000:
+        status = 'warning'
+        message = 'Moderate budget cushion'
+        recommendation = 'You have some flexibility, but stay mindful of spending.'
+        color = '#ffc107'
     else:
         status = 'success'
-        message = 'Healthy budget'
+        message = 'Healthy budget with good flexibility'
+        recommendation = 'Great job! You have room for discretionary spending and unexpected expenses.'
+        color = '#28a745'
+    
+    # Calculate percentage of income available for spending
+    percent_available = (available / total_income * 100) if total_income > 0 else 0
     
     return jsonify({
         'total_income': round(total_income, 2),
         'total_expenses': round(total_expenses, 2),
+        'total_retirement': round(total_retirement, 2),
+        'total_savings_allocations': round(total_savings_allocations, 2),
+        'total_committed': round(total_expenses + total_retirement + total_savings_allocations, 2),
         'available': round(available, 2),
+        'available_per_paycheck': round(available_per_paycheck, 2),
+        'available_per_day': round(available_per_day, 2),
+        'percent_available': round(percent_available, 1),
+        'pay_frequency': most_common_freq,
+        'paychecks_per_month': round(paychecks_per_month, 2),
         'status': status,
-        'message': message
+        'message': message,
+        'recommendation': recommendation,
+        'color': color,
+        'has_data': has_data,
+        'breakdown': {
+            'income': income_breakdown,
+            'expenses': expense_breakdown,
+            'retirement_contribution': round(total_retirement, 2),
+            'savings_allocations': round(total_savings_allocations, 2)
+        }
     })
 
 @app.route('/api/dashboard/spending-velocity', methods=['GET'])
@@ -1309,6 +2316,197 @@ def get_spending_velocity():
         'remaining_money': round(remaining_money, 2),
         'projected_remaining': round(projected_remaining, 2),
         'transaction_count': transaction_count
+    })
+
+@app.route('/api/dashboard/mtd-spending', methods=['GET'])
+def get_mtd_spending():
+    """
+    Get comprehensive month-to-date spending summary with category breakdown,
+    budget comparison, daily averages, and progress indicators.
+    
+    Returns:
+    - Total spending this month
+    - Spending by category
+    - Comparison to budget/available spending
+    - Daily average spending
+    - Days elapsed and remaining
+    - Status indicators
+    - Recent transactions
+    """
+    from datetime import datetime
+    from calendar import monthrange
+    from collections import defaultdict
+    
+    now = datetime.now()
+    current_year = now.year
+    current_month = now.month
+    current_day = now.day
+    
+    # Get days in current month
+    days_in_month = monthrange(current_year, current_month)[1]
+    days_remaining = days_in_month - current_day
+    percent_of_month = (current_day / days_in_month) * 100
+    
+    # Check if we have meaningful data
+    has_data = (len(budget_data.get('transactions', [])) > 0 or 
+                len(budget_data.get('income_sources', [])) > 0 or 
+                len(budget_data.get('fixed_expenses', [])) > 0)
+    
+    # Calculate MTD spending from transactions
+    mtd_spent = 0
+    category_spending = defaultdict(float)
+    mtd_transactions = []
+    transactions = budget_data.get('transactions', [])
+    
+    for transaction in transactions:
+        try:
+            trans_date_str = transaction.get('date', '')
+            trans_date = datetime.fromisoformat(trans_date_str.replace('Z', '+00:00'))
+            
+            if trans_date.year == current_year and trans_date.month == current_month:
+                amount = float(transaction.get('amount', 0))
+                category = transaction.get('category', 'Uncategorized')
+                
+                mtd_spent += amount
+                category_spending[category] += amount
+                
+                # Add to recent transactions list
+                mtd_transactions.append({
+                    'id': transaction.get('id'),
+                    'date': trans_date_str,
+                    'description': transaction.get('description', 'No description'),
+                    'amount': round(amount, 2),
+                    'category': category,
+                    'merchant': transaction.get('merchant', '')
+                })
+        except Exception as e:
+            print(f"Error processing transaction: {e}")
+            continue
+    
+    # Sort transactions by date (most recent first)
+    mtd_transactions.sort(key=lambda x: x['date'], reverse=True)
+    
+    # Get available spending for the month
+    total_income = 0
+    for income in budget_data.get('income_sources', []):
+        amount = float(income.get('amount', 0))
+        frequency = income.get('frequency', 'monthly')
+        
+        # Convert all frequencies to monthly
+        if frequency == 'weekly':
+            monthly_amount = amount * 52 / 12
+        elif frequency == 'bi-weekly':
+            monthly_amount = amount * 26 / 12
+        elif frequency == 'monthly':
+            monthly_amount = amount
+        elif frequency == 'annual':
+            monthly_amount = amount / 12
+        else:
+            monthly_amount = amount
+            
+        total_income += monthly_amount
+    
+    # Calculate total monthly commitments (expenses + retirement + savings)
+    total_expenses = sum(float(expense.get('amount', 0)) for expense in budget_data.get('fixed_expenses', []))
+    
+    # Add retirement contributions
+    total_retirement = 0
+    for account in budget_data.get('retirement_accounts', []):
+        contribution = float(account.get('contribution_per_paycheck', 0))
+        linked_income_id = account.get('linked_income_id')
+        
+        # Find the linked income source to determine pay frequency
+        pay_frequency = 'monthly'
+        for income in budget_data.get('income_sources', []):
+            if income.get('id') == linked_income_id:
+                pay_frequency = income.get('frequency', 'monthly')
+                break
+        
+        # Convert to monthly
+        if pay_frequency == 'weekly':
+            monthly_contribution = contribution * 52 / 12
+        elif pay_frequency == 'bi-weekly':
+            monthly_contribution = contribution * 26 / 12
+        elif pay_frequency == 'monthly':
+            monthly_contribution = contribution
+        else:
+            monthly_contribution = contribution
+            
+        total_retirement += monthly_contribution
+    
+    # Add savings allocations
+    total_savings = sum(float(goal.get('monthly_contribution', 0)) for goal in budget_data.get('savings_goals', []))
+    
+    # Calculate available for discretionary spending
+    available = total_income - total_expenses - total_retirement - total_savings
+    
+    # Calculate remaining and percentages
+    remaining = available - mtd_spent
+    percent_spent = (mtd_spent / available * 100) if available > 0 else 0
+    
+    # Calculate daily averages
+    daily_average = mtd_spent / current_day if current_day > 0 else 0
+    projected_total = daily_average * days_in_month
+    projected_remaining = available - projected_total
+    
+    # Determine status
+    if percent_spent >= 100:
+        status = 'danger'
+        status_message = 'Over budget! You\'ve spent all available funds.'
+        color = '#dc3545'
+    elif percent_spent >= 90:
+        status = 'danger'
+        status_message = 'Nearly out of budget - be very careful!'
+        color = '#dc3545'
+    elif percent_spent >= percent_of_month + 15:
+        status = 'warning'
+        status_message = 'Spending faster than expected - slow down!'
+        color = '#ffc107'
+    elif percent_spent >= percent_of_month:
+        status = 'warning'
+        status_message = 'On pace with budget - monitor closely'
+        color = '#ffc107'
+    else:
+        status = 'success'
+        status_message = 'Great job! Spending below target pace'
+        color = '#28a745'
+    
+    # Convert category spending to sorted list
+    category_breakdown = [
+        {
+            'category': category,
+            'amount': round(amount, 2),
+            'percent': round((amount / mtd_spent * 100) if mtd_spent > 0 else 0, 1),
+            'transaction_count': sum(1 for t in mtd_transactions if t['category'] == category)
+        }
+        for category, amount in category_spending.items()
+    ]
+    category_breakdown.sort(key=lambda x: x['amount'], reverse=True)
+    
+    # Get top 10 recent transactions
+    recent_transactions = mtd_transactions[:10]
+    
+    return jsonify({
+        'total': round(mtd_spent, 2),
+        'available': round(available, 2),
+        'remaining': round(remaining, 2),
+        'percent_spent': round(percent_spent, 1),
+        'percent_of_month': round(percent_of_month, 1),
+        'daily_average': round(daily_average, 2),
+        'projected_total': round(projected_total, 2),
+        'projected_remaining': round(projected_remaining, 2),
+        'days_elapsed': current_day,
+        'days_remaining': days_remaining,
+        'days_in_month': days_in_month,
+        'transaction_count': len(mtd_transactions),
+        'status': status,
+        'status_message': status_message,
+        'color': color,
+        'category_breakdown': category_breakdown,
+        'recent_transactions': recent_transactions,
+        'has_data': has_data,
+        'month_name': now.strftime('%B'),
+        'year': current_year
     })
 
 @app.route('/api/dashboard/money-per-day', methods=['GET'])
@@ -1685,6 +2883,22 @@ def get_overdraft_status():
             'days_remaining': days_remaining
         }
     })
+
+# Alias endpoints for frontend compatibility
+@app.route('/api/dashboard/overdraft-warning', methods=['GET'])
+def get_overdraft_warning():
+    """Alias for overdraft-status endpoint"""
+    return get_overdraft_status()
+
+@app.route('/api/dashboard/health-score', methods=['GET'])
+def get_health_score():
+    """Alias for budget-health-score endpoint"""
+    return get_budget_health_score()
+
+@app.route('/api/dashboard/recommendations', methods=['GET'])
+def get_recommendations():
+    """Alias for smart-recommendations endpoint"""
+    return get_smart_recommendations()
 
 @app.route('/api/dashboard/budget-health-score', methods=['GET'])
 def get_budget_health_score():
@@ -2082,6 +3296,9 @@ def get_budget_health_score():
             'Review your budget weekly'
         ]
     
+    # Check if we have meaningful data
+    has_data = (num_accounts > 0 or num_income_sources > 0 or num_expenses > 0)
+    
     return jsonify({
         'score': total_score,
         'grade': grade,
@@ -2090,6 +3307,7 @@ def get_budget_health_score():
         'icon': icon,
         'breakdown': score_breakdown,
         'recommendations': recommendations,
+        'has_data': has_data,
         'summary': {
             'total_income': round(total_income, 2),
             'total_expenses': round(total_expenses, 2),
@@ -2828,6 +4046,559 @@ def get_smart_recommendations():
             'error': str(e),
             'priority_actions': [],
             'recommendations': []
+        }), 500
+
+# Tax bracket calculator endpoint
+@app.route('/api/income/tax-estimate', methods=['GET'])
+def calculate_tax_estimate():
+    """
+    Calculate federal tax bracket and estimated tax liability based on household income.
+    Returns detailed tax information including:
+    - Federal tax brackets and rates
+    - Effective tax rate
+    - Marginal tax rate
+    - Total estimated federal tax
+    - Tax by bracket breakdown
+    - After-tax income
+    """
+    try:
+        # 2025 Federal Tax Brackets (Tax year 2025, filing in 2026)
+        # Updated for inflation adjustments
+        TAX_BRACKETS = {
+            'single': [
+                (11925, 0.10),    # 10% on income up to $11,925
+                (48475, 0.12),    # 12% on income $11,926 to $48,475
+                (103350, 0.22),   # 22% on income $48,476 to $103,350
+                (197300, 0.24),   # 24% on income $103,351 to $197,300
+                (250525, 0.32),   # 32% on income $197,301 to $250,525
+                (626350, 0.35),   # 35% on income $250,526 to $626,350
+                (float('inf'), 0.37)  # 37% on income over $626,350
+            ],
+            'married-joint': [
+                (23850, 0.10),    # 10% on income up to $23,850
+                (96950, 0.12),    # 12% on income $23,851 to $96,950
+                (206700, 0.22),   # 22% on income $96,951 to $206,700
+                (394600, 0.24),   # 24% on income $206,701 to $394,600
+                (501050, 0.32),   # 32% on income $394,601 to $501,050
+                (751600, 0.35),   # 35% on income $501,051 to $751,600
+                (float('inf'), 0.37)  # 37% on income over $751,600
+            ],
+            'married-separate': [
+                (11925, 0.10),    # 10% on income up to $11,925
+                (48475, 0.12),    # 12% on income $11,926 to $48,475
+                (103350, 0.22),   # 22% on income $48,476 to $103,350
+                (197300, 0.24),   # 24% on income $103,351 to $197,300
+                (250525, 0.32),   # 32% on income $197,301 to $250,525
+                (375800, 0.35),   # 35% on income $250,526 to $375,800
+                (float('inf'), 0.37)  # 37% on income over $375,800
+            ],
+            'head-of-household': [
+                (17000, 0.10),    # 10% on income up to $17,000
+                (64850, 0.12),    # 12% on income $17,001 to $64,850
+                (103350, 0.22),   # 22% on income $64,851 to $103,350
+                (197300, 0.24),   # 24% on income $103,351 to $197,300
+                (250500, 0.32),   # 32% on income $197,301 to $250,500
+                (626350, 0.35),   # 35% on income $250,501 to $626,350
+                (float('inf'), 0.37)  # 37% on income over $626,350
+            ]
+        }
+        
+        # Standard deductions for 2025
+        STANDARD_DEDUCTIONS = {
+            'single': 15000,
+            'married-joint': 30000,
+            'married-separate': 15000,
+            'head-of-household': 22500
+        }
+        
+        # Get query parameters
+        filing_status = request.args.get('filing_status', 'married-joint')
+        use_actual_income = request.args.get('use_actual', 'false').lower() == 'true'
+        
+        # Validate filing status
+        if filing_status not in TAX_BRACKETS:
+            return jsonify({
+                'success': False,
+                'error': f'Invalid filing status. Must be one of: {", ".join(TAX_BRACKETS.keys())}'
+            }), 400
+        
+        # Calculate total annual gross income from all sources
+        total_annual_income = 0
+        income_breakdown = []
+        
+        for income in budget_data['income_sources']:
+            # Determine which income to use
+            if use_actual_income and income.get('actual_payments'):
+                # Use actual payments from the last 12 months
+                from datetime import datetime, timedelta
+                twelve_months_ago = datetime.now() - timedelta(days=365)
+                
+                recent_payments = [
+                    p for p in income['actual_payments']
+                    if datetime.fromisoformat(p['date']) >= twelve_months_ago
+                ]
+                
+                if recent_payments:
+                    annual_amount = sum(p['amount'] for p in recent_payments)
+                else:
+                    # Fall back to expected if no actual payments
+                    annual_amount = _calculate_annual_income(income['amount'], income['frequency'])
+            else:
+                # Use expected income
+                annual_amount = _calculate_annual_income(income['amount'], income['frequency'])
+            
+            total_annual_income += annual_amount
+            income_breakdown.append({
+                'name': income['name'],
+                'type': income['type'],
+                'earner': income.get('earner_name', 'Unassigned'),
+                'annual_amount': round(annual_amount, 2)
+            })
+        
+        # Calculate taxable income (subtract standard deduction)
+        standard_deduction = STANDARD_DEDUCTIONS[filing_status]
+        taxable_income = max(0, total_annual_income - standard_deduction)
+        
+        # Calculate tax liability using progressive brackets
+        brackets = TAX_BRACKETS[filing_status]
+        total_tax = 0
+        tax_by_bracket = []
+        previous_limit = 0
+        marginal_rate = 0
+        
+        for bracket_limit, rate in brackets:
+            if taxable_income <= previous_limit:
+                break
+            
+            # Calculate income in this bracket
+            income_in_bracket = min(taxable_income, bracket_limit) - previous_limit
+            
+            if income_in_bracket > 0:
+                tax_in_bracket = income_in_bracket * rate
+                total_tax += tax_in_bracket
+                marginal_rate = rate  # Last applied rate is marginal rate
+                
+                tax_by_bracket.append({
+                    'rate': rate,
+                    'rate_percent': round(rate * 100, 1),
+                    'income_in_bracket': round(income_in_bracket, 2),
+                    'tax_amount': round(tax_in_bracket, 2),
+                    'bracket_min': round(previous_limit, 2),
+                    'bracket_max': round(bracket_limit, 2) if bracket_limit != float('inf') else None
+                })
+            
+            previous_limit = bracket_limit
+        
+        # Calculate effective tax rate
+        effective_rate = (total_tax / total_annual_income) if total_annual_income > 0 else 0
+        
+        # Calculate after-tax income
+        after_tax_income = total_annual_income - total_tax
+        
+        # Calculate monthly values
+        monthly_gross = total_annual_income / 12
+        monthly_tax = total_tax / 12
+        monthly_net = after_tax_income / 12
+        
+        # Prepare response
+        return jsonify({
+            'success': True,
+            'filing_status': filing_status,
+            'filing_status_label': filing_status.replace('-', ' ').title(),
+            'use_actual_income': use_actual_income,
+            'income': {
+                'annual_gross': round(total_annual_income, 2),
+                'monthly_gross': round(monthly_gross, 2),
+                'breakdown': income_breakdown,
+                'total_sources': len(income_breakdown)
+            },
+            'deductions': {
+                'standard_deduction': round(standard_deduction, 2),
+                'taxable_income': round(taxable_income, 2)
+            },
+            'tax': {
+                'total_annual': round(total_tax, 2),
+                'total_monthly': round(monthly_tax, 2),
+                'effective_rate': round(effective_rate, 4),
+                'effective_rate_percent': round(effective_rate * 100, 2),
+                'marginal_rate': round(marginal_rate, 4),
+                'marginal_rate_percent': round(marginal_rate * 100, 1),
+                'by_bracket': tax_by_bracket
+            },
+            'after_tax': {
+                'annual': round(after_tax_income, 2),
+                'monthly': round(monthly_net, 2)
+            },
+            'paycheck_withholding': {
+                'weekly': round(total_tax / 52, 2),
+                'bi_weekly': round(total_tax / 26, 2),
+                'semi_monthly': round(total_tax / 24, 2),
+                'monthly': round(monthly_tax, 2)
+            },
+            'note': 'This is an estimate for federal income tax only. State and local taxes, FICA taxes, and other deductions are not included.'
+        })
+        
+    except Exception as e:
+        print(f"Error calculating tax estimate: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def _calculate_annual_income(amount, frequency):
+    """Helper function to convert any income frequency to annual amount"""
+    multipliers = {
+        'weekly': 52,
+        'bi-weekly': 26,
+        'monthly': 12,
+        'annual': 1
+    }
+    return amount * multipliers.get(frequency, 12)
+
+# ============================================================================
+# RETIREMENT ACCOUNTS ENDPOINTS
+# ============================================================================
+
+@app.route('/api/retirement-accounts', methods=['GET'])
+def get_retirement_accounts():
+    """Get all retirement accounts"""
+    try:
+        accounts = budget_data.get('retirement_accounts', [])
+        print(f"DEBUG: Found {len(accounts)} retirement accounts")
+        print(f"DEBUG: Accounts data: {accounts}")
+        
+        # Calculate year-to-date totals for each account
+        current_year = datetime.now().year
+        for account in accounts:
+            ytd_total = 0
+            ytd_employee = 0
+            ytd_employer = 0
+            
+            contributions = account.get('contributions', [])
+            for contrib in contributions:
+                contrib_date = datetime.fromisoformat(contrib['date'])
+                if contrib_date.year == current_year:
+                    ytd_total += contrib['amount']
+                    if contrib.get('contribution_type') == 'employer_match':
+                        ytd_employer += contrib['amount']
+                    else:
+                        ytd_employee += contrib['amount']
+            
+            account['ytd_total'] = round(ytd_total, 2)
+            account['ytd_employee'] = round(ytd_employee, 2)
+            account['ytd_employer'] = round(ytd_employer, 2)
+            
+            # Calculate remaining limit
+            limit = account.get('annual_limit', 0)
+            account['remaining_limit'] = round(limit - ytd_employee, 2)
+            account['limit_percentage'] = round((ytd_employee / limit * 100) if limit > 0 else 0, 2)
+        
+        return jsonify({
+            'success': True,
+            'accounts': accounts
+        })
+    except Exception as e:
+        print(f"Error getting retirement accounts: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts', methods=['POST'])
+def add_retirement_account():
+    """Add a new retirement account"""
+    try:
+        account_data = request.json
+        
+        # Ensure retirement_accounts exists
+        if 'retirement_accounts' not in budget_data:
+            budget_data['retirement_accounts'] = []
+        
+        # Generate new ID
+        existing_ids = [acc['id'] for acc in budget_data['retirement_accounts']]
+        new_id = max(existing_ids) + 1 if existing_ids else 1
+        
+        # Validate required fields
+        required_fields = ['account_name', 'account_type', 'contribution_type']
+        for field in required_fields:
+            if field not in account_data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }), 400
+        
+        # Set default values based on account type for 2025
+        account_type = account_data['account_type']
+        default_limits = {
+            '401k': 23500,
+            '403b': 23500,
+            'traditional_ira': 7000,
+            'roth_ira': 7000,
+            'sep_ira': 69000,
+            'simple_ira': 16000
+        }
+        
+        # Create new account
+        new_account = {
+            'id': new_id,
+            'account_name': account_data['account_name'],
+            'account_type': account_type,
+            'contribution_type': account_data['contribution_type'],
+            'annual_limit': account_data.get('annual_limit', default_limits.get(account_type, 0)),
+            'current_balance': account_data.get('current_balance', 0),
+            'employer_match_percent': account_data.get('employer_match_percent', 0),
+            'employer_match_limit': account_data.get('employer_match_limit', 0),
+            'linked_income_id': account_data.get('linked_income_id'),
+            'contribution_per_paycheck': account_data.get('contribution_per_paycheck', 0),
+            'notes': account_data.get('notes', ''),
+            'contributions': [],
+            'created_at': datetime.now().isoformat()
+        }
+        
+        budget_data['retirement_accounts'].append(new_account)
+        save_data()
+        
+        return jsonify({
+            'success': True,
+            'account': new_account
+        })
+    except Exception as e:
+        print(f"Error adding retirement account: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts/<int:account_id>', methods=['PUT'])
+def update_retirement_account(account_id):
+    """Update a retirement account"""
+    try:
+        account_data = request.json
+        
+        accounts = budget_data.get('retirement_accounts', [])
+        account_index = next((i for i, acc in enumerate(accounts) if acc['id'] == account_id), None)
+        
+        if account_index is None:
+            return jsonify({
+                'success': False,
+                'error': 'Account not found'
+            }), 404
+        
+        # Update account fields
+        account = accounts[account_index]
+        updatable_fields = [
+            'account_name', 'account_type', 'contribution_type', 'annual_limit',
+            'current_balance', 'employer_match_percent', 'employer_match_limit',
+            'linked_income_id', 'contribution_per_paycheck', 'notes'
+        ]
+        
+        for field in updatable_fields:
+            if field in account_data:
+                account[field] = account_data[field]
+        
+        account['updated_at'] = datetime.now().isoformat()
+        save_data()
+        
+        return jsonify({
+            'success': True,
+            'account': account
+        })
+    except Exception as e:
+        print(f"Error updating retirement account: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts/<int:account_id>', methods=['DELETE'])
+def delete_retirement_account(account_id):
+    """Delete a retirement account"""
+    try:
+        accounts = budget_data.get('retirement_accounts', [])
+        
+        account_index = next((i for i, acc in enumerate(accounts) if acc['id'] == account_id), None)
+        
+        if account_index is None:
+            return jsonify({
+                'success': False,
+                'error': 'Account not found'
+            }), 404
+        
+        deleted_account = accounts.pop(account_index)
+        save_data()
+        
+        return jsonify({
+            'success': True,
+            'deleted_account': deleted_account
+        })
+    except Exception as e:
+        print(f"Error deleting retirement account: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts/<int:account_id>/contributions', methods=['POST'])
+def add_contribution(account_id):
+    """Add a contribution to a retirement account"""
+    try:
+        contribution_data = request.json
+        
+        accounts = budget_data.get('retirement_accounts', [])
+        account_index = next((i for i, acc in enumerate(accounts) if acc['id'] == account_id), None)
+        
+        if account_index is None:
+            return jsonify({
+                'success': False,
+                'error': 'Account not found'
+            }), 404
+        
+        account = accounts[account_index]
+        
+        # Validate required fields
+        if 'amount' not in contribution_data or 'date' not in contribution_data:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields: amount and date'
+            }), 400
+        
+        # Generate contribution ID
+        existing_contrib_ids = [c.get('id', 0) for c in account.get('contributions', [])]
+        new_contrib_id = max(existing_contrib_ids) + 1 if existing_contrib_ids else 1
+        
+        # Create contribution
+        new_contribution = {
+            'id': new_contrib_id,
+            'date': contribution_data['date'],
+            'amount': contribution_data['amount'],
+            'contribution_type': contribution_data.get('contribution_type', 'employee'),
+            'note': contribution_data.get('note', ''),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Initialize contributions list if it doesn't exist
+        if 'contributions' not in account:
+            account['contributions'] = []
+        
+        account['contributions'].append(new_contribution)
+        
+        # Update current balance
+        account['current_balance'] = account.get('current_balance', 0) + contribution_data['amount']
+        
+        save_data()
+        
+        return jsonify({
+            'success': True,
+            'contribution': new_contribution,
+            'account': account
+        })
+    except Exception as e:
+        print(f"Error adding contribution: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts/<int:account_id>/contributions/<int:contribution_id>', methods=['DELETE'])
+def delete_contribution(account_id, contribution_id):
+    """Delete a contribution from a retirement account"""
+    try:
+        accounts = budget_data.get('retirement_accounts', [])
+        
+        account_index = next((i for i, acc in enumerate(accounts) if acc['id'] == account_id), None)
+        
+        if account_index is None:
+            return jsonify({
+                'success': False,
+                'error': 'Account not found'
+            }), 404
+        
+        account = accounts[account_index]
+        contributions = account.get('contributions', [])
+        
+        contrib_index = next((i for i, c in enumerate(contributions) if c['id'] == contribution_id), None)
+        
+        if contrib_index is None:
+            return jsonify({
+                'success': False,
+                'error': 'Contribution not found'
+            }), 404
+        
+        deleted_contribution = contributions.pop(contrib_index)
+        
+        # Update current balance
+        account['current_balance'] = account.get('current_balance', 0) - deleted_contribution['amount']
+        
+        save_data()
+        
+        return jsonify({
+            'success': True,
+            'deleted_contribution': deleted_contribution
+        })
+    except Exception as e:
+        print(f"Error deleting contribution: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/retirement-accounts/summary', methods=['GET'])
+def get_retirement_summary():
+    """Get summary of all retirement accounts and contributions"""
+    try:
+        accounts = budget_data.get('retirement_accounts', [])
+        current_year = datetime.now().year
+        
+        total_balance = 0
+        total_ytd_contributions = 0
+        total_ytd_employee = 0
+        total_ytd_employer = 0
+        
+        for account in accounts:
+            total_balance += account.get('current_balance', 0)
+            
+            contributions = account.get('contributions', [])
+            for contrib in contributions:
+                contrib_date = datetime.fromisoformat(contrib['date'])
+                if contrib_date.year == current_year:
+                    total_ytd_contributions += contrib['amount']
+                    if contrib.get('contribution_type') == 'employer_match':
+                        total_ytd_employer += contrib['amount']
+                    else:
+                        total_ytd_employee += contrib['amount']
+        
+        return jsonify({
+            'success': True,
+            'summary': {
+                'total_accounts': len(accounts),
+                'total_balance': round(total_balance, 2),
+                'ytd_contributions': round(total_ytd_contributions, 2),
+                'ytd_employee_contributions': round(total_ytd_employee, 2),
+                'ytd_employer_contributions': round(total_ytd_employer, 2),
+                'current_year': current_year
+            }
+        })
+    except Exception as e:
+        print(f"Error getting retirement summary: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
         }), 500
 
 # Update endpoints
