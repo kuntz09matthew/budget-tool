@@ -1,6 +1,6 @@
 {
   "name": "budget-tool",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "A local desktop budgeting application with Python backend",
   "main": "electron/main.js",
   "scripts": {
@@ -32,7 +32,15 @@
     "files": [
       "electron/**/*",
       "server/**/*",
-      "frontend/**/*"
+      "frontend/**/*",
+      "python-embed/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "python-embed",
+        "to": "python",
+        "filter": ["**/*"]
+      }
     ],
     "win": {
       "target": "nsis",

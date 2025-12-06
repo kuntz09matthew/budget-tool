@@ -15,12 +15,29 @@ function startServer() {
   try {
     const serverPath = path.join(__dirname, '../server/app.py');
     
-    // Use python or python3 depending on system
-    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+    // Check for bundled Python first, then system Python
+    let pythonCommand;
+    const bundledPython = path.join(process.resourcesPath, 'python', 'python.exe');
+    
+    if (require('fs').existsSync(bundledPython)) {
+      pythonCommand = bundledPython;
+      console.log('Using bundled Python');
+    } else {
+      pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+      console.log('Using system Python');
+    }
     
     serverProcess = spawn(pythonCommand, [serverPath], {
-      stdio: 'pipe', // Changed from 'inherit' to 'pipe' to capture output
+      stdio: 'pipe',
       cwd: path.join(__dirname, '../server')
+    });
+
+    serverProcess.stdout.on('data', (data) => {
+      console.log(`Python: ${data}`);
+    });
+
+    serverProcess.stderr.on('data', (data) => {
+      console.error(`Python Error: ${data}`);
     });
 
     serverProcess.on('error', (err) => {
