@@ -9,6 +9,13 @@ let serverProcess;
 // Configure auto-updater
 autoUpdater.autoDownload = false; // Don't auto-download, let user choose
 autoUpdater.autoInstallOnAppQuit = false; // Don't auto-install, let user choose
+autoUpdater.allowDowngrade = false; // Only allow upgrades
+autoUpdater.allowPrerelease = false; // Only stable releases
+
+// Enable differential downloads (smart binary diff downloads)
+// This will automatically use .nsis.7z differential packages when available
+autoUpdater.logger = require('electron-log');
+autoUpdater.logger.transports.file.level = 'info';
 
 // Start the Python Flask server
 function startServer() {

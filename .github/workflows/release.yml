@@ -49,6 +49,8 @@ jobs:
           name: release-${{ matrix.os }}
           path: |
             dist/*.exe
+            dist/*.nsis.7z
+            dist/*.blockmap
             dist/*.dmg
             dist/*.AppImage
             dist/*.yml
@@ -59,9 +61,12 @@ jobs:
         with:
           files: |
             dist/*.exe
+            dist/*.nsis.7z
+            dist/*.blockmap
             dist/*.dmg
             dist/*.AppImage
             dist/*.yml
+            dist/*.zip
           draft: false
           prerelease: false
           generate_release_notes: true
