@@ -12,21 +12,32 @@ autoUpdater.autoInstallOnAppQuit = false; // Don't auto-install, let user choose
 
 // Start the Python Flask server
 function startServer() {
-  const serverPath = path.join(__dirname, '../server/app.py');
-  
-  // Use python or python3 depending on system
-  const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
-  
-  serverProcess = spawn(pythonCommand, [serverPath], {
-    stdio: 'inherit',
-    cwd: path.join(__dirname, '../server')
-  });
+  try {
+    const serverPath = path.join(__dirname, '../server/app.py');
+    
+    // Use python or python3 depending on system
+    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+    
+    serverProcess = spawn(pythonCommand, [serverPath], {
+      stdio: 'pipe', // Changed from 'inherit' to 'pipe' to capture output
+      cwd: path.join(__dirname, '../server')
+    });
 
-  serverProcess.on('error', (err) => {
-    console.error('Failed to start Python server:', err);
-  });
-  
-  console.log('Python Flask server starting...');
+    serverProcess.on('error', (err) => {
+      console.error('Failed to start Python server:', err);
+      console.log('App will run in frontend-only mode');
+      serverProcess = null;
+    });
+    
+    serverProcess.on('exit', (code) => {
+      console.log(`Python server exited with code ${code}`);
+    });
+    
+    console.log('Python Flask server starting...');
+  } catch (err) {
+    console.error('Could not start server:', err);
+    console.log('App will run in frontend-only mode');
+  }
 }
 
 // Stop the Express server
@@ -49,10 +60,23 @@ function createWindow() {
     icon: path.join(__dirname, '../assets/icon.png')
   });
 
-  // Load the frontend (served by Flask)
-  const startUrl = 'http://localhost:5000';
+  // Try to load from Flask server first, fallback to local file
+  const serverUrl = 'http://localhost:5000';
+  const localFile = `file://${path.join(__dirname, '../frontend/index.html')}`;
   
-  mainWindow.loadURL(startUrl);
+  // Try server, fallback to local file after 3 seconds
+  mainWindow.loadURL(serverUrl).catch(() => {
+    console.log('Flask server not available, loading local file');
+    mainWindow.loadFile(path.join(__dirname, '../frontend/index.html'));
+  });
+  
+  // Fallback if server doesn't respond
+  setTimeout(() => {
+    if (!mainWindow.webContents.getURL().includes('localhost:5000')) {
+      console.log('Server timeout, loading local file');
+      mainWindow.loadFile(path.join(__dirname, '../frontend/index.html'));
+    }
+  }, 3000);
 
   // Open DevTools in development
   if (process.env.NODE_ENV === 'development') {
@@ -167,8 +191,9 @@ ipcMain.on('install-update', () => {
 
 app.on('ready', () => {
   startServer();
-  // Wait for Flask server to start
-  setTimeout(createWindow, 3000);
+  // Wait briefly for Flask server to start, then open window
+  // Window will fallback to local files if server isn't ready
+  setTimeout(createWindow, 1000);
 });
 
 app.on('window-all-closed', () => {
