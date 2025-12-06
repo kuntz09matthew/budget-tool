@@ -135,10 +135,47 @@ if (window.electron) {
     });
 }
 
+// Navigation handling
+function showSection(section) {
+    // Hide all sections
+    document.querySelectorAll('.welcome-section, .budget-section, .next-steps, .status-section').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Update nav button states
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected section
+    if (section === 'home') {
+        document.querySelector('.welcome-section').style.display = 'block';
+        document.querySelector('.budget-section').style.display = 'block';
+        document.querySelector('.next-steps').style.display = 'block';
+        document.getElementById('menu-home').classList.add('active');
+    } else if (section === 'status') {
+        document.getElementById('status-section').style.display = 'block';
+        document.getElementById('menu-status').classList.add('active');
+        checkServerHealth(); // Refresh status when viewing
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     checkServerHealth();
     
     // Refresh data every 30 seconds
     setInterval(loadBudgetData, 30000);
+    
+    // Navigation event listeners
+    document.getElementById('menu-home').addEventListener('click', () => showSection('home'));
+    document.getElementById('menu-status').addEventListener('click', () => showSection('status'));
+    
+    // Refresh status button
+    document.getElementById('refresh-status').addEventListener('click', () => {
+        checkServerHealth();
+    });
+    
+    // Show home section by default
+    showSection('home');
 });

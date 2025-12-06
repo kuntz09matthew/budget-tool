@@ -11,15 +11,13 @@
         <header class="app-header">
             <h1>💰 Budget Tool</h1>
             <p class="subtitle">Your Local Budgeting Assistant</p>
+            <nav class="app-nav">
+                <button id="menu-home" class="nav-btn active">Home</button>
+                <button id="menu-status" class="nav-btn">Server Status</button>
+            </nav>
         </header>
 
         <main class="app-main">
-            <!-- Server Status Card -->
-            <div class="status-card">
-                <h2>Server Status</h2>
-                <p id="server-status" class="status-checking">Checking...</p>
-            </div>
-
             <!-- Update Banner (hidden by default) -->
             <div id="update-banner" class="update-banner" style="display: none;">
                 <p id="update-message"></p>
@@ -82,7 +80,20 @@
                     <li>📈 Create data visualization (charts/graphs)</li>
                 </ul>
             </div>
+
+            <!-- Server Status Section (hidden by default) -->
+            <div id="status-section" class="status-section" style="display: none;">
+                <h2>Server Status</h2>
+                <div class="status-card">
+                    <p id="server-status" class="status-checking">Checking...</p>
+                    <button id="refresh-status" class="refresh-btn">Refresh Status</button>
+                </div>
+            </div>
         </main>
+
+        <footer class="app-footer">
+            <p>v<span id="app-version">1.2.10</span></p>
+        </footer>
     </div>
 
     <script src="app.js"></script>
