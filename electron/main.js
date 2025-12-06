@@ -222,9 +222,9 @@ ipcMain.on('install-update', () => {
 
 app.on('ready', () => {
   startServer();
-  // Wait briefly for Flask server to start, then open window
+  // Wait 2 seconds for Flask server to start, then open window
   // Window will fallback to local files if server isn't ready
-  setTimeout(createWindow, 1000);
+  setTimeout(createWindow, 2000);
 });
 
 app.on('window-all-closed', () => {

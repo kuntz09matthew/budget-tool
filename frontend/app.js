@@ -1,9 +1,12 @@
+// Base URL for API calls - always use localhost:5000
+const API_BASE_URL = 'http://localhost:5000';
+
 // Check server health on load
 async function checkServerHealth() {
     const statusElement = document.getElementById('server-status');
     
     try {
-        const response = await fetch('/api/health');
+        const response = await fetch(`${API_BASE_URL}/api/health`);
         const data = await response.json();
         
         if (data.status) {
@@ -22,7 +25,7 @@ async function checkServerHealth() {
 // Load budget data
 async function loadBudgetData() {
     try {
-        const response = await fetch('/api/budget');
+        const response = await fetch(`${API_BASE_URL}/api/budget`);
         const data = await response.json();
         
         // Update transaction count
@@ -40,7 +43,7 @@ let installerPath = null;
 
 async function checkForUpdates() {
     try {
-        const response = await fetch('/api/updates/check');
+        const response = await fetch(`${API_BASE_URL}/api/updates/check`);
         const data = await response.json();
         
         if (data.available) {
@@ -69,7 +72,7 @@ function showUpdateBanner(updateInfo) {
         updateButton.textContent = 'Downloading...';
         
         try {
-            const response = await fetch('/api/updates/download', { method: 'POST' });
+            const response = await fetch(`${API_BASE_URL}/api/updates/download`, { method: 'POST' });
             const result = await response.json();
             
             if (result.success) {
@@ -98,7 +101,7 @@ async function installUpdate() {
     if (!installerPath) return;
     
     try {
-        await fetch('/api/updates/install', {
+        await fetch(`${API_BASE_URL}/api/updates/install`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path: installerPath })
