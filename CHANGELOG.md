@@ -3,6 +3,24 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.11] - Released
+*2025-12-06 05:18:15*
+
+Improved: Modified main.js, Modified preload.js, Enhanced user interface in app.js, Enhanced user interface in index.html, Enhanced user interface in styles.css, Updated backend functionality in app.py
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+- Added new file: FINANCIAL_ASSISTANT_ROADMAP.md
+
+### 📝 Changes
+- Modified main.js
+- Modified preload.js
+- Enhanced user interface in app.js
+- Enhanced user interface in index.html
+- Enhanced user interface in styles.css
+- Updated backend functionality in app.py
+
+
 ## [1.5.10] - Released
 *2025-12-06 03:59:45*
 
