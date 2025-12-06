@@ -3,6 +3,18 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.10] - Released
+*2025-12-06 03:59:45*
+
+Improved: Enhanced user interface in index.html
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+
+### 📝 Changes
+- Enhanced user interface in index.html
+
+
 ## [1.5.9] - Released
 *2025-12-06 03:53:32*
 
