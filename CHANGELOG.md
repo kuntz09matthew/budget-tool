@@ -3,6 +3,19 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.9] - Released
+*2025-12-06 03:53:32*
+
+Fixed: Fixed application crashes
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+- Updated dependencies
+
+### 📝 Changes
+- Fixed application crashes
+
+
 ## [1.5.8] - Released
 *2025-12-06 03:48:00*
 
