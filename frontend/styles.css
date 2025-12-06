@@ -32,6 +32,16 @@ body {
     margin-bottom: 0.5rem;
 }
 
+.version-tag {
+    font-size: 0.9rem;
+    color: #10b981;
+    background: #d1fae5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
 .subtitle {
     color: #666;
     font-size: 1.1rem;
