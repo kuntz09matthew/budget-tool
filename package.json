@@ -52,6 +52,14 @@
       "target": "nsis",
       "icon": "assets/icon.ico"
     },
+    "linux": {
+      "target": "AppImage",
+      "category": "Finance"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.finance"
+    },
     "publish": {
       "provider": "github",
       "owner": "kuntz09matthew",
