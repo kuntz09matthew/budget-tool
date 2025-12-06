@@ -123,6 +123,9 @@ async function loadBudgetData() {
         loadMoneyPerDay();
         loadBudgetHealthScore();
         loadMonthComparison();
+        loadUpcomingBills();
+        loadSpendingPatterns();
+        loadSmartRecommendations();
         
         console.log('Budget data loaded:', data);
     } catch (error) {
@@ -1685,6 +1688,231 @@ async function loadMonthComparison() {
         const section = document.getElementById('month-comparison-section');
         if (section) {
             section.style.display = 'none';
+        }
+    }
+}
+
+// Load and display upcoming bills (next 7 days)
+async function loadUpcomingBills() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/upcoming-bills`);
+        const data = await response.json();
+        
+        const container = document.getElementById('upcoming-bills-list');
+        const summary = document.getElementById('upcoming-bills-summary');
+        const totalDue = document.getElementById('bills-total-due');
+        const billsCount = document.getElementById('bills-count');
+        const placeholder = document.getElementById('bills-placeholder');
+        
+        if (!container) return;
+        
+        // Update summary
+        if (data.success && data.bills && data.bills.length > 0) {
+            if (summary) {
+                summary.style.display = 'flex';
+            }
+            if (totalDue) {
+                totalDue.textContent = `$${formatCurrency(data.total_due)}`;
+            }
+            if (billsCount) {
+                billsCount.textContent = data.unpaid_count;
+            }
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            
+            // Display bills
+            container.innerHTML = data.bills.map(bill => {
+                const urgencyClass = bill.urgency; // 'urgent', 'soon', or 'upcoming'
+                const urgencyText = bill.days_until_due === 0 ? 'DUE TODAY' :
+                    bill.days_until_due === 1 ? 'DUE TOMORROW' :
+                    `${bill.days_until_due} DAYS`;
+                
+                const paidClass = bill.is_paid ? ' paid' : '';
+                
+                return `
+                    <div class="bill-item ${urgencyClass}${paidClass}">
+                        <div class="bill-info">
+                            <div class="bill-name">
+                                ${bill.name}
+                                ${bill.is_autopay ? '<span class="bill-autopay-badge">AUTO-PAY</span>' : ''}
+                                ${bill.is_paid ? '<span class="bill-paid-badge">✓ PAID</span>' : ''}
+                            </div>
+                            <div class="bill-details">
+                                <span class="bill-category">📁 ${bill.category}</span>
+                                <span class="bill-due-date">📅 Due ${bill.due_date_formatted}</span>
+                            </div>
+                        </div>
+                        <div class="bill-right">
+                            <div class="bill-amount">$${formatCurrency(bill.amount)}</div>
+                            <div class="bill-urgency ${urgencyClass}">${urgencyText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            // No upcoming bills
+            if (summary) {
+                summary.style.display = 'none';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            container.innerHTML = '';
+        }
+        
+    } catch (error) {
+        console.error('Failed to load upcoming bills:', error);
+        const placeholder = document.getElementById('bills-placeholder');
+        if (placeholder) {
+            placeholder.textContent = 'Unable to load bills';
+            placeholder.style.display = 'block';
+        }
+    }
+}
+
+// Load and display spending pattern insights
+async function loadSpendingPatterns() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/spending-patterns`);
+        const data = await response.json();
+        
+        const loading = document.getElementById('patterns-loading');
+        const alertsContainer = document.getElementById('patterns-alerts');
+        const insightsContainer = document.getElementById('patterns-insights');
+        const placeholder = document.getElementById('patterns-placeholder');
+        
+        if (loading) {
+            loading.style.display = 'none';
+        }
+        
+        if (!data.success || !data.has_sufficient_data) {
+            // Not enough data to show patterns
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            return;
+        }
+        
+        // Display alerts (overspending warnings)
+        if (alertsContainer && data.alerts && data.alerts.length > 0) {
+            alertsContainer.style.display = 'flex';
+            alertsContainer.innerHTML = data.alerts.slice(0, 3).map(alert => `
+                <div class="pattern-alert ${alert.type}">
+                    <div class="pattern-icon">${alert.icon}</div>
+                    <div class="pattern-content">
+                        <div class="pattern-message">${alert.message}</div>
+                        <div class="pattern-detail">${alert.detail}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Display insights (positive trends or useful information)
+        if (insightsContainer && data.insights && data.insights.length > 0) {
+            insightsContainer.style.display = 'flex';
+            insightsContainer.innerHTML = data.insights.slice(0, 3).map(insight => `
+                <div class="pattern-alert ${insight.type}">
+                    <div class="pattern-icon">${insight.icon}</div>
+                    <div class="pattern-content">
+                        <div class="pattern-message">${insight.message}</div>
+                        ${insight.detail ? `<div class="pattern-detail">${insight.detail}</div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // If no alerts or insights, show placeholder
+        if ((!data.alerts || data.alerts.length === 0) && (!data.insights || data.insights.length === 0)) {
+            if (placeholder) {
+                placeholder.innerHTML = '<p class="placeholder-text">✅ Your spending patterns look normal - no alerts at this time</p>';
+                placeholder.style.display = 'block';
+            }
+        }
+        
+    } catch (error) {
+        console.error('Failed to load spending patterns:', error);
+        const loading = document.getElementById('patterns-loading');
+        const placeholder = document.getElementById('patterns-placeholder');
+        
+        if (loading) {
+            loading.style.display = 'none';
+        }
+        if (placeholder) {
+            placeholder.innerHTML = '<p class="placeholder-text">Unable to load spending patterns</p>';
+            placeholder.style.display = 'block';
+        }
+    }
+}
+
+// Load and display smart recommendations
+async function loadSmartRecommendations() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/smart-recommendations`);
+        const data = await response.json();
+        
+        const container = document.getElementById('smart-recommendations');
+        const priorityActionsContainer = document.getElementById('priority-actions-container');
+        const priorityActionsList = document.getElementById('priority-actions-list');
+        const recommendationsList = document.getElementById('recommendations-list');
+        
+        if (!data.success || (!data.priority_actions?.length && !data.recommendations?.length)) {
+            // No recommendations to show
+            if (container) {
+                container.style.display = 'none';
+            }
+            return;
+        }
+        
+        // Show the recommendations container
+        if (container) {
+            container.style.display = 'block';
+        }
+        
+        // Display priority actions (critical/urgent)
+        if (priorityActionsContainer && priorityActionsList && data.priority_actions && data.priority_actions.length > 0) {
+            priorityActionsContainer.style.display = 'block';
+            priorityActionsList.innerHTML = data.priority_actions.map(action => `
+                <div class="recommendation-item priority-${action.priority}">
+                    <div class="recommendation-icon">${action.icon}</div>
+                    <div class="recommendation-content">
+                        <div class="recommendation-main">
+                            <div class="recommendation-action">${action.action}</div>
+                            <div class="recommendation-category">${action.category}</div>
+                        </div>
+                        <div class="recommendation-reason">${action.reason}</div>
+                        <div class="recommendation-impact">${action.impact}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else if (priorityActionsContainer) {
+            priorityActionsContainer.style.display = 'none';
+        }
+        
+        // Display regular recommendations
+        if (recommendationsList && data.recommendations && data.recommendations.length > 0) {
+            recommendationsList.innerHTML = data.recommendations.map(rec => `
+                <div class="recommendation-item priority-${rec.priority}">
+                    <div class="recommendation-icon">${rec.icon}</div>
+                    <div class="recommendation-content">
+                        <div class="recommendation-main">
+                            <div class="recommendation-action">${rec.action}</div>
+                            <div class="recommendation-category">${rec.category}</div>
+                        </div>
+                        <div class="recommendation-reason">${rec.reason}</div>
+                        <div class="recommendation-impact">${rec.impact}</div>
+                    </div>
+                </div>
+            `).join('');
+        } else if (recommendationsList) {
+            recommendationsList.innerHTML = '<p class="placeholder-text">✅ No recommendations at this time - you\'re doing great!</p>';
+        }
+        
+    } catch (error) {
+        console.error('Failed to load smart recommendations:', error);
+        const container = document.getElementById('smart-recommendations');
+        if (container) {
+            container.style.display = 'none';
         }
     }
 }

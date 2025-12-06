@@ -91,6 +91,215 @@ def save_data():
 # Load data on startup
 load_data()
 
+# Add test data for demonstration (only in development mode)
+def load_test_data():
+    """Load sample data for testing Phase 3 features"""
+    from datetime import datetime, timedelta
+    
+    # Only load test data if the data file is empty or doesn't exist
+    if budget_data['accounts'] or budget_data['income_sources'] or budget_data['transactions']:
+        print("Existing data found. Skipping test data load.")
+        return
+    
+    print("Loading test data for demonstration...")
+    today = datetime.now()
+    
+    # Sample Accounts
+    budget_data['accounts'] = [
+        {
+            'id': 1,
+            'name': 'Primary Checking',
+            'type': 'checking',
+            'balance': 2500.00,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 2,
+            'name': 'Emergency Savings',
+            'type': 'savings',
+            'balance': 8500.00,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 3,
+            'name': 'Credit Card',
+            'type': 'credit',
+            'balance': -450.00,
+            'created_at': datetime.now().isoformat()
+        }
+    ]
+    
+    # Sample Income Sources
+    budget_data['income_sources'] = [
+        {
+            'id': 1,
+            'name': 'Primary Job Salary',
+            'type': 'salary',
+            'amount': 5500.00,
+            'frequency': 'monthly',
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 2,
+            'name': 'Freelance Work',
+            'type': 'freelance',
+            'amount': 800.00,
+            'frequency': 'monthly',
+            'created_at': datetime.now().isoformat()
+        }
+    ]
+    
+    # Sample Fixed Expenses with various due dates
+    budget_data['fixed_expenses'] = [
+        {
+            'id': 1,
+            'name': 'Rent/Mortgage',
+            'category': 'Housing',
+            'amount': 1800.00,
+            'due_day': today.day + 2,  # Due in 2 days (urgent)
+            'is_autopay': False,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 2,
+            'name': 'Car Payment',
+            'category': 'Transportation',
+            'amount': 450.00,
+            'due_day': today.day + 5,  # Due in 5 days (soon)
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 3,
+            'name': 'Electric Bill',
+            'category': 'Utilities',
+            'amount': 120.00,
+            'due_day': today.day + 6,  # Due in 6 days
+            'is_autopay': False,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 4,
+            'name': 'Internet',
+            'category': 'Utilities',
+            'amount': 89.99,
+            'due_day': today.day + 15,  # Due later (not in 7-day window)
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 5,
+            'name': 'Car Insurance',
+            'category': 'Insurance',
+            'amount': 180.00,
+            'due_day': today.day + 1,  # Due tomorrow (critical)
+            'is_autopay': False,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        },
+        {
+            'id': 6,
+            'name': 'Phone Bill',
+            'category': 'Utilities',
+            'amount': 95.00,
+            'due_day': today.day + 20,
+            'is_autopay': True,
+            'is_paid': False,
+            'created_at': datetime.now().isoformat()
+        }
+    ]
+    
+    # Sample Transactions - Create realistic spending patterns
+    transaction_id = 1
+    
+    # Current month transactions (for MTD spending and velocity)
+    current_month_start = datetime(today.year, today.month, 1)
+    categories_current = [
+        ('Groceries', [85, 120, 95, 110, 88]),  # Higher this month
+        ('Dining Out', [45, 60, 35, 52, 48]),
+        ('Gas', [55, 60, 58]),
+        ('Entertainment', [25, 40, 30]),
+        ('Miscellaneous', [20, 35, 15, 28])
+    ]
+    
+    for category, amounts in categories_current:
+        for i, amount in enumerate(amounts):
+            budget_data['transactions'].append({
+                'id': transaction_id,
+                'date': (current_month_start + timedelta(days=i*2 + 1)).isoformat(),
+                'amount': amount,
+                'category': category,
+                'description': f'{category} purchase',
+                'created_at': datetime.now().isoformat()
+            })
+            transaction_id += 1
+    
+    # Previous month transactions (for pattern comparison)
+    prev_month = today.month - 1 if today.month > 1 else 12
+    prev_year = today.year if today.month > 1 else today.year - 1
+    prev_month_start = datetime(prev_year, prev_month, 1)
+    
+    categories_prev = [
+        ('Groceries', [65, 70, 68, 72, 69, 71, 67, 70]),  # Lower last month (will trigger alert)
+        ('Dining Out', [40, 38, 42, 45, 41, 39, 43]),
+        ('Gas', [52, 55, 54, 53, 56]),
+        ('Entertainment', [30, 35, 28, 32]),
+        ('Miscellaneous', [18, 22, 25, 20])
+    ]
+    
+    for category, amounts in categories_prev:
+        for i, amount in enumerate(amounts):
+            budget_data['transactions'].append({
+                'id': transaction_id,
+                'date': (prev_month_start + timedelta(days=i*3)).isoformat(),
+                'amount': amount,
+                'category': category,
+                'description': f'{category} purchase',
+                'created_at': datetime.now().isoformat()
+            })
+            transaction_id += 1
+    
+    # Two months ago transactions (for better pattern analysis)
+    two_months_ago = prev_month - 1 if prev_month > 1 else 12
+    two_months_year = prev_year if prev_month > 1 else prev_year - 1
+    two_months_start = datetime(two_months_year, two_months_ago, 1)
+    
+    categories_two_months = [
+        ('Groceries', [68, 72, 70, 71, 69, 73, 68]),
+        ('Dining Out', [42, 45, 40, 43, 41]),
+        ('Gas', [54, 56, 55, 57]),
+        ('Entertainment', [32, 35, 30]),
+        ('Miscellaneous', [20, 24, 22])
+    ]
+    
+    for category, amounts in categories_two_months:
+        for i, amount in enumerate(amounts):
+            budget_data['transactions'].append({
+                'id': transaction_id,
+                'date': (two_months_start + timedelta(days=i*3)).isoformat(),
+                'amount': amount,
+                'category': category,
+                'description': f'{category} purchase',
+                'created_at': datetime.now().isoformat()
+            })
+            transaction_id += 1
+    
+    # Save the test data
+    save_data()
+    print(f"Test data loaded successfully!")
+    print(f"  - {len(budget_data['accounts'])} accounts")
+    print(f"  - {len(budget_data['income_sources'])} income sources")
+    print(f"  - {len(budget_data['fixed_expenses'])} fixed expenses")
+    print(f"  - {len(budget_data['transactions'])} transactions")
+
+# Load test data in development mode
+if not os.environ.get('BUDGET_APP_DATA_DIR') or os.environ.get('LOAD_TEST_DATA', 'true').lower() == 'true':
+    load_test_data()
+
 # Serve frontend
 @app.route('/')
 def index():
@@ -1687,6 +1896,573 @@ def get_month_comparison():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e), 'has_data': False}), 500
+
+@app.route('/api/dashboard/upcoming-bills', methods=['GET'])
+def get_upcoming_bills():
+    """
+    Get list of bills due in the next 7 days
+    Returns detailed information about each upcoming bill
+    """
+    from datetime import datetime, timedelta
+    from calendar import monthrange
+    
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        current_day = now.day
+        days_in_month = monthrange(current_year, current_month)[1]
+        
+        upcoming_bills = []
+        total_due = 0
+        
+        for expense in budget_data['fixed_expenses']:
+            due_day = expense.get('due_day')
+            if due_day:
+                try:
+                    due_day = int(due_day)
+                    amount = float(expense.get('amount', 0))
+                    
+                    # Calculate days until due
+                    days_until_due = due_day - current_day
+                    if days_until_due < 0:
+                        days_until_due += days_in_month
+                    
+                    # Check if bill is due in next 7 days
+                    if 0 <= days_until_due <= 7:
+                        # Calculate the actual due date
+                        if due_day >= current_day:
+                            due_date = datetime(current_year, current_month, due_day)
+                        else:
+                            # Bill is due next month
+                            next_month = current_month + 1 if current_month < 12 else 1
+                            next_year = current_year if current_month < 12 else current_year + 1
+                            due_date = datetime(next_year, next_month, due_day)
+                        
+                        bill_info = {
+                            'id': expense.get('id'),
+                            'name': expense.get('name', 'Unnamed Bill'),
+                            'amount': round(amount, 2),
+                            'due_day': due_day,
+                            'due_date': due_date.strftime('%Y-%m-%d'),
+                            'due_date_formatted': due_date.strftime('%b %d, %Y'),
+                            'days_until_due': days_until_due,
+                            'category': expense.get('category', 'Other'),
+                            'is_autopay': expense.get('is_autopay', False),
+                            'is_paid': expense.get('is_paid', False),
+                            'urgency': 'urgent' if days_until_due <= 2 else 'soon' if days_until_due <= 5 else 'upcoming'
+                        }
+                        
+                        upcoming_bills.append(bill_info)
+                        if not bill_info['is_paid']:
+                            total_due += amount
+                            
+                except (ValueError, TypeError) as e:
+                    print(f"Error processing expense {expense.get('name')}: {e}")
+                    continue
+        
+        # Sort by days until due (most urgent first)
+        upcoming_bills.sort(key=lambda x: x['days_until_due'])
+        
+        return jsonify({
+            'success': True,
+            'bills': upcoming_bills,
+            'total_count': len(upcoming_bills),
+            'total_due': round(total_due, 2),
+            'unpaid_count': len([b for b in upcoming_bills if not b['is_paid']])
+        })
+        
+    except Exception as e:
+        print(f"Error in upcoming bills: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e), 'bills': [], 'total_count': 0, 'total_due': 0}), 500
+
+@app.route('/api/dashboard/spending-patterns', methods=['GET'])
+def get_spending_patterns():
+    """
+    Analyze historical spending patterns and compare with current month
+    Detects anomalies and provides insights about spending habits
+    """
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    import statistics
+    
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        current_day = now.day
+        
+        # Get transactions grouped by category and month
+        category_history = defaultdict(lambda: defaultdict(list))
+        current_month_spending = defaultdict(float)
+        
+        for transaction in budget_data['transactions']:
+            try:
+                trans_date = datetime.fromisoformat(transaction['date'])
+                amount = float(transaction.get('amount', 0))
+                category = transaction.get('category', 'Miscellaneous')
+                
+                if amount <= 0:  # Only analyze expenses
+                    continue
+                
+                # Track current month spending
+                if trans_date.year == current_year and trans_date.month == current_month:
+                    current_month_spending[category] += amount
+                
+                # Build historical data (last 6 months, excluding current month)
+                month_key = f"{trans_date.year}-{trans_date.month:02d}"
+                if not (trans_date.year == current_year and trans_date.month == current_month):
+                    category_history[category][month_key].append(amount)
+                    
+            except (ValueError, KeyError) as e:
+                continue
+        
+        # Calculate patterns and anomalies
+        patterns = []
+        alerts = []
+        insights = []
+        
+        # For each category with history, analyze patterns
+        for category, monthly_data in category_history.items():
+            if len(monthly_data) < 2:  # Need at least 2 months of history
+                continue
+            
+            # Calculate monthly totals for this category
+            monthly_totals = [sum(transactions) for transactions in monthly_data.values()]
+            
+            if not monthly_totals:
+                continue
+            
+            # Calculate statistics
+            avg_monthly_spend = statistics.mean(monthly_totals)
+            std_dev = statistics.stdev(monthly_totals) if len(monthly_totals) > 1 else 0
+            min_spend = min(monthly_totals)
+            max_spend = max(monthly_totals)
+            
+            # Get current month spending for this category
+            current_spend = current_month_spending.get(category, 0)
+            
+            # Project to end of month
+            days_in_month = 30  # Simplified
+            if current_day > 0:
+                daily_rate = current_spend / current_day
+                projected_spend = daily_rate * days_in_month
+            else:
+                projected_spend = current_spend
+            
+            # Detect anomalies (spending significantly different from average)
+            variance_threshold = 1.5  # 50% above average
+            deviation_threshold = 2.0  # 2 standard deviations
+            
+            pattern_data = {
+                'category': category,
+                'icon': get_category_icon(category),
+                'historical_avg': round(avg_monthly_spend, 2),
+                'current_mtd': round(current_spend, 2),
+                'projected': round(projected_spend, 2),
+                'min': round(min_spend, 2),
+                'max': round(max_spend, 2),
+                'months_of_data': len(monthly_totals),
+                'variance': round(((projected_spend - avg_monthly_spend) / avg_monthly_spend * 100) if avg_monthly_spend > 0 else 0, 1),
+                'status': 'normal'
+            }
+            
+            # Determine status and generate alerts
+            if projected_spend > avg_monthly_spend * variance_threshold:
+                pattern_data['status'] = 'high'
+                if avg_monthly_spend > 50:  # Only alert on significant categories
+                    alerts.append({
+                        'type': 'warning',
+                        'icon': '⚠️',
+                        'category': category,
+                        'message': f"{category}: Spending {pattern_data['variance']}% above average",
+                        'detail': f"Projected ${projected_spend:.2f} vs typical ${avg_monthly_spend:.2f}",
+                        'severity': 'medium' if projected_spend < avg_monthly_spend * 2 else 'high'
+                    })
+            elif projected_spend < avg_monthly_spend * 0.7:
+                pattern_data['status'] = 'low'
+                if avg_monthly_spend > 50:
+                    insights.append({
+                        'type': 'positive',
+                        'icon': '📉',
+                        'category': category,
+                        'message': f"{category}: Spending {abs(pattern_data['variance'])}% below average",
+                        'detail': f"Great job! Saving ${avg_monthly_spend - projected_spend:.2f}"
+                    })
+            else:
+                pattern_data['status'] = 'normal'
+            
+            patterns.append(pattern_data)
+        
+        # Sort patterns by variance (highest first)
+        patterns.sort(key=lambda x: abs(x['variance']), reverse=True)
+        
+        # Sort alerts by severity
+        alerts.sort(key=lambda x: 0 if x['severity'] == 'high' else 1 if x['severity'] == 'medium' else 2)
+        
+        # Generate overall insights
+        total_current_spending = sum(current_month_spending.values())
+        
+        # Calculate average spending rate
+        if current_day > 0:
+            daily_spending_rate = total_current_spending / current_day
+            insights.append({
+                'type': 'info',
+                'icon': '📊',
+                'category': 'Overall',
+                'message': f"Daily spending rate: ${daily_spending_rate:.2f}/day",
+                'detail': f"Based on {current_day} days of data"
+            })
+        
+        # Add general recommendations
+        recommendations = []
+        
+        if len(alerts) > 3:
+            recommendations.append("Multiple categories are over budget - review and prioritize spending cuts")
+        elif len(alerts) > 0:
+            recommendations.append(f"Focus on reducing spending in {alerts[0]['category']}")
+        else:
+            recommendations.append("Spending patterns are consistent with your history - keep it up!")
+        
+        # Check if user has enough data
+        has_sufficient_data = len(patterns) >= 3
+        
+        if not has_sufficient_data:
+            insights.append({
+                'type': 'info',
+                'icon': 'ℹ️',
+                'category': 'Data',
+                'message': "Building your spending history",
+                'detail': "Add more transactions to get better pattern insights"
+            })
+        
+        return jsonify({
+            'success': True,
+            'patterns': patterns[:10],  # Top 10 categories
+            'alerts': alerts,
+            'insights': insights,
+            'recommendations': recommendations,
+            'has_sufficient_data': has_sufficient_data,
+            'total_categories': len(patterns),
+            'months_analyzed': max([p['months_of_data'] for p in patterns]) if patterns else 0
+        })
+        
+    except Exception as e:
+        print(f"Error in spending patterns: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'patterns': [],
+            'alerts': [],
+            'insights': [],
+            'recommendations': [],
+            'has_sufficient_data': False
+        }), 500
+
+def get_category_icon(category):
+    """Return an icon for a given category"""
+    category_icons = {
+        'Groceries': '🛒',
+        'Dining Out': '🍔',
+        'Restaurants': '🍽️',
+        'Gas': '⛽',
+        'Transportation': '🚗',
+        'Entertainment': '🎮',
+        'Clothing': '👕',
+        'Personal Care': '💇',
+        'Medical': '🏥',
+        'Healthcare': '💊',
+        'Gifts': '🎁',
+        'Home Improvement': '🏠',
+        'Pet Care': '🐕',
+        'Education': '📚',
+        'Books': '📖',
+        'Utilities': '💡',
+        'Internet': '🌐',
+        'Phone': '📱',
+        'Insurance': '🛡️',
+        'Rent': '🏘️',
+        'Mortgage': '🏠',
+        'Subscriptions': '📺',
+        'Miscellaneous': '💰'
+    }
+    
+    return category_icons.get(category, '📁')
+
+@app.route('/api/dashboard/smart-recommendations', methods=['GET'])
+def get_smart_recommendations():
+    """
+    Generate context-aware financial recommendations based on:
+    - Account balances
+    - Spending patterns
+    - Upcoming bills
+    - Budget health
+    - Current month progress
+    """
+    from datetime import datetime
+    from calendar import monthrange
+    
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        current_day = now.day
+        days_in_month = monthrange(current_year, current_month)[1]
+        days_remaining = days_in_month - current_day
+        
+        recommendations = []
+        priority_actions = []
+        
+        # Get current financial snapshot
+        checking_balance = 0
+        savings_balance = 0
+        total_liquid = 0
+        
+        for account in budget_data['accounts']:
+            balance = float(account.get('balance', 0))
+            account_type = account.get('type', '').lower()
+            
+            if account_type == 'checking':
+                checking_balance += balance
+            elif account_type == 'savings':
+                savings_balance += balance
+            
+            total_liquid += balance
+        
+        # Calculate income and expenses
+        total_income = 0
+        for income in budget_data['income_sources']:
+            amount = float(income.get('amount', 0))
+            frequency = income.get('frequency', 'monthly')
+            
+            if frequency == 'weekly':
+                monthly_amount = amount * 52 / 12
+            elif frequency == 'bi-weekly':
+                monthly_amount = amount * 26 / 12
+            elif frequency == 'monthly':
+                monthly_amount = amount
+            elif frequency == 'annual':
+                monthly_amount = amount / 12
+            else:
+                monthly_amount = amount
+            
+            total_income += monthly_amount
+        
+        total_expenses = sum(float(e.get('amount', 0)) for e in budget_data['fixed_expenses'])
+        available_for_month = total_income - total_expenses
+        
+        # Calculate month-to-date spending
+        mtd_spent = 0
+        for transaction in budget_data['transactions']:
+            try:
+                trans_date = datetime.fromisoformat(transaction['date'])
+                if trans_date.year == current_year and trans_date.month == current_month:
+                    amount = float(transaction.get('amount', 0))
+                    if amount > 0:
+                        mtd_spent += amount
+            except (ValueError, KeyError):
+                continue
+        
+        remaining_money = available_for_month - mtd_spent
+        
+        # Calculate upcoming bills (next 7 days)
+        upcoming_bills = 0
+        urgent_bills = []
+        
+        for expense in budget_data['fixed_expenses']:
+            due_day = expense.get('due_day')
+            if due_day:
+                try:
+                    due_day = int(due_day)
+                    amount = float(expense.get('amount', 0))
+                    days_until_due = due_day - current_day
+                    if days_until_due < 0:
+                        days_until_due += days_in_month
+                    
+                    if 0 <= days_until_due <= 7:
+                        upcoming_bills += amount
+                        if days_until_due <= 2:
+                            urgent_bills.append({
+                                'name': expense.get('name', 'Bill'),
+                                'amount': amount,
+                                'days': days_until_due
+                            })
+                except (ValueError, TypeError):
+                    pass
+        
+        # === PRIORITY ACTIONS (Critical/Urgent) ===
+        
+        # Critical: Overdraft risk
+        if checking_balance < 0:
+            priority_actions.append({
+                'priority': 'critical',
+                'icon': '🚨',
+                'category': 'Account',
+                'action': 'Transfer funds immediately',
+                'reason': f'Checking account is overdrawn by ${abs(checking_balance):.2f}',
+                'impact': 'Avoid overdraft fees'
+            })
+        
+        # Critical: Insufficient funds for bills
+        elif checking_balance < upcoming_bills:
+            deficit = upcoming_bills - checking_balance
+            priority_actions.append({
+                'priority': 'critical',
+                'icon': '⚠️',
+                'category': 'Bills',
+                'action': f'Transfer ${deficit:.2f} to checking',
+                'reason': f'Upcoming bills (${upcoming_bills:.2f}) exceed checking balance',
+                'impact': 'Prevent missed payments'
+            })
+        
+        # Urgent bills due soon
+        for bill in urgent_bills:
+            if bill['days'] == 0:
+                priority_actions.append({
+                    'priority': 'urgent',
+                    'icon': '📅',
+                    'category': 'Bill Due',
+                    'action': f'Pay {bill["name"]} today',
+                    'reason': f'${bill["amount"]:.2f} due today',
+                    'impact': 'Avoid late fees'
+                })
+            elif bill['days'] == 1:
+                priority_actions.append({
+                    'priority': 'urgent',
+                    'icon': '⏰',
+                    'category': 'Bill Due',
+                    'action': f'Pay {bill["name"]} tomorrow',
+                    'reason': f'${bill["amount"]:.2f} due in 1 day',
+                    'impact': 'Stay on schedule'
+                })
+        
+        # === FINANCIAL HEALTH RECOMMENDATIONS ===
+        
+        # Emergency fund check
+        monthly_expenses_total = total_expenses
+        emergency_fund_target = monthly_expenses_total * 3  # 3 months minimum
+        
+        if savings_balance < emergency_fund_target:
+            recommendations.append({
+                'priority': 'high',
+                'icon': '🏦',
+                'category': 'Savings',
+                'action': 'Build your emergency fund',
+                'reason': f'Current: ${savings_balance:.2f}, Target: ${emergency_fund_target:.2f}',
+                'impact': f'${(emergency_fund_target - savings_balance):.2f} away from 3-month safety net'
+            })
+        
+        # Spending velocity check
+        if current_day > 0:
+            actual_daily_rate = mtd_spent / current_day
+            safe_daily_rate = remaining_money / days_remaining if days_remaining > 0 else 0
+            
+            if actual_daily_rate > safe_daily_rate * 1.3:
+                overspend_projection = (actual_daily_rate - safe_daily_rate) * days_remaining
+                recommendations.append({
+                    'priority': 'high',
+                    'icon': '⚡',
+                    'category': 'Spending',
+                    'action': f'Reduce daily spending to ${safe_daily_rate:.2f}/day',
+                    'reason': f'Current pace: ${actual_daily_rate:.2f}/day is too high',
+                    'impact': f'Prevent ${overspend_projection:.2f} overspend'
+                })
+        
+        # Low checking balance warning
+        if checking_balance < 500 and checking_balance > 0:
+            recommendations.append({
+                'priority': 'medium',
+                'icon': '💳',
+                'category': 'Account',
+                'action': 'Maintain checking buffer of $500+',
+                'reason': f'Current balance: ${checking_balance:.2f} is low',
+                'impact': 'Avoid overdraft risks'
+            })
+        
+        # Savings rate recommendation
+        if total_income > 0:
+            savings_rate = (savings_balance / total_income) * 100
+            if savings_rate < 10:
+                target_monthly_savings = total_income * 0.10
+                recommendations.append({
+                    'priority': 'medium',
+                    'icon': '💰',
+                    'category': 'Savings',
+                    'action': f'Save ${target_monthly_savings:.2f}/month (10% of income)',
+                    'reason': 'Current savings rate is below recommended 10%',
+                    'impact': 'Build long-term financial security'
+                })
+        
+        # === OPTIMIZATION RECOMMENDATIONS ===
+        
+        # Positive: Surplus money
+        if remaining_money > 200 and days_remaining < 5:
+            recommendations.append({
+                'priority': 'low',
+                'icon': '✨',
+                'category': 'Opportunity',
+                'action': f'Allocate ${remaining_money:.2f} surplus',
+                'reason': 'You have extra money this month',
+                'impact': 'Put it in savings or toward goals'
+            })
+        
+        # Budget completion
+        if not budget_data['income_sources']:
+            recommendations.append({
+                'priority': 'medium',
+                'icon': '📝',
+                'category': 'Setup',
+                'action': 'Add your income sources',
+                'reason': 'Complete your budget setup',
+                'impact': 'Get accurate financial insights'
+            })
+        
+        if not budget_data['fixed_expenses']:
+            recommendations.append({
+                'priority': 'medium',
+                'icon': '📝',
+                'category': 'Setup',
+                'action': 'Add your monthly bills',
+                'reason': 'Track fixed expenses',
+                'impact': 'Better budget planning'
+            })
+        
+        # Sort recommendations by priority
+        priority_order = {'critical': 0, 'urgent': 1, 'high': 2, 'medium': 3, 'low': 4}
+        priority_actions.sort(key=lambda x: priority_order.get(x['priority'], 5))
+        recommendations.sort(key=lambda x: priority_order.get(x['priority'], 5))
+        
+        # Limit to top items
+        priority_actions = priority_actions[:3]
+        recommendations = recommendations[:5]
+        
+        return jsonify({
+            'success': True,
+            'priority_actions': priority_actions,
+            'recommendations': recommendations,
+            'summary': {
+                'checking_balance': round(checking_balance, 2),
+                'savings_balance': round(savings_balance, 2),
+                'upcoming_bills': round(upcoming_bills, 2),
+                'remaining_budget': round(remaining_money, 2),
+                'days_remaining': days_remaining
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error in smart recommendations: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'priority_actions': [],
+            'recommendations': []
+        }), 500
 
 # Update endpoints
 @app.route('/api/updates/check', methods=['GET'])

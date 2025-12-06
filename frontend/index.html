@@ -96,6 +96,34 @@
                     </div>
                 </div>
                 
+                <!-- Smart Recommendations -->
+                <div id="smart-recommendations" class="smart-recommendations" style="display: none;">
+                    <div class="recommendations-header">
+                        <div class="recommendations-icon">💡</div>
+                        <div class="recommendations-title">
+                            <h3>Smart Recommendations</h3>
+                            <p class="recommendations-subtitle">Personalized actions to improve your financial health</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Priority Actions (Critical/Urgent) -->
+                    <div id="priority-actions-container" class="priority-actions-container" style="display: none;">
+                        <div class="priority-actions-header">
+                            <span class="priority-badge critical">⚡ Priority Actions</span>
+                        </div>
+                        <div id="priority-actions-list" class="recommendations-list">
+                            <!-- Priority actions will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Regular Recommendations -->
+                    <div id="recommendations-container" class="recommendations-container">
+                        <div id="recommendations-list" class="recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Top Summary Cards -->
                 <div class="summary-cards">
                     <div class="summary-card income-card">
@@ -157,6 +185,29 @@
                                 <h3>📝 Recent Activity</h3>
                             </div>
                             <p class="placeholder-text">No recent transactions</p>
+                        </div>
+                        
+                        <!-- Spending Pattern Insights -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>🔍 Spending Pattern Insights</h3>
+                                <span class="section-subtitle">Compare with your history</span>
+                            </div>
+                            <div id="spending-patterns-container" class="spending-patterns-container">
+                                <div class="patterns-loading" id="patterns-loading">
+                                    <div class="loading-spinner">⏳</div>
+                                    <p>Analyzing your spending patterns...</p>
+                                </div>
+                                <div class="patterns-alerts" id="patterns-alerts" style="display: none;">
+                                    <!-- Alerts will be populated here -->
+                                </div>
+                                <div class="patterns-insights" id="patterns-insights" style="display: none;">
+                                    <!-- Insights will be populated here -->
+                                </div>
+                                <div class="patterns-placeholder" id="patterns-placeholder" style="display: none;">
+                                    <p class="placeholder-text">Add more transactions to see spending pattern analysis</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -362,6 +413,29 @@
                                 <div class="health-recommendations" id="health-recommendations">
                                     <h4>💡 Recommendations:</h4>
                                     <ul id="health-recommendations-list"></ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upcoming Bills (Next 7 Days) -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📅 Bills Due Soon</h3>
+                                <span class="section-subtitle">Next 7 days</span>
+                            </div>
+                            <div id="upcoming-bills-container" class="upcoming-bills-container">
+                                <div class="upcoming-bills-summary" id="upcoming-bills-summary" style="display: none;">
+                                    <div class="bills-summary-stat">
+                                        <span class="bills-summary-label">Total Due:</span>
+                                        <span class="bills-summary-value" id="bills-total-due">$0.00</span>
+                                    </div>
+                                    <div class="bills-summary-stat">
+                                        <span class="bills-summary-label">Bills:</span>
+                                        <span class="bills-summary-value" id="bills-count">0</span>
+                                    </div>
+                                </div>
+                                <div class="upcoming-bills-list" id="upcoming-bills-list">
+                                    <p class="placeholder-text" id="bills-placeholder">No bills due in the next 7 days</p>
                                 </div>
                             </div>
                         </div>
