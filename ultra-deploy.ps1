@@ -401,3 +401,75 @@ if ($CreateRelease) {
     Write-Host "📦 Release: https://github.com/kuntz09matthew/budget-tool/releases/tag/v$newVersion" -ForegroundColor White
 }
 Write-Host ""
+
+# Monitor build status if release was created
+if ($CreateRelease) {
+    Write-Host "🔍 Monitoring GitHub Actions build..." -ForegroundColor Cyan
+    Write-Host ""
+    
+    $tag = "v$newVersion"
+    $maxWaitTime = 600  # 10 minutes max
+    $startTime = Get-Date
+    $checkInterval = 15
+    
+    do {
+        Start-Sleep -Seconds 5  # Initial wait for workflow to start
+        
+        try {
+            $runs = gh run list --limit 1 --json status,conclusion,name,createdAt,url | ConvertFrom-Json
+            
+            if ($runs) {
+                $status = $runs.status
+                $conclusion = $runs.conclusion
+                $workflowUrl = $runs.url
+                $elapsed = [math]::Round(((Get-Date) - $startTime).TotalSeconds)
+                
+                if ($status -eq "completed") {
+                    if ($conclusion -eq "success") {
+                        Write-Host "✅ Build completed successfully after $elapsed seconds!" -ForegroundColor Green
+                        Write-Host ""
+                        Write-Host "📦 Checking release assets..." -ForegroundColor Cyan
+                        
+                        # Wait a moment for assets to be fully uploaded
+                        Start-Sleep -Seconds 5
+                        
+                        $assets = gh release view $tag --json assets --jq '.assets[].name' 2>$null
+                        if ($assets -match "\.exe") {
+                            Write-Host ""
+                            Write-Host "🎉 Windows installer is ready!" -ForegroundColor Green
+                            Write-Host ""
+                            Write-Host "✨ YOU CAN NOW OPEN YOUR INSTALLED APP TO GET THE UPDATE!" -ForegroundColor Yellow -BackgroundColor DarkGreen
+                            Write-Host ""
+                            Write-Host "📦 Available assets:" -ForegroundColor Cyan
+                            $assets | ForEach-Object { Write-Host "   • $_" -ForegroundColor White }
+                            Write-Host ""
+                        } else {
+                            Write-Host "⚠️  Build succeeded but .exe not found yet. Check manually." -ForegroundColor Yellow
+                        }
+                        break
+                    } else {
+                        Write-Host "❌ Build failed after $elapsed seconds" -ForegroundColor Red
+                        Write-Host "🔗 View logs: $workflowUrl" -ForegroundColor Yellow
+                        break
+                    }
+                }
+                
+                # Show progress
+                Write-Host "⏳ Build in progress... ($elapsed seconds elapsed)" -ForegroundColor Yellow
+                Start-Sleep -Seconds $checkInterval
+                
+                # Check if we've exceeded max wait time
+                if ($elapsed -gt $maxWaitTime) {
+                    Write-Host ""
+                    Write-Host "⏰ Monitoring timeout. Build is still running." -ForegroundColor Yellow
+                    Write-Host "🔗 Check status: $workflowUrl" -ForegroundColor Cyan
+                    break
+                }
+            }
+        }
+        catch {
+            Write-Host "⚠️  Error monitoring build: $_" -ForegroundColor Yellow
+            break
+        }
+    } while ($true)
+}
