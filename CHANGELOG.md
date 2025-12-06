@@ -3,6 +3,22 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.0] - Released
+*2025-12-06 02:42:00*
+
+New: Added data visualization features. Improved: Modified main.js, Enhanced user interface in app.js
+
+### 📝 Changes
+- Added data visualization features
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+
+### 📝 Changes
+- Modified main.js
+- Enhanced user interface in app.js
+
+
 ## [1.4.0] - Released
 *2025-12-06 02:21:43*
 
