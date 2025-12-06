@@ -117,46 +117,7 @@ async function installUpdate() {
     }
 }
 
-// Handle Electron update events (if running in Electron - legacy support)
-if (window.electron) {
-    const updateBanner = document.getElementById('update-banner');
-    const updateMessage = document.getElementById('update-message');
-    const updateButton = document.getElementById('update-button');
-    const progressContainer = document.getElementById('progress-container');
-    const progressBar = document.getElementById('progress-bar');
-    const progressPercent = document.getElementById('progress-percent');
-    const progressSize = document.getElementById('progress-size');
-    
-    window.electron.onUpdateAvailable(() => {
-        updateBanner.style.display = 'block';
-        updateMessage.textContent = '🎉 Update available! Preparing download...';
-    });
-    
-    window.electron.onUpdateDownloading(() => {
-        updateMessage.textContent = '⬇️ Downloading update...';
-        progressContainer.style.display = 'block';
-    });
-    
-    window.electron.onUpdateDownloadProgress((progress) => {
-        const percent = Math.round(progress.percent);
-        const transferred = (progress.transferred / 1024 / 1024).toFixed(2);
-        const total = (progress.total / 1024 / 1024).toFixed(2);
-        
-        progressBar.style.width = percent + '%';
-        progressPercent.textContent = percent + '%';
-        progressSize.textContent = `${transferred} MB / ${total} MB`;
-    });
-    
-    window.electron.onUpdateDownloaded(() => {
-        progressContainer.style.display = 'none';
-        updateMessage.textContent = '✅ Update downloaded! Click to restart and install.';
-        updateButton.style.display = 'inline-block';
-    });
-    
-    updateButton.addEventListener('click', () => {
-        window.electron.installUpdate();
-    });
-}
+// Electron update handlers will be set up in setupElectronUpdates() after DOM is ready
 
 // Navigation handling
 function showSection(section) {
@@ -213,6 +174,34 @@ function setupElectronUpdates() {
     
     console.log('Setting up Electron update handlers...');
     
+    // Listen for update available
+    window.electron.onUpdateAvailable((info) => {
+        console.log('Update available:', info);
+        const updateBanner = document.getElementById('update-banner');
+        const updateMessage = document.getElementById('update-message');
+        
+        updateBanner.style.display = 'block';
+        updateMessage.innerHTML = `
+            <strong>🎉 Update Available!</strong>
+            <br><small>Version ${info.version} is available. The download will start when you click OK in the dialog.</small>
+        `;
+    });
+    
+    // Listen for download starting
+    window.electron.onUpdateDownloading(() => {
+        console.log('Download starting...');
+        const updateBanner = document.getElementById('update-banner');
+        const updateMessage = document.getElementById('update-message');
+        const progressContainer = document.getElementById('progress-container');
+        
+        updateBanner.style.display = 'block';
+        progressContainer.style.display = 'block';
+        updateMessage.innerHTML = `
+            <strong>📥 Downloading Update...</strong>
+            <br><small>Please wait while the update is being downloaded.</small>
+        `;
+    });
+    
     // Listen for update download progress
     window.electron.onUpdateDownloadProgress((progress) => {
         console.log('Download progress:', progress);
@@ -251,19 +240,21 @@ function showUpdateProgress(progress) {
     progressBar.style.width = `${percent}%`;
     progressPercent.textContent = `${percent}%`;
     
-    // Update size info
+    // Update size info with speed
     if (progress.transferredMB && progress.totalMB) {
-        progressSize.textContent = `${progress.transferredMB} MB / ${progress.totalMB} MB`;
-        if (progress.speedMB) {
-            progressSize.textContent += ` @ ${progress.speedMB} MB/s`;
+        let sizeText = `${progress.transferredMB} MB / ${progress.totalMB} MB`;
+        if (progress.speedMB && progress.speedMB !== '0.00') {
+            sizeText += ` (${progress.speedMB} MB/s)`;
         }
+        progressSize.textContent = sizeText;
     } else {
-        progressSize.textContent = 'Downloading...';
+        progressSize.textContent = 'Starting download...';
     }
     
+    // Update message with current status
     updateMessage.innerHTML = `
-        <strong>📥 Downloading Update...</strong>
-        <br><small>Please wait while the update is being downloaded.</small>
+        <strong>📥 Downloading Update... ${percent}%</strong>
+        <br><small>Please wait while the update is being downloaded. Do not close the application.</small>
     `;
 }
 

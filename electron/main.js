@@ -177,17 +177,19 @@ autoUpdater.on('update-available', (info) => {
       // User chose to download
       console.log('Starting download...');
       
-      // Show progress dialog
+      // Send downloading event to renderer (progress will show in UI)
+      mainWindow.webContents.send('update-downloading');
+      
+      // Show non-blocking notification
       dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Downloading Update',
-        message: 'Downloading update...',
-        detail: `Size: ${sizeInMB} MB\nThis may take a few minutes.`,
-        buttons: []
+        message: 'Download started',
+        detail: `Size: ${sizeInMB} MB\n\nProgress will be shown in the taskbar and at the top of the window.`,
+        buttons: ['OK']
       });
       
       autoUpdater.downloadUpdate();
-      mainWindow.webContents.send('update-downloading');
     }
   });
 });
