@@ -3,6 +3,21 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.7] - Released
+*2025-12-06 03:40:20*
+
+Fixed: Fixed application crashes. Improved: Modified main.js
+
+### 📝 Changes
+- Modified main.js
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+
+### 📝 Changes
+- Fixed application crashes
+
+
 ## [1.5.6] - Released
 *2025-12-06 03:35:01*
 
