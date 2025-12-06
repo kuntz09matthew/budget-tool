@@ -1,6 +1,6 @@
 {
   "name": "budget-tool",
-  "version": "1.5.11",
+  "version": "1.5.12",
   "description": "A local desktop budgeting application with Python backend",
   "main": "electron/main.js",
   "scripts": {

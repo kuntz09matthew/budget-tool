@@ -53,10 +53,21 @@ function startServer() {
     
     console.log('Working directory:', serverDir);
     
+    // Get user data directory for storing database
+    // This directory persists across app updates and is user-specific
+    const userDataPath = app.getPath('userData');
+    console.log('User data directory:', userDataPath);
+    
+    // Set environment variable so Python knows where to store data
+    const env = Object.assign({}, process.env, {
+      BUDGET_APP_DATA_DIR: userDataPath
+    });
+    
     serverProcess = spawn(pythonCommand, [serverPath], {
       stdio: 'pipe',
       cwd: serverDir,
-      shell: false
+      shell: false,
+      env: env  // Pass environment variables including data directory
     });
 
     serverProcess.stdout.on('data', (data) => {
@@ -105,6 +116,9 @@ function createWindow() {
     },
     icon: path.join(__dirname, '../assets/icon.png')
   });
+
+  // Maximize the window after creation
+  mainWindow.maximize();
 
   // Disable cache for development
   if (process.env.NODE_ENV === 'development') {

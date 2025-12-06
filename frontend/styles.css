@@ -543,10 +543,39 @@ body {
 
 .available-card {
     border-left-color: #3b82f6;
+    transition: all 0.3s ease;
 }
 
 .available-card .summary-amount {
     color: #3b82f6;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+/* Status-based styling for available card */
+.available-card.status-success {
+    border-left-color: #4caf50;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, transparent 100%);
+}
+
+.available-card.status-warning {
+    border-left-color: #ff9800;
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, transparent 100%);
+}
+
+.available-card.status-danger {
+    border-left-color: #ff4444;
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.05) 0%, transparent 100%);
+    animation: pulse-danger 2s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(255, 68, 68, 0.1);
+    }
+    50% {
+        box-shadow: 0 2px 16px rgba(255, 68, 68, 0.2);
+    }
 }
 
 .savings-card {
@@ -694,6 +723,677 @@ body {
 
 .mtd-count {
     color: #667eea;
+}
+
+/* Spending Velocity Indicator */
+.velocity-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.velocity-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.velocity-status.status-success {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: #22c55e;
+}
+
+.velocity-status.status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+
+.velocity-status.status-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.velocity-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.velocity-status.status-success .velocity-icon {
+    animation: none;
+}
+
+.velocity-status.status-danger .velocity-icon {
+    animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+.velocity-status-text {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.velocity-status.status-success .velocity-status-text {
+    color: #22c55e;
+}
+
+.velocity-status.status-warning .velocity-status-text {
+    color: #f59e0b;
+}
+
+.velocity-status.status-danger .velocity-status-text {
+    color: #ef4444;
+}
+
+.velocity-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.velocity-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.velocity-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.velocity-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.velocity-message {
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.velocity-status.status-success ~ .velocity-message {
+    border-left-color: #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.velocity-status.status-warning ~ .velocity-message {
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.velocity-status.status-danger ~ .velocity-message {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.velocity-projection {
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.projection-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.projection-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.projection-value.positive {
+    color: #22c55e;
+}
+
+.projection-value.negative {
+    color: #ef4444;
+}
+
+/* Next Paycheck Countdown */
+.paycheck-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.paycheck-countdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.paycheck-countdown:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.paycheck-days {
+    font-size: 4rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: countdownPulse 2s ease-in-out infinite;
+}
+
+.paycheck-label {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 0.5rem;
+}
+
+@keyframes countdownPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.paycheck-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.paycheck-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.paycheck-row:last-child {
+    border-bottom: none;
+}
+
+.paycheck-row .paycheck-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.paycheck-row .paycheck-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.paycheck-message {
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Paycheck status color variations */
+.paycheck-container.paycheck-today .paycheck-countdown {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    animation: celebratePulse 1s ease-in-out infinite;
+}
+
+.paycheck-container.paycheck-soon .paycheck-countdown {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.paycheck-container.paycheck-upcoming .paycheck-countdown {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+@keyframes celebratePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 24px rgba(34, 197, 94, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(34, 197, 94, 0.6);
+    }
+}
+
+/* Money Per Day Styles */
+.money-per-day-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.money-per-day-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+    transition: all 0.3s ease;
+}
+
+.money-per-day-display:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+}
+
+.money-per-day-amount {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.money-per-day-label {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 0.5rem;
+}
+
+.money-per-day-status {
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+}
+
+.status-icon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Status color variations */
+.status-indicator.status-success {
+    background: rgba(34, 197, 94, 0.1);
+    border-left: 4px solid #22c55e;
+}
+
+.status-indicator.status-success .status-text {
+    color: #22c55e;
+}
+
+.status-indicator.status-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid #f59e0b;
+}
+
+.status-indicator.status-warning .status-text {
+    color: #f59e0b;
+}
+
+.status-indicator.status-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid #ef4444;
+}
+
+.status-indicator.status-danger .status-text {
+    color: #ef4444;
+}
+
+.money-per-day-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.money-per-day-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.money-per-day-row:last-child {
+    border-bottom: none;
+}
+
+.money-per-day-row .money-per-day-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.money-per-day-row .money-per-day-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.money-per-day-row .money-per-day-value.positive {
+    color: #22c55e;
+}
+
+.money-per-day-row .money-per-day-value.negative {
+    color: #ef4444;
+}
+
+.money-per-day-message {
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 4px solid #10b981;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Budget Health Score Styles */
+.budget-health-container {
+    padding: 0.5rem;
+}
+
+.budget-health-score-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+}
+
+.health-score-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#10b981 0deg, var(--bg-secondary) 0deg);
+    border: 8px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.health-score-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.health-score-total {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.health-grade-display {
+    text-align: center;
+}
+
+.health-grade {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.health-grade-text {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.health-breakdown {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.health-breakdown h4 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.health-category {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.health-category:last-child {
+    margin-bottom: 0;
+}
+
+.health-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.health-category-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.health-category-score {
+    font-weight: bold;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.health-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.health-progress-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 4px;
+    transition: all 0.5s ease;
+    width: 0%;
+}
+
+.health-factors {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.health-factors li {
+    padding: 0.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.health-factors li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.health-factors li:first-child {
+    padding-top: 0;
+}
+
+.health-recommendations {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid var(--border-color);
+}
+
+.health-recommendations h4 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.health-recommendations ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.health-recommendations li {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    border-left: 4px solid #10b981;
+    transition: all 0.2s ease;
+}
+
+.health-recommendations li:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+.health-recommendations li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments for Budget Health Score */
+@media (max-width: 768px) {
+    .budget-health-score-display {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .health-score-circle {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .health-score-number {
+        font-size: 2rem;
+    }
+    
+    .health-grade {
+        font-size: 1.75rem;
+    }
+}
+
+/* Small helper text for form fields */
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 /* Accounts Grid */
@@ -1123,5 +1823,835 @@ body {
     color: var(--text-secondary);
     font-style: italic;
 }
+
+/* ============================================ */
+/* Expense Styles */
+/* ============================================ */
+
+/* Expense Summary Boxes */
+.expense-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.expense-summary .summary-value.expense-total {
+    color: #ef4444;
+}
+
+/* Expense List */
+.expense-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Expense Item Card */
+.expense-item {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-left: 4px solid #ef4444;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.expense-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow-hover);
+}
+
+.expense-item-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.expense-icon {
+    font-size: 2rem;
+}
+
+.expense-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.expense-info h4 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+}
+
+.expense-category-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.expense-amount-section {
+    text-align: right;
+}
+
+.expense-amount {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+.expense-frequency {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.expense-item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.expense-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.due-date-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.autopay-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: #10b981;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.expense-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.expense-notes {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Checkbox Group Styling */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    cursor: pointer;
+}
+
+.checkbox-group span {
+    font-weight: 500;
+}
+
+/* ============================================ */
+/* Enhanced Account Styles */
+/* ============================================ */
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-subtext {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.loading-spinner::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--border-color);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error Message */
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    background: #fee;
+    border: 2px solid #fcc;
+    border-radius: 12px;
+    color: #c33;
+}
+
+.error-message p {
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+/* Enhanced Account Card */
+.account-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.account-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.account-card.checking-account::before {
+    background: #10b981;
+}
+
+.account-card.savings-account::before {
+    background: #8b5cf6;
+}
+
+.account-card.credit-account::before {
+    background: #ef4444;
+}
+
+.account-card.investment-account::before {
+    background: #3b82f6;
+}
+
+.account-card:hover::before {
+    width: 6px;
+}
+
+.account-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.account-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.account-type-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.btn-danger {
+    color: #ef4444;
+}
+
+.btn-danger:hover {
+    background: #fee;
+}
+
+/* Form Error Message */
+.form-error {
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    color: #c33;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Notification Toast */
+.notification-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 16px var(--shadow-hover);
+    font-size: 1rem;
+    font-weight: 600;
+    z-index: 2000;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+}
+
+.notification-toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-success {
+    border-left: 4px solid #10b981;
+    color: #10b981;
+}
+
+.notification-error {
+    border-left: 4px solid #ef4444;
+    color: #ef4444;
+}
+
+.notification-info {
+    border-left: 4px solid #3b82f6;
+    color: #3b82f6;
+}
+
+/* Disable Button State */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ============================================
+   OVERDRAFT WARNING SYSTEM STYLES
+   ============================================ */
+
+.overdraft-warning {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px var(--shadow-hover);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    animation: slideInDown 0.5s ease;
+    border: 3px solid transparent;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Risk Level Colors */
+.overdraft-warning.risk-critical {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--bg-secondary) 50%);
+}
+
+.overdraft-warning.risk-warning {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 50%);
+}
+
+.overdraft-warning.risk-safe {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, var(--bg-secondary) 50%);
+}
+
+.overdraft-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.overdraft-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px var(--shadow);
+}
+
+.overdraft-warning.risk-critical .overdraft-icon-container {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.overdraft-warning.risk-warning .overdraft-icon-container {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.overdraft-warning.risk-safe .overdraft-icon-container {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.overdraft-icon {
+    font-size: 2.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.overdraft-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.overdraft-title {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.overdraft-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.overdraft-warning-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.overdraft-warning.risk-critical .overdraft-warning-message {
+    border-left-color: #ef4444;
+    color: #ef4444;
+}
+
+.overdraft-warning.risk-warning .overdraft-warning-message {
+    border-left-color: #f59e0b;
+    color: #d97706;
+}
+
+.overdraft-warning.risk-safe .overdraft-warning-message {
+    border-left-color: #10b981;
+    color: #059669;
+}
+
+.overdraft-warning-message-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.overdraft-warning-message-text {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.overdraft-recommendations {
+    padding: 1.5rem;
+    border-top: 2px solid var(--border-color);
+    background: var(--bg-primary);
+}
+
+.overdraft-recommendations h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.overdraft-recommendations ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+#overdraft-recommendations-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid #8b5cf6;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+}
+
+#overdraft-recommendations-list li:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+
+#overdraft-recommendations-list li::before {
+    content: '→';
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #8b5cf6;
+    flex-shrink: 0;
+}
+
+.overdraft-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.overdraft-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.overdraft-metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overdraft-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.overdraft-metric-value.positive {
+    color: #10b981;
+}
+
+.overdraft-metric-value.negative {
+    color: #ef4444;
+}
+
+.overdraft-metric-value.neutral {
+    color: #6b7280;
+}
+
+/* ===================================
+   MONTH COMPARISON SECTION
+   =================================== */
+
+.month-comparison-section {
+    margin: 1.5rem 0;
+    background: var(--bg-secondary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.comparison-card {
+    background: var(--bg-primary);
+    padding: 1.25rem;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.comparison-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border-color);
+    transition: background 0.3s ease;
+}
+
+.comparison-card.positive::before {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.comparison-card.negative::before {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.comparison-card.neutral::before {
+    background: linear-gradient(90deg, #6b7280 0%, #4b5563 100%);
+}
+
+.comparison-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.comparison-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.comparison-icon {
+    font-size: 1.75rem;
+}
+
+.comparison-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.comparison-values {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.comparison-current,
+.comparison-previous {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.comparison-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.comparison-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.comparison-change {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.comparison-card.positive .comparison-change {
+    color: #10b981;
+}
+
+.comparison-card.negative .comparison-change {
+    color: #ef4444;
+}
+
+.comparison-card.neutral .comparison-change {
+    color: #6b7280;
+}
+
+.change-arrow {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.change-amount {
+    font-weight: 700;
+}
+
+.change-percent {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* Comparison Insights */
+.comparison-insights {
+    margin-top: 1.5rem;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.insight-item.insight-positive {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+    color: var(--text-primary);
+}
+
+.insight-item.insight-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+    color: var(--text-primary);
+}
+
+.insight-item.insight-info {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color: var(--text-primary);
+}
+
+.insight-icon {
+    font-size: 1.5rem;
+}
+
+.insight-message {
+    flex: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .comparison-values {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .overdraft-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .overdraft-icon-container {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .overdraft-icon {
+        font-size: 2rem;
+    }
+    
+    .overdraft-title {
+        font-size: 1.25rem;
+    }
+    
+    .overdraft-metrics {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+}
+
+
 
 

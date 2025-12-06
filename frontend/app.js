@@ -113,9 +113,16 @@ async function loadBudgetData() {
         const data = await response.json();
         
         // Load dashboard metrics
+        loadOverdraftStatus();
         loadTotalIncome();
         loadTotalExpenses();
+        calculateAvailableSpending();
         loadMonthToDateSpending();
+        loadSpendingVelocity();
+        loadNextPaycheck();
+        loadMoneyPerDay();
+        loadBudgetHealthScore();
+        loadMonthComparison();
         
         console.log('Budget data loaded:', data);
     } catch (error) {
@@ -399,45 +406,133 @@ if (window.electron && window.electron.onNavigate) {
 
 let currentEditAccountId = null;
 
-// Load and display accounts
+// Load and display accounts with loading state and error handling
 async function loadAccounts() {
+    const container = document.getElementById('accounts-container');
+    
     try {
+        // Show loading state
+        container.innerHTML = '<div class="loading-spinner">Loading accounts...</div>';
+        
         const response = await fetch(`${API_BASE_URL}/api/accounts`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const accounts = await response.json();
         displayAccounts(accounts);
         updateAccountSummaries(accounts);
+        
+        // Also load account summary
+        loadAccountSummary();
+        
+        // Reload overdraft status when accounts change
+        loadOverdraftStatus();
     } catch (error) {
         console.error('Failed to load accounts:', error);
+        container.innerHTML = `
+            <div class="error-message">
+                <p>⚠️ Failed to load accounts</p>
+                <button class="btn-primary btn-sm" onclick="loadAccounts()">Retry</button>
+            </div>
+        `;
     }
 }
 
-// Display accounts in the dashboard
+// Load account summary (totals by type)
+async function loadAccountSummary() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/accounts/summary`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const summary = await response.json();
+        updateDashboardSummaryCards(summary);
+    } catch (error) {
+        console.error('Failed to load account summary:', error);
+    }
+}
+
+// Update dashboard summary cards with account data
+function updateDashboardSummaryCards(summary) {
+    // Update total savings card (savings + investment)
+    const savingsCard = document.querySelector('.savings-card .summary-amount');
+    if (savingsCard) {
+        const totalSavings = summary.savings_total + summary.investment_total;
+        savingsCard.textContent = `$${formatCurrency(totalSavings)}`;
+    }
+    
+    // Update available to spend (if income is loaded, we'll calculate it properly)
+    updateAvailableToSpend();
+}
+
+// Display accounts in the dashboard with enhanced UI
 function displayAccounts(accounts) {
     const container = document.getElementById('accounts-container');
     
     if (!accounts || accounts.length === 0) {
-        container.innerHTML = '<p class="placeholder-text">No accounts added yet. Click "Add Account" to get started.</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">💳</div>
+                <p class="empty-state-text">No accounts added yet</p>
+                <p class="empty-state-subtext">Add your checking, savings, credit cards, and investment accounts to get started</p>
+            </div>
+        `;
         return;
     }
     
-    container.innerHTML = accounts.map(account => {
+    // Sort accounts by type for better organization
+    const sortOrder = { 'checking': 1, 'savings': 2, 'investment': 3, 'credit': 4 };
+    const sortedAccounts = [...accounts].sort((a, b) => {
+        return (sortOrder[a.type] || 999) - (sortOrder[b.type] || 999);
+    });
+    
+    container.innerHTML = sortedAccounts.map(account => {
         const accountIcon = getAccountIcon(account.type);
         const balanceClass = getBalanceClass(account.type, account.balance);
+        const formattedBalance = formatCurrency(account.balance);
+        const accountTypeLabel = formatAccountType(account.type);
+        
+        // Sanitize account name for display
+        const accountName = escapeHtml(account.name);
+        
         return `
-            <div class="account-card ${account.type}-account">
+            <div class="account-card ${account.type}-account" data-account-id="${account.id}">
                 <div class="account-header">
                     <span class="account-icon">${accountIcon}</span>
-                    <h4>${account.name}</h4>
+                    <h4 class="account-name">${accountName}</h4>
                 </div>
-                <p class="account-balance ${balanceClass}">$${formatCurrency(account.balance)}</p>
-                <p class="account-type">${formatAccountType(account.type)}</p>
-                <div class="account-actions">
-                    <button class="btn-icon" onclick="editAccount(${account.id})" title="Edit">✏️</button>
-                    <button class="btn-icon" onclick="deleteAccount(${account.id})" title="Delete">🗑️</button>
+                <div class="account-balance ${balanceClass}">
+                    $${formattedBalance}
+                </div>
+                <div class="account-footer">
+                    <span class="account-type-label">${accountTypeLabel}</span>
+                    <div class="account-actions">
+                        <button class="btn-icon" onclick="editAccount(${account.id})" title="Edit account" aria-label="Edit ${accountName}">
+                            ✏️
+                        </button>
+                        <button class="btn-icon btn-danger" onclick="deleteAccount(${account.id})" title="Delete account" aria-label="Delete ${accountName}">
+                            🗑️
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 // Update summary cards with account data
@@ -451,6 +546,44 @@ function updateAccountSummaries(accounts) {
     const savingsCard = document.querySelector('.savings-card .summary-amount');
     if (savingsCard) {
         savingsCard.textContent = `$${formatCurrency(savings + investment)}`;
+    }
+}
+
+// Update available to spend calculation
+async function updateAvailableToSpend() {
+    try {
+        // Get total monthly income
+        const incomeResponse = await fetch(`${API_BASE_URL}/api/income/total`);
+        const incomeData = await incomeResponse.json();
+        const totalIncome = incomeData.total || 0;
+        
+        // Get total fixed expenses (when implemented)
+        // For now, set to 0
+        const totalExpenses = 0;
+        
+        // Get account summary
+        const summaryResponse = await fetch(`${API_BASE_URL}/api/accounts/summary`);
+        const summary = await summaryResponse.json();
+        
+        // Calculate available to spend: Income - Fixed Expenses
+        const availableToSpend = totalIncome - totalExpenses;
+        
+        // Update the card
+        const availableCard = document.querySelector('.available-card .summary-amount');
+        if (availableCard) {
+            availableCard.textContent = `$${formatCurrency(availableToSpend)}`;
+            
+            // Add color coding based on amount
+            if (availableToSpend < 0) {
+                availableCard.style.color = 'var(--danger-color, #dc3545)';
+            } else if (availableToSpend < 100) {
+                availableCard.style.color = 'var(--warning-color, #ffc107)';
+            } else {
+                availableCard.style.color = 'var(--success-color, #28a745)';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to calculate available to spend:', error);
     }
 }
 
@@ -534,17 +667,62 @@ async function loadAccountData(accountId) {
     }
 }
 
-// Save account (add or update)
+// Save account (add or update) with enhanced validation and feedback
 async function saveAccount(event) {
     event.preventDefault();
     
-    const accountData = {
-        type: document.getElementById('account-type').value,
-        name: document.getElementById('account-name').value,
-        balance: parseFloat(document.getElementById('account-balance').value)
-    };
+    const saveButton = document.getElementById('save-account-btn');
+    const originalButtonText = saveButton.textContent;
     
     try {
+        // Get form values
+        const type = document.getElementById('account-type').value.trim();
+        const name = document.getElementById('account-name').value.trim();
+        const balanceInput = document.getElementById('account-balance').value.trim();
+        
+        // Client-side validation
+        if (!type) {
+            showAccountError('Please select an account type');
+            return;
+        }
+        
+        if (!name) {
+            showAccountError('Please enter an account name');
+            return;
+        }
+        
+        if (name.length < 2) {
+            showAccountError('Account name must be at least 2 characters');
+            return;
+        }
+        
+        if (name.length > 50) {
+            showAccountError('Account name must be less than 50 characters');
+            return;
+        }
+        
+        if (!balanceInput) {
+            showAccountError('Please enter a balance');
+            return;
+        }
+        
+        const balance = parseFloat(balanceInput);
+        if (isNaN(balance)) {
+            showAccountError('Balance must be a valid number');
+            return;
+        }
+        
+        // Construct account data
+        const accountData = {
+            type: type,
+            name: name,
+            balance: balance
+        };
+        
+        // Show loading state
+        saveButton.disabled = true;
+        saveButton.textContent = currentEditAccountId ? 'Updating...' : 'Saving...';
+        
         let response;
         if (currentEditAccountId) {
             // Update existing account
@@ -563,14 +741,81 @@ async function saveAccount(event) {
         }
         
         const result = await response.json();
+        
         if (result.success) {
+            // Success! Close modal and reload
             hideAccountModal();
-            loadAccounts();
+            await loadAccounts();
+            
+            // Show success message
+            showNotification(
+                currentEditAccountId ? 'Account updated successfully!' : 'Account added successfully!',
+                'success'
+            );
+        } else {
+            // Server returned an error
+            showAccountError(result.error || 'Failed to save account');
         }
     } catch (error) {
         console.error('Failed to save account:', error);
-        alert('Failed to save account. Please try again.');
+        showAccountError('Failed to save account. Please check your connection and try again.');
+    } finally {
+        // Restore button state
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
     }
+}
+
+// Show error in account modal
+function showAccountError(message) {
+    const form = document.getElementById('account-form');
+    
+    // Remove existing error if present
+    const existingError = form.querySelector('.form-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Add new error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'form-error';
+    errorDiv.textContent = message;
+    form.insertBefore(errorDiv, form.firstChild);
+    
+    // Remove error after 5 seconds
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
+}
+
+// Show notification toast
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.querySelector('.notification-toast');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification-toast notification-${type}`;
+    notification.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Trigger animation
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
 }
 
 // Edit account
@@ -578,9 +823,25 @@ function editAccount(accountId) {
     showAccountModal(accountId);
 }
 
-// Delete account
+// Delete account with enhanced confirmation and feedback
 async function deleteAccount(accountId) {
-    if (!confirm('Are you sure you want to delete this account?')) {
+    // Find the account to get its name
+    let accountName = 'this account';
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/accounts`);
+        if (response.ok) {
+            const accounts = await response.json();
+            const account = accounts.find(a => a.id === accountId);
+            if (account) {
+                accountName = account.name;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch account details:', error);
+    }
+    
+    // Confirm deletion with account name
+    if (!confirm(`Are you sure you want to delete "${accountName}"?\n\nThis action cannot be undone.`)) {
         return;
     }
     
@@ -589,13 +850,21 @@ async function deleteAccount(accountId) {
             method: 'DELETE'
         });
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
+        
         if (result.success) {
-            loadAccounts();
+            await loadAccounts();
+            showNotification('Account deleted successfully', 'success');
+        } else {
+            throw new Error(result.error || 'Failed to delete account');
         }
     } catch (error) {
         console.error('Failed to delete account:', error);
-        alert('Failed to delete account. Please try again.');
+        showNotification('Failed to delete account. Please try again.', 'error');
     }
 }
 
@@ -701,37 +970,54 @@ function updateExpensesDisplay(total) {
 // Calculate and display available spending money
 async function calculateAvailableSpending() {
     try {
-        // Fetch both income and expenses totals
-        const [incomeResponse, expensesResponse] = await Promise.all([
-            fetch(`${API_BASE_URL}/api/income/total`),
-            fetch(`${API_BASE_URL}/api/expenses/total`)
-        ]);
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/available-spending`);
         
-        const incomeData = await incomeResponse.json();
-        const expensesData = await expensesResponse.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
-        const totalIncome = incomeData.total || 0;
-        const totalExpenses = expensesData.total || 0;
-        
-        // Calculate available money (Income - Fixed Expenses)
-        const available = totalIncome - totalExpenses;
+        const data = await response.json();
         
         // Update display
         const availableCard = document.querySelector('.available-card .summary-amount');
+        const availableLabel = document.querySelector('.available-card .summary-label');
+        
         if (availableCard) {
-            availableCard.textContent = `$${formatCurrency(available)}`;
+            availableCard.textContent = `$${formatCurrency(data.available)}`;
             
-            // Add color coding based on available amount
-            if (available < 0) {
-                availableCard.style.color = 'var(--danger-color, #ff4444)';
-            } else if (available < 500) {
-                availableCard.style.color = 'var(--warning-color, #ff9800)';
+            // Add color coding based on status from backend
+            const availableCardParent = document.querySelector('.available-card');
+            
+            // Remove previous status classes
+            availableCardParent.classList.remove('status-success', 'status-warning', 'status-danger');
+            
+            // Add appropriate status class
+            if (data.status === 'danger') {
+                availableCardParent.classList.add('status-danger');
+                availableCard.style.color = '#ff4444';
+            } else if (data.status === 'warning') {
+                availableCardParent.classList.add('status-warning');
+                availableCard.style.color = '#ff9800';
             } else {
-                availableCard.style.color = 'var(--success-color, #4caf50)';
+                availableCardParent.classList.add('status-success');
+                availableCard.style.color = '#4caf50';
+            }
+            
+            // Update label with status message
+            if (availableLabel) {
+                availableLabel.textContent = data.message;
             }
         }
+        
+        console.log('Available spending calculated:', data);
     } catch (error) {
         console.error('Failed to calculate available spending:', error);
+        
+        // Fallback to showing $0.00 if API fails
+        const availableCard = document.querySelector('.available-card .summary-amount');
+        if (availableCard) {
+            availableCard.textContent = '$0.00';
+        }
     }
 }
 
@@ -771,6 +1057,638 @@ async function loadMonthToDateSpending() {
     }
 }
 
+// Load and display spending velocity indicator
+async function loadSpendingVelocity() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/spending-velocity`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update velocity status
+        const velocityStatus = document.getElementById('velocity-status');
+        const velocityIcon = document.getElementById('velocity-icon');
+        const velocityStatusText = document.getElementById('velocity-status-text');
+        
+        if (velocityStatus && velocityIcon && velocityStatusText) {
+            // Remove all status classes
+            velocityStatus.classList.remove('status-success', 'status-warning', 'status-danger');
+            
+            // Add appropriate status class
+            velocityStatus.classList.add(`status-${data.status}`);
+            
+            // Update icon based on status
+            const icons = {
+                'success': '✅',
+                'warning': '⚠️',
+                'danger': '🚨'
+            };
+            velocityIcon.textContent = icons[data.status] || '⏱️';
+            
+            // Update status text
+            velocityStatusText.textContent = data.status_text;
+        }
+        
+        // Update velocity details
+        const velocityActual = document.getElementById('velocity-actual');
+        const velocityTarget = document.getElementById('velocity-target');
+        const velocityDays = document.getElementById('velocity-days');
+        
+        if (velocityActual) {
+            velocityActual.textContent = `$${formatCurrency(data.actual_daily_rate)}/day`;
+        }
+        
+        if (velocityTarget) {
+            velocityTarget.textContent = `$${formatCurrency(data.safe_daily_rate)}/day`;
+        }
+        
+        if (velocityDays) {
+            const dayText = data.days_remaining === 1 ? 'day' : 'days';
+            velocityDays.textContent = `${data.days_remaining} ${dayText}`;
+        }
+        
+        // Update velocity message
+        const velocityMessage = document.getElementById('velocity-message');
+        if (velocityMessage) {
+            velocityMessage.textContent = data.message;
+        }
+        
+        // Update projection
+        const velocityProjection = document.getElementById('velocity-projection');
+        const velocityProjected = document.getElementById('velocity-projected');
+        
+        if (velocityProjection && velocityProjected) {
+            // Show projection if there's transaction data
+            if (data.transaction_count > 0) {
+                velocityProjection.style.display = 'block';
+                
+                const projectedValue = data.projected_remaining;
+                velocityProjected.textContent = `$${formatCurrency(Math.abs(projectedValue))} ${projectedValue >= 0 ? 'remaining' : 'over budget'}`;
+                
+                // Remove old classes
+                velocityProjected.classList.remove('positive', 'negative');
+                
+                // Add appropriate class
+                if (projectedValue >= 0) {
+                    velocityProjected.classList.add('positive');
+                } else {
+                    velocityProjected.classList.add('negative');
+                }
+            } else {
+                velocityProjection.style.display = 'none';
+            }
+        }
+        
+    } catch (error) {
+        console.error('Failed to load spending velocity:', error);
+        
+        // Show error state in UI
+        const velocityMessage = document.getElementById('velocity-message');
+        if (velocityMessage) {
+            velocityMessage.textContent = 'Unable to calculate velocity. Add income and transactions to get started.';
+        }
+    }
+}
+
+// Load and display next paycheck countdown
+async function loadNextPaycheck() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/next-paycheck`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        const paycheckContainer = document.getElementById('paycheck-container');
+        const paycheckCountdown = document.getElementById('paycheck-countdown');
+        const paycheckDetails = document.getElementById('paycheck-details');
+        const paycheckMessage = document.getElementById('paycheck-message');
+        
+        if (!data.has_paycheck) {
+            // No paycheck configured - show message
+            if (paycheckCountdown) paycheckCountdown.style.display = 'none';
+            if (paycheckDetails) paycheckDetails.style.display = 'none';
+            if (paycheckMessage) {
+                paycheckMessage.style.display = 'block';
+                paycheckMessage.textContent = data.message || 'Add income sources with pay dates to see your next paycheck countdown';
+            }
+            return;
+        }
+        
+        // Update countdown display
+        const paycheckDays = document.getElementById('paycheck-days');
+        if (paycheckDays) {
+            paycheckDays.textContent = data.days_until;
+        }
+        
+        // Update paycheck details
+        const paycheckDate = document.getElementById('paycheck-date');
+        const paycheckSource = document.getElementById('paycheck-source');
+        const paycheckAmount = document.getElementById('paycheck-amount');
+        
+        if (paycheckDate) {
+            paycheckDate.textContent = data.formatted_date;
+        }
+        
+        if (paycheckSource) {
+            paycheckSource.textContent = data.source;
+        }
+        
+        if (paycheckAmount) {
+            paycheckAmount.textContent = `$${formatCurrency(data.amount)}`;
+        }
+        
+        // Show appropriate sections
+        if (paycheckCountdown) paycheckCountdown.style.display = 'flex';
+        if (paycheckDetails) paycheckDetails.style.display = 'block';
+        if (paycheckMessage) paycheckMessage.style.display = 'none';
+        
+        // Apply color coding based on days until payday
+        if (paycheckContainer) {
+            paycheckContainer.classList.remove('paycheck-soon', 'paycheck-today', 'paycheck-upcoming');
+            
+            if (data.days_until === 0) {
+                paycheckContainer.classList.add('paycheck-today');
+            } else if (data.days_until <= 3) {
+                paycheckContainer.classList.add('paycheck-soon');
+            } else {
+                paycheckContainer.classList.add('paycheck-upcoming');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Failed to load next paycheck:', error);
+        
+        // Show error state
+        const paycheckMessage = document.getElementById('paycheck-message');
+        if (paycheckMessage) {
+            paycheckMessage.style.display = 'block';
+            paycheckMessage.textContent = 'Unable to calculate next paycheck. Add income sources with pay dates to get started.';
+        }
+    }
+}
+
+// Load and display overdraft warning status
+async function loadOverdraftStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/overdraft-status`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Get the overdraft warning element
+        const overdraftWarning = document.getElementById('overdraft-warning');
+        if (!overdraftWarning) return;
+        
+        // Remove old risk level classes
+        overdraftWarning.classList.remove('risk-critical', 'risk-warning', 'risk-safe');
+        
+        // Add new risk level class
+        overdraftWarning.classList.add(`risk-${data.risk_level}`);
+        
+        // Update icon
+        const iconElement = document.getElementById('overdraft-icon');
+        if (iconElement) {
+            iconElement.textContent = data.alert_icon;
+        }
+        
+        // Update warnings
+        const warningsContainer = document.getElementById('overdraft-warnings');
+        if (warningsContainer && data.warnings && data.warnings.length > 0) {
+            warningsContainer.innerHTML = '';
+            data.warnings.forEach(warning => {
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'overdraft-warning-message';
+                warningDiv.innerHTML = `
+                    <span class="overdraft-warning-message-icon">${data.alert_icon}</span>
+                    <span class="overdraft-warning-message-text">${warning}</span>
+                `;
+                warningsContainer.appendChild(warningDiv);
+            });
+        }
+        
+        // Update recommendations
+        const recommendationsList = document.getElementById('overdraft-recommendations-list');
+        if (recommendationsList && data.recommendations && data.recommendations.length > 0) {
+            recommendationsList.innerHTML = '';
+            data.recommendations.forEach(recommendation => {
+                const li = document.createElement('li');
+                li.textContent = recommendation;
+                recommendationsList.appendChild(li);
+            });
+        }
+        
+        // Update metrics
+        const metricsContainer = document.getElementById('overdraft-metrics');
+        if (metricsContainer && data.metrics) {
+            metricsContainer.innerHTML = '';
+            
+            // Define which metrics to show
+            const metricsToShow = [
+                { key: 'checking_balance', label: 'Checking', format: 'currency', checkSign: true },
+                { key: 'savings_balance', label: 'Savings', format: 'currency', checkSign: true },
+                { key: 'remaining_money', label: 'Remaining', format: 'currency', checkSign: true },
+                { key: 'upcoming_bills', label: 'Bills Due Soon', format: 'currency', checkSign: false },
+                { key: 'days_remaining', label: 'Days Left', format: 'number', checkSign: false }
+            ];
+            
+            metricsToShow.forEach(metric => {
+                const value = data.metrics[metric.key];
+                if (value !== undefined && value !== null) {
+                    const metricDiv = document.createElement('div');
+                    metricDiv.className = 'overdraft-metric';
+                    
+                    let displayValue = value;
+                    let valueClass = 'neutral';
+                    
+                    if (metric.format === 'currency') {
+                        displayValue = `$${formatCurrency(Math.abs(value))}`;
+                        if (value < 0) displayValue = `-${displayValue}`;
+                        
+                        if (metric.checkSign) {
+                            if (value > 0) valueClass = 'positive';
+                            else if (value < 0) valueClass = 'negative';
+                        }
+                    } else if (metric.format === 'number') {
+                        displayValue = Math.round(value);
+                    }
+                    
+                    metricDiv.innerHTML = `
+                        <span class="overdraft-metric-label">${metric.label}</span>
+                        <span class="overdraft-metric-value ${valueClass}">${displayValue}</span>
+                    `;
+                    metricsContainer.appendChild(metricDiv);
+                }
+            });
+        }
+        
+        // Show the overdraft warning section
+        overdraftWarning.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Failed to load overdraft status:', error);
+        
+        // Hide the overdraft warning on error
+        const overdraftWarning = document.getElementById('overdraft-warning');
+        if (overdraftWarning) {
+            overdraftWarning.style.display = 'none';
+        }
+    }
+}
+
+// Load and display money left per day
+async function loadMoneyPerDay() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/money-per-day`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update the main display amount
+        const moneyPerDayAmount = document.getElementById('money-per-day-amount');
+        if (moneyPerDayAmount) {
+            moneyPerDayAmount.textContent = `$${formatCurrency(data.money_per_day)}`;
+        }
+        
+        // Update status indicator
+        const statusIndicator = document.getElementById('money-per-day-indicator');
+        const statusIcon = document.getElementById('money-per-day-icon');
+        const statusText = document.getElementById('money-per-day-status-text');
+        
+        if (statusIndicator && statusIcon && statusText) {
+            // Remove old status classes
+            statusIndicator.classList.remove('status-success', 'status-warning', 'status-danger');
+            
+            // Add new status class
+            statusIndicator.classList.add(`status-${data.status}`);
+            
+            // Update icon based on status
+            const icons = {
+                'success': '✅',
+                'warning': '⚠️',
+                'danger': '🚨'
+            };
+            statusIcon.textContent = icons[data.status] || '💰';
+            
+            // Update status text
+            statusText.textContent = data.status_text;
+        }
+        
+        // Update details
+        const remainingElement = document.getElementById('money-per-day-remaining');
+        const daysElement = document.getElementById('money-per-day-days');
+        
+        if (remainingElement) {
+            const remaining = data.remaining_money;
+            remainingElement.textContent = `$${formatCurrency(Math.abs(remaining))}`;
+            
+            // Add positive/negative class
+            remainingElement.classList.remove('positive', 'negative');
+            if (remaining >= 0) {
+                remainingElement.classList.add('positive');
+            } else {
+                remainingElement.classList.add('negative');
+            }
+        }
+        
+        if (daysElement) {
+            const dayText = data.days_until_paycheck === 1 ? 'day' : 'days';
+            daysElement.textContent = `${data.days_until_paycheck} ${dayText}`;
+        }
+        
+        // Update message
+        const messageElement = document.getElementById('money-per-day-message');
+        if (messageElement) {
+            messageElement.textContent = data.message;
+        }
+        
+        // Show/hide sections based on data availability
+        const displayElement = document.getElementById('money-per-day-display');
+        const detailsElement = document.getElementById('money-per-day-details');
+        const statusElement = document.getElementById('money-per-day-status');
+        
+        if (data.available_for_month === 0 && data.mtd_spent === 0) {
+            // No data yet - show message only
+            if (displayElement) displayElement.style.display = 'none';
+            if (detailsElement) detailsElement.style.display = 'none';
+            if (statusElement) statusElement.style.display = 'none';
+            if (messageElement) messageElement.style.display = 'block';
+        } else {
+            // Has data - show all info
+            if (displayElement) displayElement.style.display = 'flex';
+            if (detailsElement) detailsElement.style.display = 'block';
+            if (statusElement) statusElement.style.display = 'block';
+            if (messageElement) messageElement.style.display = 'block';
+        }
+        
+    } catch (error) {
+        console.error('Failed to load money per day:', error);
+        
+        // Show error state
+        const messageElement = document.getElementById('money-per-day-message');
+        if (messageElement) {
+            messageElement.style.display = 'block';
+            messageElement.textContent = 'Unable to calculate daily budget. Add income and transactions to get started.';
+        }
+        
+        // Hide other elements
+        const displayElement = document.getElementById('money-per-day-display');
+        const detailsElement = document.getElementById('money-per-day-details');
+        const statusElement = document.getElementById('money-per-day-status');
+        
+        if (displayElement) displayElement.style.display = 'none';
+        if (detailsElement) detailsElement.style.display = 'none';
+        if (statusElement) statusElement.style.display = 'none';
+    }
+}
+
+// Load and display budget health score
+async function loadBudgetHealthScore() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/budget-health-score`);
+        const data = await response.json();
+        
+        // Update main score display
+        const scoreNumber = document.getElementById('health-score-number');
+        const scoreCircle = document.getElementById('health-score-circle');
+        const gradeElement = document.getElementById('health-grade');
+        const gradeText = document.getElementById('health-grade-text');
+        
+        if (scoreNumber) {
+            scoreNumber.textContent = data.score;
+        }
+        
+        if (scoreCircle) {
+            scoreCircle.style.borderColor = data.color;
+            scoreCircle.style.background = `conic-gradient(${data.color} ${data.score * 3.6}deg, var(--card-bg) 0deg)`;
+        }
+        
+        if (gradeElement) {
+            gradeElement.textContent = `${data.icon} ${data.grade}`;
+            gradeElement.style.color = data.color;
+        }
+        
+        if (gradeText) {
+            gradeText.textContent = data.grade_text;
+        }
+        
+        // Update breakdown sections
+        const breakdownMap = {
+            'account_health': 'account',
+            'spending_adherence': 'spending',
+            'savings_rate': 'savings',
+            'bill_payment': 'bill',
+            'setup_completeness': 'setup'
+        };
+        
+        for (const [key, shortName] of Object.entries(breakdownMap)) {
+            const categoryData = data.breakdown[key];
+            
+            // Update score
+            const scoreElement = document.getElementById(`health-${shortName}-score`);
+            if (scoreElement) {
+                scoreElement.textContent = `${categoryData.score}/${categoryData.max}`;
+            }
+            
+            // Update progress bar
+            const progressElement = document.getElementById(`health-${shortName}-progress`);
+            if (progressElement) {
+                const percentage = (categoryData.score / categoryData.max) * 100;
+                progressElement.style.width = `${percentage}%`;
+                
+                // Color code the progress bar
+                if (percentage >= 80) {
+                    progressElement.style.backgroundColor = '#10b981'; // Green
+                } else if (percentage >= 60) {
+                    progressElement.style.backgroundColor = '#3b82f6'; // Blue
+                } else if (percentage >= 40) {
+                    progressElement.style.backgroundColor = '#f59e0b'; // Amber
+                } else {
+                    progressElement.style.backgroundColor = '#ef4444'; // Red
+                }
+            }
+            
+            // Update factors list
+            const factorsElement = document.getElementById(`health-${shortName}-factors`);
+            if (factorsElement && categoryData.factors && categoryData.factors.length > 0) {
+                factorsElement.innerHTML = categoryData.factors
+                    .map(factor => `<li>${factor}</li>`)
+                    .join('');
+            }
+        }
+        
+        // Update recommendations
+        const recommendationsList = document.getElementById('health-recommendations-list');
+        if (recommendationsList && data.recommendations && data.recommendations.length > 0) {
+            recommendationsList.innerHTML = data.recommendations
+                .map(rec => `<li>${rec}</li>`)
+                .join('');
+        }
+        
+    } catch (error) {
+        console.error('Failed to load budget health score:', error);
+        
+        // Show error state
+        const scoreNumber = document.getElementById('health-score-number');
+        const gradeText = document.getElementById('health-grade-text');
+        
+        if (scoreNumber) {
+            scoreNumber.textContent = '--';
+        }
+        
+        if (gradeText) {
+            gradeText.textContent = 'Unable to calculate';
+        }
+    }
+}
+
+// Load and display month comparison
+async function loadMonthComparison() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard/month-comparison`);
+        const data = await response.json();
+        
+        // Always show the comparison section
+        const section = document.getElementById('month-comparison-section');
+        if (section) {
+            section.style.display = 'block';
+        }
+        
+        // If no data, show empty state
+        if (!data.has_data) {
+            const comparisonGrid = document.getElementById('comparison-grid');
+            if (comparisonGrid) {
+                comparisonGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📊</div>
+                        <p class="empty-state-text">No comparison data yet</p>
+                        <p class="empty-state-subtext">Add transactions to your budget to see month-over-month comparisons</p>
+                    </div>
+                `;
+            }
+            
+            const insightsContainer = document.getElementById('comparison-insights');
+            if (insightsContainer) {
+                insightsContainer.innerHTML = '';
+            }
+            return;
+        }
+        
+        // Update subtitle with month names
+        const subtitle = document.getElementById('comparison-subtitle');
+        if (subtitle && data.current_month && data.previous_month) {
+            subtitle.textContent = `${data.current_month.month_name} vs. ${data.previous_month.month_name}`;
+        }
+        
+        // Build comparison cards
+        const comparisonGrid = document.getElementById('comparison-grid');
+        if (comparisonGrid) {
+            const cards = [
+                {
+                    title: 'Monthly Spending',
+                    icon: '💳',
+                    data: data.spending,
+                    goodDirection: 'down'
+                },
+                {
+                    title: 'Net Savings',
+                    icon: '💰',
+                    data: data.savings,
+                    goodDirection: 'up'
+                },
+                {
+                    title: 'Transactions',
+                    icon: '🛒',
+                    data: data.transaction_count,
+                    goodDirection: 'neutral',
+                    hidePercent: false
+                },
+                {
+                    title: 'Total Income',
+                    icon: '💵',
+                    data: data.income,
+                    goodDirection: 'up'
+                }
+            ];
+            
+            comparisonGrid.innerHTML = cards.map(card => {
+                const isGood = card.goodDirection === 'neutral' ? 'neutral' :
+                    (card.goodDirection === 'up' && card.data.direction === 'up') ||
+                    (card.goodDirection === 'down' && card.data.direction === 'down');
+                
+                const colorClass = card.data.direction === 'same' ? 'neutral' :
+                    isGood ? 'positive' : 'negative';
+                
+                const arrow = card.data.direction === 'up' ? '↑' :
+                    card.data.direction === 'down' ? '↓' : '→';
+                
+                const changeSign = card.data.change >= 0 ? '+' : '';
+                
+                return `
+                    <div class="comparison-card ${colorClass}">
+                        <div class="comparison-card-header">
+                            <span class="comparison-icon">${card.icon}</span>
+                            <h4 class="comparison-title">${card.title}</h4>
+                        </div>
+                        <div class="comparison-values">
+                            <div class="comparison-current">
+                                <span class="comparison-label">Current</span>
+                                <span class="comparison-amount">$${formatCurrency(card.data.current)}</span>
+                            </div>
+                            <div class="comparison-previous">
+                                <span class="comparison-label">Previous</span>
+                                <span class="comparison-amount">$${formatCurrency(card.data.previous)}</span>
+                            </div>
+                        </div>
+                        <div class="comparison-change">
+                            <span class="change-arrow">${arrow}</span>
+                            <span class="change-amount">${changeSign}$${Math.abs(card.data.change).toFixed(2)}</span>
+                            ${card.hidePercent !== true ? `
+                                <span class="change-percent">(${changeSign}${card.data.percent_change}%)</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Display insights
+        const insightsContainer = document.getElementById('comparison-insights');
+        if (insightsContainer && data.insights && data.insights.length > 0) {
+            insightsContainer.innerHTML = `
+                <div class="insights-list">
+                    ${data.insights.map(insight => `
+                        <div class="insight-item insight-${insight.type}">
+                            <span class="insight-icon">${insight.icon}</span>
+                            <span class="insight-message">${insight.message}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else if (insightsContainer) {
+            insightsContainer.innerHTML = '';
+        }
+        
+    } catch (error) {
+        console.error('Failed to load month comparison:', error);
+        const section = document.getElementById('month-comparison-section');
+        if (section) {
+            section.style.display = 'none';
+        }
+    }
+}
+
 // Load and display all income sources
 async function loadIncomeSources() {
     try {
@@ -786,6 +1704,9 @@ async function loadIncomeSources() {
         
         // Refresh total
         loadTotalIncome();
+        
+        // Reload overdraft status when income changes
+        loadOverdraftStatus();
     } catch (error) {
         console.error('Failed to load income sources:', error);
     }
@@ -927,6 +1848,7 @@ async function loadIncomeData(incomeId) {
             document.getElementById('income-name').value = income.name;
             document.getElementById('income-amount').value = income.amount;
             document.getElementById('income-frequency').value = income.frequency;
+            document.getElementById('income-next-pay-date').value = income.next_pay_date || '';
             document.getElementById('income-notes').value = income.notes || '';
         }
     } catch (error) {
@@ -943,6 +1865,7 @@ async function saveIncome(event) {
         name: document.getElementById('income-name').value,
         amount: parseFloat(document.getElementById('income-amount').value),
         frequency: document.getElementById('income-frequency').value,
+        next_pay_date: document.getElementById('income-next-pay-date').value || null,
         notes: document.getElementById('income-notes').value
     };
     
@@ -1038,14 +1961,291 @@ function setupIncomeListeners() {
     }
 }
 
+// ============================================
+// EXPENSE MANAGEMENT
+// ============================================
+
+let currentEditExpenseId = null;
+
+// Load and display all fixed expenses
+async function loadExpenses() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/expenses`);
+        const expenses = await response.json();
+        displayExpenses(expenses);
+        
+        // Update count
+        const countDisplay = document.getElementById('expense-count-display');
+        if (countDisplay) {
+            countDisplay.textContent = expenses.length;
+        }
+        
+        // Refresh total
+        loadTotalExpenses();
+        
+        // Reload overdraft status when expenses change
+        loadOverdraftStatus();
+    } catch (error) {
+        console.error('Failed to load expenses:', error);
+    }
+}
+
+// Display expenses in the expenses tab
+function displayExpenses(expenses) {
+    const container = document.getElementById('expense-list-container');
+    
+    if (!container) return;
+    
+    if (!expenses || expenses.length === 0) {
+        container.innerHTML = '<p class="placeholder-text">No expenses added yet. Click "Add Expense" to get started.</p>';
+        return;
+    }
+    
+    // Sort expenses by due date
+    expenses.sort((a, b) => (a.due_date || 99) - (b.due_date || 99));
+    
+    container.innerHTML = expenses.map(expense => {
+        const icon = getExpenseIcon(expense.category);
+        const dueDate = expense.due_date ? `Due: ${ordinalSuffix(expense.due_date)} of month` : 'No due date set';
+        const autopay = expense.autopay ? '<span class="autopay-badge">⚡ Auto-pay</span>' : '';
+        
+        return `
+            <div class="expense-item">
+                <div class="expense-item-header">
+                    <span class="expense-icon">${icon}</span>
+                    <div class="expense-info">
+                        <h4>${expense.name}</h4>
+                        <span class="expense-category-label">${formatExpenseCategory(expense.category)}</span>
+                    </div>
+                    <div class="expense-amount-section">
+                        <p class="expense-amount">$${formatCurrency(expense.amount)}</p>
+                        <span class="expense-frequency">per month</span>
+                    </div>
+                </div>
+                <div class="expense-item-footer">
+                    <div class="expense-details">
+                        <span class="due-date-label">${dueDate}</span>
+                        ${autopay}
+                    </div>
+                    <div class="expense-actions">
+                        <button class="btn-icon" onclick="editExpense(${expense.id})" title="Edit">✏️</button>
+                        <button class="btn-icon" onclick="deleteExpense(${expense.id})" title="Delete">🗑️</button>
+                    </div>
+                </div>
+                ${expense.notes ? `<p class="expense-notes">📝 ${expense.notes}</p>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// Get ordinal suffix for numbers (1st, 2nd, 3rd, etc.)
+function ordinalSuffix(num) {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return num + "st";
+    if (j === 2 && k !== 12) return num + "nd";
+    if (j === 3 && k !== 13) return num + "rd";
+    return num + "th";
+}
+
+// Get icon for expense category
+function getExpenseIcon(category) {
+    const icons = {
+        'housing': '🏠',
+        'utilities': '💡',
+        'internet': '🌐',
+        'insurance': '🛡️',
+        'transportation': '🚗',
+        'debt': '💳',
+        'subscriptions': '📺',
+        'childcare': '👶',
+        'other': '📝'
+    };
+    return icons[category] || '📝';
+}
+
+// Format expense category for display
+function formatExpenseCategory(category) {
+    const categories = {
+        'housing': 'Housing',
+        'utilities': 'Utilities',
+        'internet': 'Internet & Phone',
+        'insurance': 'Insurance',
+        'transportation': 'Transportation',
+        'debt': 'Debt Payments',
+        'subscriptions': 'Subscriptions',
+        'childcare': 'Childcare & Education',
+        'other': 'Other'
+    };
+    return categories[category] || category;
+}
+
+// Show expense modal
+function showExpenseModal(expenseId = null) {
+    const modal = document.getElementById('expense-modal');
+    const title = document.getElementById('expense-modal-title');
+    const form = document.getElementById('expense-form');
+    
+    currentEditExpenseId = expenseId;
+    
+    if (expenseId) {
+        title.textContent = 'Edit Fixed Expense';
+        loadExpenseData(expenseId);
+    } else {
+        title.textContent = 'Add Fixed Expense';
+        form.reset();
+    }
+    
+    modal.style.display = 'flex';
+}
+
+// Hide expense modal
+function hideExpenseModal() {
+    const modal = document.getElementById('expense-modal');
+    modal.style.display = 'none';
+    currentEditExpenseId = null;
+    document.getElementById('expense-form').reset();
+}
+
+// Load expense data for editing
+async function loadExpenseData(expenseId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/expenses`);
+        const expenses = await response.json();
+        const expense = expenses.find(e => e.id === expenseId);
+        
+        if (expense) {
+            document.getElementById('expense-category').value = expense.category;
+            document.getElementById('expense-name').value = expense.name;
+            document.getElementById('expense-amount').value = expense.amount;
+            document.getElementById('expense-due-date').value = expense.due_date || '';
+            document.getElementById('expense-autopay').checked = expense.autopay || false;
+            document.getElementById('expense-notes').value = expense.notes || '';
+        }
+    } catch (error) {
+        console.error('Failed to load expense data:', error);
+    }
+}
+
+// Save expense (add or update)
+async function saveExpense(event) {
+    event.preventDefault();
+    
+    const expenseData = {
+        category: document.getElementById('expense-category').value,
+        name: document.getElementById('expense-name').value,
+        amount: parseFloat(document.getElementById('expense-amount').value),
+        due_date: document.getElementById('expense-due-date').value ? parseInt(document.getElementById('expense-due-date').value) : null,
+        autopay: document.getElementById('expense-autopay').checked,
+        notes: document.getElementById('expense-notes').value
+    };
+    
+    try {
+        let response;
+        if (currentEditExpenseId) {
+            // Update existing expense
+            response = await fetch(`${API_BASE_URL}/api/expenses/${currentEditExpenseId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(expenseData)
+            });
+        } else {
+            // Add new expense
+            response = await fetch(`${API_BASE_URL}/api/expenses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(expenseData)
+            });
+        }
+        
+        const result = await response.json();
+        if (result.success) {
+            hideExpenseModal();
+            loadExpenses();
+        }
+    } catch (error) {
+        console.error('Failed to save expense:', error);
+        alert('Failed to save expense. Please try again.');
+    }
+}
+
+// Edit expense
+function editExpense(expenseId) {
+    showExpenseModal(expenseId);
+}
+
+// Delete expense
+async function deleteExpense(expenseId) {
+    if (!confirm('Are you sure you want to delete this expense?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/expenses/${expenseId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            loadExpenses();
+        }
+    } catch (error) {
+        console.error('Failed to delete expense:', error);
+        alert('Failed to delete expense. Please try again.');
+    }
+}
+
+// Setup expense event listeners
+function setupExpenseListeners() {
+    // Add expense button
+    const addExpenseBtn = document.getElementById('add-expense-btn');
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', () => showExpenseModal());
+    }
+    
+    // Close modal buttons
+    const closeModalBtn = document.getElementById('close-expense-modal');
+    const cancelBtn = document.getElementById('cancel-expense-btn');
+    
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', hideExpenseModal);
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideExpenseModal);
+    }
+    
+    // Form submission
+    const expenseForm = document.getElementById('expense-form');
+    if (expenseForm) {
+        expenseForm.addEventListener('submit', saveExpense);
+    }
+    
+    // Close modal when clicking outside
+    const modal = document.getElementById('expense-modal');
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                hideExpenseModal();
+            }
+        });
+    }
+}
+
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupAccountListeners();
     setupIncomeListeners();
+    setupExpenseListeners();
     loadAccounts();
     loadIncomeSources();
+    loadExpenses();
     loadTotalIncome();
+    loadTotalExpenses();
+    calculateAvailableSpending();
+    loadMonthToDateSpending();
+    loadSpendingVelocity();
 });
 
 

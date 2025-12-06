@@ -72,6 +72,30 @@
                     <p class="dashboard-date" id="current-date"></p>
                 </div>
                 
+                <!-- Overdraft Warning System -->
+                <div id="overdraft-warning" class="overdraft-warning" style="display: none;">
+                    <div class="overdraft-header">
+                        <div class="overdraft-icon-container">
+                            <span class="overdraft-icon" id="overdraft-icon">⚠️</span>
+                        </div>
+                        <div class="overdraft-content">
+                            <h3 class="overdraft-title" id="overdraft-title">Overdraft Risk Assessment</h3>
+                            <div class="overdraft-warnings" id="overdraft-warnings">
+                                <!-- Warning messages will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overdraft-recommendations">
+                        <h4>💡 Recommendations:</h4>
+                        <ul id="overdraft-recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </ul>
+                    </div>
+                    <div class="overdraft-metrics" id="overdraft-metrics">
+                        <!-- Metrics will be populated here -->
+                    </div>
+                </div>
+                
                 <!-- Top Summary Cards -->
                 <div class="summary-cards">
                     <div class="summary-card income-card">
@@ -93,6 +117,22 @@
                         <h3>Total Savings</h3>
                         <p class="summary-amount">$0.00</p>
                         <span class="summary-label">All savings accounts</span>
+                    </div>
+                </div>
+
+                <!-- Month Comparison Section -->
+                <div class="dashboard-section month-comparison-section" id="month-comparison-section" style="display: none;">
+                    <div class="section-header">
+                        <h3>📊 Month-over-Month Comparison</h3>
+                        <span class="section-subtitle" id="comparison-subtitle">Current vs. Previous Month</span>
+                    </div>
+                    
+                    <div class="comparison-grid" id="comparison-grid">
+                        <!-- Comparison cards will be dynamically inserted here -->
+                    </div>
+                    
+                    <div class="comparison-insights" id="comparison-insights">
+                        <!-- Insights will be dynamically inserted here -->
                     </div>
                 </div>
 
@@ -144,12 +184,186 @@
                             </div>
                         </div>
                         
-                        <!-- Budget Health Section -->
+                        <!-- Spending Velocity Indicator -->
                         <div class="dashboard-section">
                             <div class="section-header">
-                                <h3>💪 Budget Health</h3>
+                                <h3>⚡ Spending Velocity</h3>
+                                <span class="section-subtitle">How fast are you spending?</span>
                             </div>
-                            <p class="placeholder-text">Set up your budget to see insights</p>
+                            <div id="velocity-container" class="velocity-container">
+                                <div class="velocity-status" id="velocity-status">
+                                    <div class="velocity-icon" id="velocity-icon">⏱️</div>
+                                    <div class="velocity-status-text" id="velocity-status-text">Calculating...</div>
+                                </div>
+                                <div class="velocity-details">
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Current Pace:</span>
+                                        <span class="velocity-value" id="velocity-actual">$0.00/day</span>
+                                    </div>
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Target Pace:</span>
+                                        <span class="velocity-value" id="velocity-target">$0.00/day</span>
+                                    </div>
+                                    <div class="velocity-row">
+                                        <span class="velocity-label">Days Remaining:</span>
+                                        <span class="velocity-value" id="velocity-days">0 days</span>
+                                    </div>
+                                </div>
+                                <div class="velocity-message" id="velocity-message">
+                                    Add income and transactions to see your spending velocity
+                                </div>
+                                <div class="velocity-projection" id="velocity-projection" style="display: none;">
+                                    <div class="projection-label">Projected Month End:</div>
+                                    <div class="projection-value" id="velocity-projected">$0.00 remaining</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Next Paycheck Countdown -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💰 Next Paycheck</h3>
+                                <span class="section-subtitle">Days until payday</span>
+                            </div>
+                            <div id="paycheck-container" class="paycheck-container">
+                                <div class="paycheck-countdown" id="paycheck-countdown">
+                                    <div class="paycheck-days" id="paycheck-days">--</div>
+                                    <div class="paycheck-label">days</div>
+                                </div>
+                                <div class="paycheck-details" id="paycheck-details">
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Date:</span>
+                                        <span class="paycheck-value" id="paycheck-date">--</span>
+                                    </div>
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Source:</span>
+                                        <span class="paycheck-value" id="paycheck-source">--</span>
+                                    </div>
+                                    <div class="paycheck-row">
+                                        <span class="paycheck-label">Amount:</span>
+                                        <span class="paycheck-value" id="paycheck-amount">$0.00</span>
+                                    </div>
+                                </div>
+                                <div class="paycheck-message" id="paycheck-message">
+                                    Add income sources with pay dates to see your next paycheck countdown
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Money Left Per Day -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💵 Money Left Per Day</h3>
+                                <span class="section-subtitle">Daily spending budget</span>
+                            </div>
+                            <div id="money-per-day-container" class="money-per-day-container">
+                                <div class="money-per-day-display" id="money-per-day-display">
+                                    <div class="money-per-day-amount" id="money-per-day-amount">$0.00</div>
+                                    <div class="money-per-day-label">per day</div>
+                                </div>
+                                <div class="money-per-day-status" id="money-per-day-status">
+                                    <div class="status-indicator" id="money-per-day-indicator">
+                                        <span class="status-icon" id="money-per-day-icon">💰</span>
+                                        <span class="status-text" id="money-per-day-status-text">Calculating...</span>
+                                    </div>
+                                </div>
+                                <div class="money-per-day-details" id="money-per-day-details">
+                                    <div class="money-per-day-row">
+                                        <span class="money-per-day-label">Remaining:</span>
+                                        <span class="money-per-day-value" id="money-per-day-remaining">$0.00</span>
+                                    </div>
+                                    <div class="money-per-day-row">
+                                        <span class="money-per-day-label">Days Left:</span>
+                                        <span class="money-per-day-value" id="money-per-day-days">0 days</span>
+                                    </div>
+                                </div>
+                                <div class="money-per-day-message" id="money-per-day-message">
+                                    Add income and transactions to see your daily budget
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Budget Health Score -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💪 Budget Health Score</h3>
+                                <span class="section-subtitle">Overall financial health rating</span>
+                            </div>
+                            <div id="budget-health-container" class="budget-health-container">
+                                <div class="budget-health-score-display">
+                                    <div class="health-score-circle" id="health-score-circle">
+                                        <div class="health-score-number" id="health-score-number">--</div>
+                                        <div class="health-score-total">/100</div>
+                                    </div>
+                                    <div class="health-grade-display">
+                                        <div class="health-grade" id="health-grade">--</div>
+                                        <div class="health-grade-text" id="health-grade-text">Calculating...</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="health-breakdown" id="health-breakdown">
+                                    <h4>Score Breakdown:</h4>
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Account Health</span>
+                                            <span class="health-category-score" id="health-account-score">0/25</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-account-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-account-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Spending Adherence</span>
+                                            <span class="health-category-score" id="health-spending-score">0/25</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-spending-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-spending-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Savings Rate</span>
+                                            <span class="health-category-score" id="health-savings-score">0/20</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-savings-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-savings-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Bill Payment</span>
+                                            <span class="health-category-score" id="health-bill-score">0/20</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-bill-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-bill-factors"></ul>
+                                    </div>
+                                    
+                                    <div class="health-category">
+                                        <div class="health-category-header">
+                                            <span class="health-category-name">Setup Completeness</span>
+                                            <span class="health-category-score" id="health-setup-score">0/10</span>
+                                        </div>
+                                        <div class="health-progress-bar">
+                                            <div class="health-progress-fill" id="health-setup-progress"></div>
+                                        </div>
+                                        <ul class="health-factors" id="health-setup-factors"></ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="health-recommendations" id="health-recommendations">
+                                    <h4>💡 Recommendations:</h4>
+                                    <ul id="health-recommendations-list"></ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -183,17 +397,27 @@
 
             <!-- Monthly Expenses Tab -->
             <div id="tab-expenses" class="tab-content">
-                <h2>Monthly Expenses</h2>
-                <p class="tab-description">Manage your fixed monthly bills and obligations</p>
-                <div class="content-placeholder">
-                    <p>Expense tracking will be built here</p>
-                    <ul>
-                        <li>Rent/Mortgage</li>
-                        <li>Utilities</li>
-                        <li>Insurance</li>
-                        <li>Subscriptions</li>
-                        <li>Loan payments</li>
-                    </ul>
+                <div class="page-header">
+                    <div>
+                        <h2>📝 Monthly Expenses</h2>
+                        <p class="tab-description">Manage your fixed monthly bills and obligations</p>
+                    </div>
+                    <button class="btn-primary" id="add-expense-btn">+ Add Expense</button>
+                </div>
+                
+                <div class="expense-summary">
+                    <div class="summary-box">
+                        <span class="summary-label">Total Monthly Expenses</span>
+                        <span class="summary-value expense-total" id="expense-total-display">$0.00</span>
+                    </div>
+                    <div class="summary-box">
+                        <span class="summary-label">Active Expenses</span>
+                        <span class="summary-value" id="expense-count-display">0</span>
+                    </div>
+                </div>
+                
+                <div id="expense-list-container" class="expense-list">
+                    <p class="placeholder-text">No expenses added yet. Click "Add Expense" to get started.</p>
                 </div>
             </div>
 
@@ -339,12 +563,70 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="income-next-pay-date">Next Pay Date (Optional)</label>
+                    <input type="date" id="income-next-pay-date" title="When is your next paycheck? This helps calculate days until payday">
+                    <small class="form-help">Set your next expected pay date to see a countdown on your dashboard</small>
+                </div>
+                <div class="form-group">
                     <label for="income-notes">Notes (Optional)</label>
                     <textarea id="income-notes" placeholder="Additional details about this income source..." rows="3"></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="cancel-income-btn">Cancel</button>
                     <button type="submit" class="btn-primary" id="save-income-btn">Save Income Source</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expense-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="expense-modal-title">Add Fixed Expense</h3>
+                <button class="modal-close" id="close-expense-modal">&times;</button>
+            </div>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label for="expense-category">Category</label>
+                    <select id="expense-category" required>
+                        <option value="">Select category...</option>
+                        <option value="housing">🏠 Housing (Rent/Mortgage)</option>
+                        <option value="utilities">💡 Utilities (Electric, Gas, Water)</option>
+                        <option value="internet">🌐 Internet & Phone</option>
+                        <option value="insurance">🛡️ Insurance</option>
+                        <option value="transportation">🚗 Transportation (Car Payment, Gas)</option>
+                        <option value="debt">💳 Debt Payments</option>
+                        <option value="subscriptions">📺 Subscriptions & Memberships</option>
+                        <option value="childcare">👶 Childcare & Education</option>
+                        <option value="other">📝 Other Fixed Expense</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expense-name">Expense Name</label>
+                    <input type="text" id="expense-name" placeholder="e.g., Mortgage Payment, Electric Bill" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-amount">Monthly Amount</label>
+                    <input type="number" id="expense-amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-due-date">Due Date (Day of Month)</label>
+                    <input type="number" id="expense-due-date" placeholder="e.g., 15" min="1" max="31">
+                </div>
+                <div class="form-group checkbox-group">
+                    <label>
+                        <input type="checkbox" id="expense-autopay">
+                        <span>Auto-pay enabled</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="expense-notes">Notes (Optional)</label>
+                    <textarea id="expense-notes" placeholder="Additional details about this expense..." rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-expense-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-expense-btn">Save Expense</button>
                 </div>
             </form>
         </div>

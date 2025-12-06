@@ -193,7 +193,25 @@ pyinstaller --onefile --windowed --name BudgetTool main.py
 # 4. Users get notified automatically!
 ```
 
-See `UPDATE_GUIDE.md` for detailed instructions.
+See `docs/guides/UPDATE_GUIDE.md` for detailed instructions.
+
+## 📚 Documentation
+
+All documentation has been organized into the `/docs/` directory:
+
+- **`/docs/features/`** - Feature implementation details and specifications
+- **`/docs/guides/`** - User guides, tutorials, and quick references
+- **`/docs/development/`** - Development workflows, deployment, and testing docs
+
+**Quick Links:**
+- 📊 [Budget Health Score Feature](docs/features/BUDGET_HEALTH_SCORE_FEATURE.md)
+- 💾 [Data Storage Guide](docs/guides/DATA_STORAGE_GUIDE.md)
+- 🔄 [Update Guide](docs/guides/UPDATE_GUIDE.md)
+- 🚀 [Ultra Deploy Guide](docs/development/ULTRA-DEPLOY.md)
+- 🗺️ [Product Roadmap](FINANCIAL_ASSISTANT_ROADMAP.md)
+- 📝 [Changelog](CHANGELOG.md)
+
+See [`docs/README.md`](docs/README.md) for complete documentation structure and guidelines.
 
 ## 🔧 JavaScript Usage
 
