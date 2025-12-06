@@ -3,6 +3,35 @@
 All notable changes to Budget Tool.
 
 
+## [1.5.4] - Released
+*2025-12-06 03:15:54*
+
+Improved: Enhanced user interface in EFFICIENT_UPDATES_QUICKREF.md, Enhanced user interface in index.html, Modified ultra-deploy.ps1
+
+### 📝 Changes
+- Enhanced user interface in EFFICIENT_UPDATES_QUICKREF.md
+- Enhanced user interface in index.html
+- Modified ultra-deploy.ps1
+
+### 📝 Other Changes
+- Updated documentation: ULTRA-DEPLOY.md
+- Updated dependencies
+
+
+## [1.5.3] - Released
+*2025-12-06 03:04:32*
+
+Improved: Enhanced user interface in EFFICIENT_UPDATES_QUICKREF.md, Modified ultra-deploy.ps1
+
+### 📝 Changes
+- Enhanced user interface in EFFICIENT_UPDATES_QUICKREF.md
+- Modified ultra-deploy.ps1
+
+### 📝 Other Changes
+- Updated documentation: CHANGELOG.md
+- Updated documentation: ULTRA-DEPLOY.md
+
+
 ## [1.5.2] - Released
 *2025-12-06 02:56:09*
 
