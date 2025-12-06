@@ -13,7 +13,11 @@ autoUpdater.autoInstallOnAppQuit = false; // Don't auto-install, let user choose
 // Start the Python Flask server
 function startServer() {
   try {
-    const serverPath = path.join(__dirname, '../server/app.py');
+    // In production, server files are unpacked to app.asar.unpacked
+    const isPackaged = app.isPackaged;
+    const serverPath = isPackaged 
+      ? path.join(process.resourcesPath, 'app.asar.unpacked', 'server', 'app.py')
+      : path.join(__dirname, '../server/app.py');
     
     // Check for bundled Python first, then system Python
     let pythonCommand;
@@ -22,6 +26,7 @@ function startServer() {
     if (require('fs').existsSync(bundledPython)) {
       pythonCommand = bundledPython;
       console.log('Using bundled Python');
+      console.log('Server path:', serverPath);
     } else {
       pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
       console.log('Using system Python');
@@ -104,15 +109,16 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Check for updates after window loads (only in production)
-  if (process.env.NODE_ENV !== 'development') {
-    mainWindow.webContents.on('did-finish-load', () => {
-      // Check for updates 2 seconds after app loads
-      setTimeout(() => {
-        autoUpdater.checkForUpdates();
-      }, 2000);
-    });
-  }
+  // Check for updates after window loads
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Check for updates 3 seconds after app loads (always check, even in dev)
+    setTimeout(() => {
+      console.log('Initiating update check...');
+      autoUpdater.checkForUpdates().catch(err => {
+        console.error('Update check failed:', err);
+      });
+    }, 3000);
+  });
 }
 
 // Auto-updater events
