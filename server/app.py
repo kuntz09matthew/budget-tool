@@ -137,7 +137,17 @@ def load_test_data():
             'type': 'salary',
             'amount': 5500.00,
             'frequency': 'monthly',
-            'created_at': datetime.now().isoformat()
+            'created_at': datetime.now().isoformat(),
+            'actual_payments': [
+                {
+                    'id': 1001,
+                    'date': datetime.now().strftime('%Y-%m-%d'),
+                    'amount': 5500.00,
+                    'notes': 'Monthly salary payment',
+                    'recorded_at': datetime.now().isoformat()
+                }
+            ],
+            'expected_next_payment': None
         },
         {
             'id': 2,
@@ -145,7 +155,9 @@ def load_test_data():
             'type': 'freelance',
             'amount': 800.00,
             'frequency': 'monthly',
-            'created_at': datetime.now().isoformat()
+            'created_at': datetime.now().isoformat(),
+            'actual_payments': [],
+            'expected_next_payment': None
         }
     ]
     
@@ -569,9 +581,110 @@ def get_income_sources():
 def add_income_source():
     """Add a new income source"""
     income = request.json
+    
+    # Validate required fields
+    required_fields = ['type', 'name', 'amount', 'frequency']
+    for field in required_fields:
+        if field not in income or not income[field]:
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+    
+    # Validate income type
+    valid_types = ['salary', 'secondary-salary', 'freelance', 'investment', 'rental', 'other']
+    if income['type'] not in valid_types:
+        return jsonify({'success': False, 'error': 'Invalid income type'}), 400
+    
+    # Validate frequency
+    valid_frequencies = ['weekly', 'bi-weekly', 'monthly', 'annual']
+    if income['frequency'] not in valid_frequencies:
+        return jsonify({'success': False, 'error': 'Invalid frequency'}), 400
+    
+    # Validate amount is a positive number
+    try:
+        amount = float(income['amount'])
+        if amount <= 0:
+            return jsonify({'success': False, 'error': 'Amount must be greater than 0'}), 400
+        income['amount'] = amount
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+    
+    # Sanitize name (prevent XSS)
+    income['name'] = str(income['name']).strip()[:100]  # Limit to 100 characters
+    if not income['name']:
+        return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+    
+    # Sanitize notes if present
+    if 'notes' in income and income['notes']:
+        income['notes'] = str(income['notes']).strip()[:500]  # Limit to 500 characters
+    
+    # Validate and sanitize tax withholding fields
+    # Federal tax percentage
+    if 'federal_tax_percent' in income:
+        try:
+            federal_tax = float(income['federal_tax_percent'])
+            if federal_tax < 0 or federal_tax > 100:
+                return jsonify({'success': False, 'error': 'Federal tax must be between 0 and 100%'}), 400
+            income['federal_tax_percent'] = federal_tax
+        except (ValueError, TypeError):
+            income['federal_tax_percent'] = 0
+    else:
+        income['federal_tax_percent'] = 0
+    
+    # State tax percentage
+    if 'state_tax_percent' in income:
+        try:
+            state_tax = float(income['state_tax_percent'])
+            if state_tax < 0 or state_tax > 100:
+                return jsonify({'success': False, 'error': 'State tax must be between 0 and 100%'}), 400
+            income['state_tax_percent'] = state_tax
+        except (ValueError, TypeError):
+            income['state_tax_percent'] = 0
+    else:
+        income['state_tax_percent'] = 0
+    
+    # Social Security percentage
+    if 'social_security_percent' in income:
+        try:
+            ss_tax = float(income['social_security_percent'])
+            if ss_tax < 0 or ss_tax > 100:
+                return jsonify({'success': False, 'error': 'Social Security must be between 0 and 100%'}), 400
+            income['social_security_percent'] = ss_tax
+        except (ValueError, TypeError):
+            income['social_security_percent'] = 6.2  # Default
+    else:
+        income['social_security_percent'] = 6.2  # Default
+    
+    # Medicare percentage
+    if 'medicare_percent' in income:
+        try:
+            medicare = float(income['medicare_percent'])
+            if medicare < 0 or medicare > 100:
+                return jsonify({'success': False, 'error': 'Medicare must be between 0 and 100%'}), 400
+            income['medicare_percent'] = medicare
+        except (ValueError, TypeError):
+            income['medicare_percent'] = 1.45  # Default
+    else:
+        income['medicare_percent'] = 1.45  # Default
+    
+    # Other deductions (flat dollar amount)
+    if 'other_deductions' in income:
+        try:
+            other_ded = float(income['other_deductions'])
+            if other_ded < 0:
+                return jsonify({'success': False, 'error': 'Other deductions cannot be negative'}), 400
+            income['other_deductions'] = other_ded
+        except (ValueError, TypeError):
+            income['other_deductions'] = 0
+    else:
+        income['other_deductions'] = 0
+    
     income['id'] = int(datetime.now().timestamp() * 1000)
     income['created_at'] = datetime.now().isoformat()
     income['updated_at'] = datetime.now().isoformat()
+    
+    # Initialize actual income tracking fields
+    income['actual_payments'] = []  # List of actual payments received: [{date, amount, notes}]
+    income['expected_next_payment'] = None  # When the next payment is expected
+    
     budget_data['income_sources'].append(income)
     save_data()
     return jsonify({'success': True, 'data': income})
@@ -580,13 +693,100 @@ def add_income_source():
 def update_income_source(income_id):
     """Update an existing income source"""
     updated_data = request.json
-    for income in budget_data['income_sources']:
-        if income['id'] == income_id:
-            income.update(updated_data)
-            income['updated_at'] = datetime.now().isoformat()
-            save_data()
-            return jsonify({'success': True, 'data': income})
-    return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    # Find the income source
+    income = None
+    for inc in budget_data['income_sources']:
+        if inc['id'] == income_id:
+            income = inc
+            break
+    
+    if not income:
+        return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    # Validate type if provided
+    if 'type' in updated_data:
+        valid_types = ['salary', 'secondary-salary', 'freelance', 'investment', 'rental', 'other']
+        if updated_data['type'] not in valid_types:
+            return jsonify({'success': False, 'error': 'Invalid income type'}), 400
+    
+    # Validate frequency if provided
+    if 'frequency' in updated_data:
+        valid_frequencies = ['weekly', 'bi-weekly', 'monthly', 'annual']
+        if updated_data['frequency'] not in valid_frequencies:
+            return jsonify({'success': False, 'error': 'Invalid frequency'}), 400
+    
+    # Validate amount if provided
+    if 'amount' in updated_data:
+        try:
+            amount = float(updated_data['amount'])
+            if amount <= 0:
+                return jsonify({'success': False, 'error': 'Amount must be greater than 0'}), 400
+            updated_data['amount'] = amount
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+    
+    # Sanitize name if provided
+    if 'name' in updated_data:
+        updated_data['name'] = str(updated_data['name']).strip()[:100]
+        if not updated_data['name']:
+            return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+    
+    # Sanitize notes if provided
+    if 'notes' in updated_data and updated_data['notes']:
+        updated_data['notes'] = str(updated_data['notes']).strip()[:500]
+    
+    # Validate and sanitize tax withholding fields if provided
+    if 'federal_tax_percent' in updated_data:
+        try:
+            federal_tax = float(updated_data['federal_tax_percent'])
+            if federal_tax < 0 or federal_tax > 100:
+                return jsonify({'success': False, 'error': 'Federal tax must be between 0 and 100%'}), 400
+            updated_data['federal_tax_percent'] = federal_tax
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid federal tax value'}), 400
+    
+    if 'state_tax_percent' in updated_data:
+        try:
+            state_tax = float(updated_data['state_tax_percent'])
+            if state_tax < 0 or state_tax > 100:
+                return jsonify({'success': False, 'error': 'State tax must be between 0 and 100%'}), 400
+            updated_data['state_tax_percent'] = state_tax
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid state tax value'}), 400
+    
+    if 'social_security_percent' in updated_data:
+        try:
+            ss_tax = float(updated_data['social_security_percent'])
+            if ss_tax < 0 or ss_tax > 100:
+                return jsonify({'success': False, 'error': 'Social Security must be between 0 and 100%'}), 400
+            updated_data['social_security_percent'] = ss_tax
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid Social Security value'}), 400
+    
+    if 'medicare_percent' in updated_data:
+        try:
+            medicare = float(updated_data['medicare_percent'])
+            if medicare < 0 or medicare > 100:
+                return jsonify({'success': False, 'error': 'Medicare must be between 0 and 100%'}), 400
+            updated_data['medicare_percent'] = medicare
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid Medicare value'}), 400
+    
+    if 'other_deductions' in updated_data:
+        try:
+            other_ded = float(updated_data['other_deductions'])
+            if other_ded < 0:
+                return jsonify({'success': False, 'error': 'Other deductions cannot be negative'}), 400
+            updated_data['other_deductions'] = other_ded
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid other deductions value'}), 400
+    
+    # Update the income source
+    income.update(updated_data)
+    income['updated_at'] = datetime.now().isoformat()
+    save_data()
+    return jsonify({'success': True, 'data': income})
 
 @app.route('/api/income/<int:income_id>', methods=['DELETE'])
 def delete_income_source(income_id):
@@ -597,6 +797,172 @@ def delete_income_source(income_id):
     ]
     save_data()
     return jsonify({'success': True})
+
+@app.route('/api/income/<int:income_id>/record-payment', methods=['POST'])
+def record_income_payment(income_id):
+    """Record an actual payment received for an income source"""
+    payment_data = request.json
+    
+    # Find the income source
+    income = None
+    for inc in budget_data['income_sources']:
+        if inc['id'] == income_id:
+            income = inc
+            break
+    
+    if not income:
+        return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    # Validate required fields
+    if 'amount' not in payment_data:
+        return jsonify({'success': False, 'error': 'Amount is required'}), 400
+    
+    # Validate amount
+    try:
+        amount = float(payment_data['amount'])
+        if amount <= 0:
+            return jsonify({'success': False, 'error': 'Amount must be greater than 0'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+    
+    # Get payment date (default to today)
+    payment_date = payment_data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    
+    # Validate date format
+    try:
+        datetime.strptime(payment_date, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    
+    # Sanitize notes if present
+    notes = ''
+    if 'notes' in payment_data and payment_data['notes']:
+        notes = str(payment_data['notes']).strip()[:500]
+    
+    # Initialize actual_payments if it doesn't exist (for backwards compatibility)
+    if 'actual_payments' not in income:
+        income['actual_payments'] = []
+    
+    # Create payment record
+    payment = {
+        'id': int(datetime.now().timestamp() * 1000),
+        'date': payment_date,
+        'amount': amount,
+        'notes': notes,
+        'recorded_at': datetime.now().isoformat()
+    }
+    
+    income['actual_payments'].append(payment)
+    income['updated_at'] = datetime.now().isoformat()
+    
+    save_data()
+    return jsonify({'success': True, 'data': payment, 'income': income})
+
+@app.route('/api/income/<int:income_id>/payments/<int:payment_id>', methods=['DELETE'])
+def delete_income_payment(income_id, payment_id):
+    """Delete a recorded payment from an income source"""
+    # Find the income source
+    income = None
+    for inc in budget_data['income_sources']:
+        if inc['id'] == income_id:
+            income = inc
+            break
+    
+    if not income:
+        return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    # Remove the payment
+    if 'actual_payments' in income:
+        income['actual_payments'] = [
+            p for p in income['actual_payments'] 
+            if p['id'] != payment_id
+        ]
+        income['updated_at'] = datetime.now().isoformat()
+        save_data()
+    
+    return jsonify({'success': True})
+
+@app.route('/api/income/<int:income_id>/analysis', methods=['GET'])
+def get_income_analysis(income_id):
+    """Get analysis of expected vs actual income for a specific source"""
+    # Find the income source
+    income = None
+    for inc in budget_data['income_sources']:
+        if inc['id'] == income_id:
+            income = inc
+            break
+    
+    if not income:
+        return jsonify({'success': False, 'error': 'Income source not found'}), 404
+    
+    expected_amount = float(income.get('amount', 0))
+    frequency = income.get('frequency', 'monthly')
+    actual_payments = income.get('actual_payments', [])
+    
+    # Calculate stats for the current month
+    from datetime import datetime
+    today = datetime.now()
+    current_month = today.month
+    current_year = today.year
+    
+    # Filter payments for current month
+    current_month_payments = [
+        p for p in actual_payments
+        if datetime.strptime(p['date'], '%Y-%m-%d').month == current_month
+        and datetime.strptime(p['date'], '%Y-%m-%d').year == current_year
+    ]
+    
+    total_actual = sum(p['amount'] for p in current_month_payments)
+    payment_count = len(current_month_payments)
+    
+    # Calculate expected payments for this month based on frequency
+    if frequency == 'weekly':
+        # Approximately 4.33 weeks per month
+        expected_this_month = expected_amount * 4.33
+        expected_count = 4
+    elif frequency == 'bi-weekly':
+        # Approximately 2.17 bi-weekly periods per month
+        expected_this_month = expected_amount * 2.17
+        expected_count = 2
+    elif frequency == 'monthly':
+        expected_this_month = expected_amount
+        expected_count = 1
+    elif frequency == 'annual':
+        # Only expect one payment per year, check if it's this month
+        expected_this_month = expected_amount if payment_count > 0 else 0
+        expected_count = 1 if payment_count > 0 else 0
+    else:
+        expected_this_month = expected_amount
+        expected_count = 1
+    
+    variance = total_actual - expected_this_month
+    variance_percent = (variance / expected_this_month * 100) if expected_this_month > 0 else 0
+    
+    # Determine status
+    if abs(variance_percent) < 1:  # Within 1%
+        status = 'on-track'
+        status_message = 'On Track'
+    elif variance > 0:
+        status = 'over'
+        status_message = 'Above Expected'
+    else:
+        status = 'under'
+        status_message = 'Below Expected'
+    
+    return jsonify({
+        'income_id': income_id,
+        'income_name': income.get('name', ''),
+        'expected_amount': expected_amount,
+        'expected_this_month': round(expected_this_month, 2),
+        'expected_count': expected_count,
+        'total_actual': round(total_actual, 2),
+        'payment_count': payment_count,
+        'variance': round(variance, 2),
+        'variance_percent': round(variance_percent, 2),
+        'status': status,
+        'status_message': status_message,
+        'payments': sorted(current_month_payments, key=lambda x: x['date'], reverse=True)
+    })
 
 @app.route('/api/income/total', methods=['GET'])
 def get_total_monthly_income():

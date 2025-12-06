@@ -641,6 +641,61 @@
                     <input type="date" id="income-next-pay-date" title="When is your next paycheck? This helps calculate days until payday">
                     <small class="form-help">Set your next expected pay date to see a countdown on your dashboard</small>
                 </div>
+                
+                <!-- Tax Withholding Section -->
+                <div class="form-section">
+                    <h4 class="form-section-title">💰 Tax Withholding & Deductions</h4>
+                    <p class="form-section-description">Enter pre-tax deductions to calculate your net (take-home) income</p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="income-federal-tax">Federal Income Tax (%)</label>
+                            <input type="number" id="income-federal-tax" placeholder="0.00" step="0.01" min="0" max="100" value="0">
+                            <small class="form-help">Percentage withheld for federal taxes</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="income-state-tax">State Income Tax (%)</label>
+                            <input type="number" id="income-state-tax" placeholder="0.00" step="0.01" min="0" max="100" value="0">
+                            <small class="form-help">Percentage withheld for state taxes</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="income-social-security">Social Security (6.2%)</label>
+                            <input type="number" id="income-social-security" placeholder="6.2" step="0.01" min="0" max="100" value="6.2">
+                            <small class="form-help">FICA Social Security tax (typically 6.2%)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="income-medicare">Medicare (1.45%)</label>
+                            <input type="number" id="income-medicare" placeholder="1.45" step="0.01" min="0" max="100" value="1.45">
+                            <small class="form-help">FICA Medicare tax (typically 1.45%)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="income-other-deductions">Other Deductions ($)</label>
+                        <input type="number" id="income-other-deductions" placeholder="0.00" step="0.01" min="0" value="0">
+                        <small class="form-help">401k, HSA, health insurance, etc. (flat dollar amount per payment)</small>
+                    </div>
+                    
+                    <!-- Net Income Display -->
+                    <div class="net-income-calculator">
+                        <div class="calc-row">
+                            <span class="calc-label">Gross Income:</span>
+                            <span class="calc-value" id="calc-gross-income">$0.00</span>
+                        </div>
+                        <div class="calc-row">
+                            <span class="calc-label">Total Taxes & Deductions:</span>
+                            <span class="calc-value expense" id="calc-total-deductions">-$0.00</span>
+                        </div>
+                        <div class="calc-row calc-total">
+                            <span class="calc-label">Net Income (Take-Home):</span>
+                            <span class="calc-value income" id="calc-net-income">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label for="income-notes">Notes (Optional)</label>
                     <textarea id="income-notes" placeholder="Additional details about this income source..." rows="3"></textarea>

@@ -1,5 +1,21 @@
 # Ultra-Smart Deploy with AI-Powered Change Detection
 # Automatically analyzes git changes and generates human-readable descriptions
+#
+# SEMANTIC VERSIONING (X.Y.Z):
+# - MAJOR (X.0.0) = Breaking changes, incompatible API changes
+#   Examples: "breaking: removed legacy API", "major change to data structure"
+# 
+# - MINOR (0.Y.0) = New features, added functionality (backwards compatible)
+#   Examples: "feat: add expense charts", "add new budget categories", "implement export feature"
+# 
+# - PATCH (0.0.Z) = Bug fixes, improvements, updates (no new features)
+#   Examples: "fix: calculation error", "improve UI performance", "update dependencies"
+#
+# HOW TO USE:
+# - Use "feat:" or "add new" in your message for new features → bumps MINOR version
+# - Use "fix:" or "bug:" in your message for bug fixes → bumps PATCH version
+# - Use "breaking:" for breaking changes → bumps MAJOR version
+# - Leave message blank for auto-detection based on file changes
 
 param(
     [Parameter(Mandatory=$false)]
@@ -59,14 +75,22 @@ function Get-ChangeDescription {
                 }
             }
             'M' {  # Modified
-                if ($file -match 'server|backend|api') {
-                    $changes['improvements'] += "Updated backend functionality in $fileName"
-                }
-                elseif ($file -match 'frontend|ui|component') {
-                    $changes['improvements'] += "Enhanced user interface in $fileName"
+                # Check for feature-related changes first
+                if ($file -match 'feature|feat') {
+                    $changes['features'] += "Enhanced features in $fileName"
                 }
                 elseif ($file -match 'bug|fix') {
                     $changes['fixes'] += "Fixed issues in $fileName"
+                }
+                # Backend/API changes could be features if substantial
+                elseif ($file -match 'server|backend|api') {
+                    # Default to improvement, but message can override
+                    $changes['improvements'] += "Updated backend functionality in $fileName"
+                }
+                # Frontend changes could be features if substantial
+                elseif ($file -match 'frontend|ui|component') {
+                    # Default to improvement, but message can override
+                    $changes['improvements'] += "Enhanced user interface in $fileName"
                 }
                 elseif ($fileName -eq 'package.json') {
                     $changes['other'] += "Updated dependencies"
@@ -91,7 +115,30 @@ function Get-ChangeDescription {
     if ($Message) {
         $msgLower = $Message.ToLower()
         
-        if ($msgLower -match 'fix|bug|error|issue|problem') {
+        # Check for FEATURES first (most important for version bumping)
+        if ($msgLower -match '^feat:|^feature:|add |new |implement |create ') {
+            # Generic feature detection
+            $changes['features'] += "Added new functionality"
+            
+            # Specific feature types
+            if ($msgLower -match 'chart|graph|visual|dashboard') {
+                $changes['features'] += "Added data visualization features"
+            }
+            if ($msgLower -match 'export|import|csv|data') {
+                $changes['features'] += "Added data import/export capabilities"
+            }
+            if ($msgLower -match 'budget|transaction|category|account') {
+                $changes['features'] += "Added new budgeting features"
+            }
+            if ($msgLower -match 'report|analysis|insight') {
+                $changes['features'] += "Added reporting and analysis features"
+            }
+            if ($msgLower -match 'notification|alert|reminder') {
+                $changes['features'] += "Added notification system"
+            }
+        }
+        # Check for FIXES (patch version)
+        elseif ($msgLower -match '^fix:|^bug:|fix |bug |error |issue |problem ') {
             if ($msgLower -match 'calculation|compute|math') {
                 $changes['fixes'] += "Fixed calculation errors"
             }
@@ -101,31 +148,32 @@ function Get-ChangeDescription {
             elseif ($msgLower -match 'crash|error|exception') {
                 $changes['fixes'] += "Fixed application crashes"
             }
-        }
-        
-        if ($msgLower -match 'add|new|implement|create') {
-            if ($msgLower -match 'chart|graph|visual') {
-                $changes['features'] += "Added data visualization features"
+            elseif ($msgLower -match 'data|save|load|persist') {
+                $changes['fixes'] += "Fixed data handling issues"
             }
-            elseif ($msgLower -match 'export|import|csv') {
-                $changes['features'] += "Added data import/export capabilities"
-            }
-            elseif ($msgLower -match 'budget|transaction|category') {
-                $changes['features'] += "Added new budgeting features"
+            else {
+                $changes['fixes'] += "Fixed bugs and issues"
             }
         }
-        
-        if ($msgLower -match 'improve|enhance|better|optimize') {
+        # Check for IMPROVEMENTS (patch version)
+        elseif ($msgLower -match 'improve|enhance|better|optimize|update|refactor') {
             if ($msgLower -match 'performance|speed|fast') {
                 $changes['improvements'] += "Improved application performance"
             }
-            elseif ($msgLower -match 'ui|interface|design') {
+            elseif ($msgLower -match 'ui|interface|design|style') {
                 $changes['improvements'] += "Enhanced user interface design"
+            }
+            elseif ($msgLower -match 'code|structure|architecture') {
+                $changes['improvements'] += "Improved code quality"
+            }
+            else {
+                $changes['improvements'] += "General improvements"
             }
         }
         
-        if ($msgLower -match 'breaking|major change|incompatible') {
-            $changes['breaking'] += "Made significant architectural changes"
+        # Check for BREAKING CHANGES (major version)
+        if ($msgLower -match 'breaking|major change|incompatible|migration') {
+            $changes['breaking'] += "Made breaking changes requiring user action"
         }
     }
     
@@ -162,17 +210,51 @@ function Get-ChangeSummary {
 function Get-VersionBump {
     param($changes, [string]$message)
     
-    # Breaking changes = major
-    if ($changes['breaking'].Count -gt 0 -or $message -match 'breaking|major') {
+    $msgLower = $message.ToLower()
+    
+    # MAJOR version (1.x.x) - Breaking changes
+    if ($changes['breaking'].Count -gt 0) {
+        return "major"
+    }
+    if ($msgLower -match '^breaking:|breaking change|major change|incompatible|migration required') {
         return "major"
     }
     
-    # New features = minor
-    if ($changes['features'].Count -gt 0 -or $message -match '^feat:|add |new |implement ') {
+    # MINOR version (x.1.x) - New features, added functionality
+    if ($changes['features'].Count -gt 0) {
+        return "minor"
+    }
+    if ($msgLower -match '^feat:|^feature:|add new |new feature|implement new|create new') {
+        return "minor"
+    }
+    # Added files in key directories suggest new features
+    if ($msgLower -match 'add.*component|add.*page|add.*module|add.*functionality') {
         return "minor"
     }
     
-    # Everything else = patch
+    # PATCH version (x.x.1) - Bug fixes, improvements, updates
+    # Explicit fixes
+    if ($changes['fixes'].Count -gt 0) {
+        return "patch"
+    }
+    if ($msgLower -match '^fix:|^bug:|fix bug|bug fix') {
+        return "patch"
+    }
+    
+    # Improvements and refactors
+    if ($changes['improvements'].Count -gt 0) {
+        return "patch"
+    }
+    if ($msgLower -match 'improve|enhance|optimize|refactor|update|tweak|adjust') {
+        return "patch"
+    }
+    
+    # Documentation and minor changes
+    if ($msgLower -match 'docs:|documentation|readme|comment') {
+        return "patch"
+    }
+    
+    # Default to patch for any other changes
     return "patch"
 }
 
@@ -252,6 +334,8 @@ Write-Host "`n📊 Current version: $currentVersion" -ForegroundColor Cyan
 # Get commit message if not provided
 if ([string]::IsNullOrWhiteSpace($Message)) {
     Write-Host "`n💬 Describe your changes (or press Enter to auto-generate):" -ForegroundColor Cyan
+    Write-Host "   💡 Tip: Use 'feat:' for features, 'fix:' for bugs, 'breaking:' for breaking changes" -ForegroundColor DarkGray
+    Write-Host "   Examples: 'feat: add charts' | 'fix: calculation error' | 'improve: performance'" -ForegroundColor DarkGray
     $Message = Read-Host "   Message"
 }
 
@@ -280,12 +364,20 @@ if ($SkipVersionBump) {
     
     Write-Host "`n🎯 Detected change type: " -NoNewline -ForegroundColor Cyan
     switch ($bumpType) {
-        "major" { Write-Host "MAJOR (Breaking Change) 💥" -ForegroundColor Red }
-        "minor" { Write-Host "MINOR (New Feature) ✨" -ForegroundColor Yellow }
-        "patch" { Write-Host "PATCH (Bug Fix/Update) 🔧" -ForegroundColor Green }
+        "major" { 
+            Write-Host "MAJOR (Breaking Change) 💥" -ForegroundColor Red 
+            Write-Host "   → First number changes: $currentVersion → $newVersion" -ForegroundColor Red
+        }
+        "minor" { 
+            Write-Host "MINOR (New Feature) ✨" -ForegroundColor Yellow 
+            Write-Host "   → Second number changes: $currentVersion → $newVersion" -ForegroundColor Yellow
+        }
+        "patch" { 
+            Write-Host "PATCH (Bug Fix/Update) 🔧" -ForegroundColor Green 
+            Write-Host "   → Third number changes: $currentVersion → $newVersion" -ForegroundColor Green
+        }
     }
 }
-Write-Host "📈 Version: $newVersion" -ForegroundColor Cyan
 
 # Show detailed changes
 Write-Host "`n📋 Detailed Changes:" -ForegroundColor Cyan

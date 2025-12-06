@@ -1954,6 +1954,36 @@ function displayIncomeSources(sources) {
     container.innerHTML = sources.map(source => {
         const icon = getIncomeIcon(source.type);
         const monthlyAmount = calculateMonthlyAmount(source.amount, source.frequency);
+        const actualPayments = source.actual_payments || [];
+        const hasPayments = actualPayments.length > 0;
+        
+        // Calculate net income if tax withholding is set
+        const hasTaxInfo = source.federal_tax_percent || source.state_tax_percent || 
+                          source.social_security_percent || source.medicare_percent || 
+                          source.other_deductions;
+        let netIncome = null;
+        if (hasTaxInfo) {
+            const netCalc = calculateNetIncome(
+                source.amount,
+                source.federal_tax_percent || 0,
+                source.state_tax_percent || 0,
+                source.social_security_percent || 0,
+                source.medicare_percent || 0,
+                source.other_deductions || 0
+            );
+            netIncome = netCalc.net;
+        }
+        
+        // Calculate total actual for current month
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const currentMonthPayments = actualPayments.filter(p => {
+            const pDate = new Date(p.date);
+            return pDate.getMonth() === currentMonth && pDate.getFullYear() === currentYear;
+        });
+        const totalActual = currentMonthPayments.reduce((sum, p) => sum + p.amount, 0);
+        
         return `
             <div class="income-item">
                 <div class="income-item-header">
@@ -1965,13 +1995,63 @@ function displayIncomeSources(sources) {
                     <div class="income-amount-section">
                         <p class="income-amount">$${formatCurrency(source.amount)}</p>
                         <span class="income-frequency">${formatFrequency(source.frequency)}</span>
+                        ${netIncome !== null ? `
+                            <div class="net-income-badge">
+                                <span class="net-label">Net Take-Home:</span>
+                                <span class="net-value">$${formatCurrency(netIncome)}</span>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
-                <div class="income-item-footer">
+                <div class="income-item-body">
                     <div class="income-monthly">
                         <span class="monthly-label">Monthly equivalent:</span>
                         <span class="monthly-amount">$${formatCurrency(monthlyAmount)}</span>
                     </div>
+                    
+                    <!-- Expected vs Actual Tracking -->
+                    <div class="income-tracking">
+                        <div class="tracking-header">
+                            <strong>📊 This Month's Income</strong>
+                            <button class="btn-secondary btn-sm" onclick="recordIncomePayment(${source.id})" title="Record Payment">
+                                💵 Record Payment
+                            </button>
+                        </div>
+                        <div class="tracking-stats">
+                            <div class="tracking-stat">
+                                <span class="stat-label">Expected:</span>
+                                <span class="stat-value">$${formatCurrency(monthlyAmount)}</span>
+                            </div>
+                            <div class="tracking-stat ${hasPayments ? '' : 'stat-warning'}">
+                                <span class="stat-label">Actual:</span>
+                                <span class="stat-value">$${formatCurrency(totalActual)}</span>
+                            </div>
+                            ${hasPayments ? `
+                                <div class="tracking-stat ${totalActual >= monthlyAmount ? 'stat-success' : 'stat-warning'}">
+                                    <span class="stat-label">Variance:</span>
+                                    <span class="stat-value">${totalActual >= monthlyAmount ? '+' : ''}$${formatCurrency(totalActual - monthlyAmount)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${currentMonthPayments.length > 0 ? `
+                            <div class="payment-history">
+                                <strong>Payment History (This Month):</strong>
+                                <ul class="payment-list">
+                                    ${currentMonthPayments.map(p => `
+                                        <li class="payment-item">
+                                            <span class="payment-date">${formatDateShort(p.date)}</span>
+                                            <span class="payment-amount">$${formatCurrency(p.amount)}</span>
+                                            ${p.notes ? `<span class="payment-notes">${p.notes}</span>` : ''}
+                                            <button class="btn-icon-sm" onclick="deleteIncomePayment(${source.id}, ${p.id})" title="Delete">🗑️</button>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : '<p class="no-payments-text">No payments recorded this month yet.</p>'}
+                        <button class="btn-link" onclick="viewIncomeAnalysis(${source.id})">📈 View Detailed Analysis</button>
+                    </div>
+                </div>
+                <div class="income-item-footer">
                     <div class="income-actions">
                         <button class="btn-icon" onclick="editIncome(${source.id})" title="Edit">✏️</button>
                         <button class="btn-icon" onclick="deleteIncome(${source.id})" title="Delete">🗑️</button>
@@ -2037,6 +2117,58 @@ function formatFrequency(frequency) {
     return frequencies[frequency] || frequency;
 }
 
+// Calculate net income (take-home pay)
+function calculateNetIncome(grossAmount, federalTax, stateTax, socialSecurity, medicare, otherDeductions) {
+    // Calculate tax amounts (percentages)
+    const federalTaxAmount = grossAmount * (federalTax / 100);
+    const stateTaxAmount = grossAmount * (stateTax / 100);
+    const socialSecurityAmount = grossAmount * (socialSecurity / 100);
+    const medicareAmount = grossAmount * (medicare / 100);
+    
+    // Total deductions
+    const totalDeductions = federalTaxAmount + stateTaxAmount + socialSecurityAmount + medicareAmount + otherDeductions;
+    
+    // Net income
+    const netAmount = grossAmount - totalDeductions;
+    
+    return {
+        gross: grossAmount,
+        totalDeductions: totalDeductions,
+        net: netAmount,
+        breakdown: {
+            federalTax: federalTaxAmount,
+            stateTax: stateTaxAmount,
+            socialSecurity: socialSecurityAmount,
+            medicare: medicareAmount,
+            otherDeductions: otherDeductions
+        }
+    };
+}
+
+// Update net income calculator in the modal
+function updateNetIncomeCalculator() {
+    const amountInput = document.getElementById('income-amount');
+    const federalTaxInput = document.getElementById('income-federal-tax');
+    const stateTaxInput = document.getElementById('income-state-tax');
+    const socialSecurityInput = document.getElementById('income-social-security');
+    const medicareInput = document.getElementById('income-medicare');
+    const otherDeductionsInput = document.getElementById('income-other-deductions');
+    
+    const grossAmount = parseFloat(amountInput.value) || 0;
+    const federalTax = parseFloat(federalTaxInput.value) || 0;
+    const stateTax = parseFloat(stateTaxInput.value) || 0;
+    const socialSecurity = parseFloat(socialSecurityInput.value) || 0;
+    const medicare = parseFloat(medicareInput.value) || 0;
+    const otherDeductions = parseFloat(otherDeductionsInput.value) || 0;
+    
+    const netCalc = calculateNetIncome(grossAmount, federalTax, stateTax, socialSecurity, medicare, otherDeductions);
+    
+    // Update display
+    document.getElementById('calc-gross-income').textContent = `$${netCalc.gross.toFixed(2)}`;
+    document.getElementById('calc-total-deductions').textContent = `-$${netCalc.totalDeductions.toFixed(2)}`;
+    document.getElementById('calc-net-income').textContent = `$${netCalc.net.toFixed(2)}`;
+}
+
 // Show income modal
 function showIncomeModal(incomeId = null) {
     const modal = document.getElementById('income-modal');
@@ -2051,9 +2183,34 @@ function showIncomeModal(incomeId = null) {
     } else {
         title.textContent = 'Add Income Source';
         form.reset();
+        // Set default values for new income
+        document.getElementById('income-social-security').value = 6.2;
+        document.getElementById('income-medicare').value = 1.45;
+        updateNetIncomeCalculator();
     }
     
     modal.style.display = 'flex';
+    
+    // Attach event listeners for real-time calculation (only once)
+    if (!window.incomeCalculatorInitialized) {
+        const calculatorInputs = [
+            'income-amount',
+            'income-federal-tax',
+            'income-state-tax',
+            'income-social-security',
+            'income-medicare',
+            'income-other-deductions'
+        ];
+        
+        calculatorInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', updateNetIncomeCalculator);
+            }
+        });
+        
+        window.incomeCalculatorInitialized = true;
+    }
 }
 
 // Hide income modal
@@ -2078,6 +2235,16 @@ async function loadIncomeData(incomeId) {
             document.getElementById('income-frequency').value = income.frequency;
             document.getElementById('income-next-pay-date').value = income.next_pay_date || '';
             document.getElementById('income-notes').value = income.notes || '';
+            
+            // Load tax withholding fields
+            document.getElementById('income-federal-tax').value = income.federal_tax_percent || 0;
+            document.getElementById('income-state-tax').value = income.state_tax_percent || 0;
+            document.getElementById('income-social-security').value = income.social_security_percent || 6.2;
+            document.getElementById('income-medicare').value = income.medicare_percent || 1.45;
+            document.getElementById('income-other-deductions').value = income.other_deductions || 0;
+            
+            // Update net income calculator
+            updateNetIncomeCalculator();
         }
     } catch (error) {
         console.error('Failed to load income data:', error);
@@ -2088,14 +2255,84 @@ async function loadIncomeData(incomeId) {
 async function saveIncome(event) {
     event.preventDefault();
     
+    // Get and validate form data
+    const type = document.getElementById('income-type').value;
+    const name = document.getElementById('income-name').value.trim();
+    const amountInput = document.getElementById('income-amount').value;
+    const frequency = document.getElementById('income-frequency').value;
+    const nextPayDate = document.getElementById('income-next-pay-date').value || null;
+    const notes = document.getElementById('income-notes').value.trim();
+    
+    // Client-side validation
+    if (!type) {
+        alert('Please select an income type');
+        return;
+    }
+    
+    if (!name) {
+        alert('Please enter a name for this income source');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput);
+    if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid amount greater than 0');
+        return;
+    }
+    
+    if (!frequency) {
+        alert('Please select a payment frequency');
+        return;
+    }
+    
+    // Get tax withholding data
+    const federalTax = parseFloat(document.getElementById('income-federal-tax').value) || 0;
+    const stateTax = parseFloat(document.getElementById('income-state-tax').value) || 0;
+    const socialSecurity = parseFloat(document.getElementById('income-social-security').value) || 0;
+    const medicare = parseFloat(document.getElementById('income-medicare').value) || 0;
+    const otherDeductions = parseFloat(document.getElementById('income-other-deductions').value) || 0;
+    
+    // Validate tax percentages
+    if (federalTax < 0 || federalTax > 100) {
+        alert('Federal tax must be between 0 and 100%');
+        return;
+    }
+    if (stateTax < 0 || stateTax > 100) {
+        alert('State tax must be between 0 and 100%');
+        return;
+    }
+    if (socialSecurity < 0 || socialSecurity > 100) {
+        alert('Social Security must be between 0 and 100%');
+        return;
+    }
+    if (medicare < 0 || medicare > 100) {
+        alert('Medicare must be between 0 and 100%');
+        return;
+    }
+    if (otherDeductions < 0) {
+        alert('Other deductions cannot be negative');
+        return;
+    }
+    
     const incomeData = {
-        type: document.getElementById('income-type').value,
-        name: document.getElementById('income-name').value,
-        amount: parseFloat(document.getElementById('income-amount').value),
-        frequency: document.getElementById('income-frequency').value,
-        next_pay_date: document.getElementById('income-next-pay-date').value || null,
-        notes: document.getElementById('income-notes').value
+        type,
+        name,
+        amount,
+        frequency,
+        next_pay_date: nextPayDate,
+        notes: notes || '',
+        federal_tax_percent: federalTax,
+        state_tax_percent: stateTax,
+        social_security_percent: socialSecurity,
+        medicare_percent: medicare,
+        other_deductions: otherDeductions
     };
+    
+    // Disable submit button to prevent double-submission
+    const submitBtn = document.getElementById('save-income-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
     
     try {
         let response;
@@ -2116,13 +2353,21 @@ async function saveIncome(event) {
         }
         
         const result = await response.json();
+        
         if (result.success) {
             hideIncomeModal();
             loadIncomeSources();
+        } else {
+            // Show error message from server
+            alert(`Error: ${result.error || 'Failed to save income source'}`);
         }
     } catch (error) {
         console.error('Failed to save income:', error);
-        alert('Failed to save income source. Please try again.');
+        alert('Failed to save income source. Please check your connection and try again.');
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
 }
 
@@ -2150,6 +2395,113 @@ async function deleteIncome(incomeId) {
         console.error('Failed to delete income:', error);
         alert('Failed to delete income source. Please try again.');
     }
+}
+
+// Record income payment
+async function recordIncomePayment(incomeId) {
+    const amount = prompt('Enter the amount received:');
+    if (!amount) return;
+    
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        alert('Please enter a valid amount greater than 0');
+        return;
+    }
+    
+    const date = prompt('Enter the date received (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+    if (!date) return;
+    
+    const notes = prompt('Add any notes (optional):') || '';
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/${incomeId}/record-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: parsedAmount,
+                date: date,
+                notes: notes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadIncomeSources();
+            alert('Payment recorded successfully!');
+        } else {
+            alert(`Error: ${result.error || 'Failed to record payment'}`);
+        }
+    } catch (error) {
+        console.error('Failed to record payment:', error);
+        alert('Failed to record payment. Please try again.');
+    }
+}
+
+// Delete income payment
+async function deleteIncomePayment(incomeId, paymentId) {
+    if (!confirm('Are you sure you want to delete this payment record?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/${incomeId}/payments/${paymentId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadIncomeSources();
+        } else {
+            alert(`Error: ${result.error || 'Failed to delete payment'}`);
+        }
+    } catch (error) {
+        console.error('Failed to delete payment:', error);
+        alert('Failed to delete payment. Please try again.');
+    }
+}
+
+// View income analysis
+async function viewIncomeAnalysis(incomeId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/income/${incomeId}/analysis`);
+        const analysis = await response.json();
+        
+        if (analysis.error) {
+            alert(`Error: ${analysis.error}`);
+            return;
+        }
+        
+        // Create a formatted analysis message
+        const message = `
+📊 Income Analysis for ${analysis.income_name}
+
+Expected Income This Month: $${analysis.expected_this_month.toFixed(2)}
+Actual Income Received: $${analysis.total_actual.toFixed(2)}
+Variance: ${analysis.variance >= 0 ? '+' : ''}$${analysis.variance.toFixed(2)} (${analysis.variance_percent >= 0 ? '+' : ''}${analysis.variance_percent.toFixed(1)}%)
+
+Status: ${analysis.status_message}
+
+Expected Payments: ${analysis.expected_count}
+Actual Payments: ${analysis.payment_count}
+
+${analysis.payments.length > 0 ? 'Recent Payments:\n' + analysis.payments.map(p => 
+    `• ${p.date}: $${p.amount.toFixed(2)}${p.notes ? ' - ' + p.notes : ''}`
+).join('\n') : 'No payments recorded this month.'}
+        `.trim();
+        
+        alert(message);
+    } catch (error) {
+        console.error('Failed to load analysis:', error);
+        alert('Failed to load income analysis. Please try again.');
+    }
+}
+
+// Helper function to format dates
+function formatDateShort(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 // Setup income event listeners
