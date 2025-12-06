@@ -176,6 +176,13 @@ autoUpdater.on('update-available', (info) => {
     if (result.response === 0) {
       // User chose to download
       console.log('Starting download...');
+      console.log('Update feed URL:', autoUpdater.getFeedURL());
+      console.log('Auto-updater configured:', {
+        autoDownload: autoUpdater.autoDownload,
+        autoInstallOnAppQuit: autoUpdater.autoInstallOnAppQuit,
+        allowDowngrade: autoUpdater.allowDowngrade,
+        allowPrerelease: autoUpdater.allowPrerelease
+      });
       
       // Send downloading event to renderer (progress will show in UI)
       mainWindow.webContents.send('update-downloading');
@@ -189,7 +196,13 @@ autoUpdater.on('update-available', (info) => {
         buttons: ['OK']
       });
       
-      autoUpdater.downloadUpdate();
+      // Start the download
+      console.log('Calling autoUpdater.downloadUpdate()...');
+      autoUpdater.downloadUpdate().then(() => {
+        console.log('downloadUpdate() promise resolved');
+      }).catch((err) => {
+        console.error('downloadUpdate() promise rejected:', err);
+      });
     }
   });
 });
@@ -202,6 +215,8 @@ autoUpdater.on('update-not-available', (info) => {
 autoUpdater.on('error', (err) => {
   console.error('Update error:', err);
   console.error('Error stack:', err.stack);
+  console.error('Error name:', err.name);
+  console.error('Error code:', err.code);
   
   // Clear progress bar
   if (mainWindow && process.platform === 'win32') {
@@ -210,12 +225,26 @@ autoUpdater.on('error', (err) => {
   
   mainWindow.webContents.send('update-error', err.message);
   
+  // Provide more helpful error messages based on error type
+  let errorDetail = `Error: ${err.message}`;
+  
+  // Check for specific error types
+  if (err.message.includes('net::') || err.message.includes('ENOTFOUND') || err.message.includes('ECONNREFUSED')) {
+    errorDetail += '\n\nPlease check your internet connection and try again.';
+  } else if (err.message.includes('sha512') || err.message.includes('checksum')) {
+    errorDetail += '\n\nThe download was corrupted. Please try again.';
+  } else if (err.message.includes('EACCES') || err.message.includes('permission')) {
+    errorDetail += '\n\nPermission denied. Try running as administrator.';
+  } else {
+    errorDetail += '\n\nPlease try again later or download manually from GitHub.';
+  }
+  
   // Show error to user
   dialog.showMessageBox(mainWindow, {
     type: 'error',
     title: 'Update Error',
     message: 'Failed to download update',
-    detail: `Error: ${err.message}\n\nPlease check your internet connection and try again later.`,
+    detail: errorDetail,
     buttons: ['OK']
   });
 });
