@@ -45,16 +45,28 @@ When you deploy, these files are created:
 
 ## 🚀 Deploy Workflow
 
-### Same as before!
+### Automatic Version Bumping (Default)
 ```powershell
-# Regular commit
+# Regular commit (auto-bump version)
 .\ultra-deploy.ps1 -Message "Your changes"
 
 # Deploy + Release (triggers auto-update)
 .\ultra-deploy.ps1 -Message "Your changes" -CreateRelease
 ```
 
-**Nothing changes for you!** The system handles differential packages automatically.
+### Manual Version Control
+```powershell
+# 1. Update version in package.json manually
+# 2. Deploy without auto-bump
+.\ultra-deploy.ps1 -SkipVersionBump -CreateRelease
+```
+
+**Use `-SkipVersionBump` when:**
+- You've already changed the version in `package.json`
+- You want full control over version numbers
+- Prevents double version bumping!
+
+**Nothing else changes for you!** The system handles differential packages automatically.
 
 ---
 

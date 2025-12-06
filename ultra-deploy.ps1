@@ -6,7 +6,10 @@ param(
     [string]$Message = "",
     
     [Parameter(Mandatory=$false)]
-    [switch]$CreateRelease
+    [switch]$CreateRelease,
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipVersionBump
 )
 
 Write-Host "`n🧠 Ultra-Smart Auto-Deploy System`n" -ForegroundColor Cyan
@@ -266,16 +269,23 @@ Write-Host "`n📄 Change Summary:" -ForegroundColor Cyan
 Write-Host "   $summary" -ForegroundColor White
 
 # Determine version bump
-$bumpType = Get-VersionBump -changes $changes -message $Message
-$newVersion = Get-NewVersion -currentVersion $currentVersion -bumpType $bumpType
-
-Write-Host "`n🎯 Detected change type: " -NoNewline -ForegroundColor Cyan
-switch ($bumpType) {
-    "major" { Write-Host "MAJOR (Breaking Change) 💥" -ForegroundColor Red }
-    "minor" { Write-Host "MINOR (New Feature) ✨" -ForegroundColor Yellow }
-    "patch" { Write-Host "PATCH (Bug Fix/Update) 🔧" -ForegroundColor Green }
+if ($SkipVersionBump) {
+    Write-Host "`n🎯 Version bump: " -NoNewline -ForegroundColor Cyan
+    Write-Host "SKIPPED (using current version)" -ForegroundColor Magenta
+    $newVersion = $currentVersion
+    $bumpType = "manual"
+} else {
+    $bumpType = Get-VersionBump -changes $changes -message $Message
+    $newVersion = Get-NewVersion -currentVersion $currentVersion -bumpType $bumpType
+    
+    Write-Host "`n🎯 Detected change type: " -NoNewline -ForegroundColor Cyan
+    switch ($bumpType) {
+        "major" { Write-Host "MAJOR (Breaking Change) 💥" -ForegroundColor Red }
+        "minor" { Write-Host "MINOR (New Feature) ✨" -ForegroundColor Yellow }
+        "patch" { Write-Host "PATCH (Bug Fix/Update) 🔧" -ForegroundColor Green }
+    }
 }
-Write-Host "📈 New version: $newVersion" -ForegroundColor Cyan
+Write-Host "📈 Version: $newVersion" -ForegroundColor Cyan
 
 # Show detailed changes
 Write-Host "`n📋 Detailed Changes:" -ForegroundColor Cyan
@@ -311,10 +321,14 @@ if ([string]::IsNullOrWhiteSpace($Message)) {
 
 # Update package.json
 Write-Host "`n📋 Step 2: Updating version..." -ForegroundColor Yellow
-$packageJson = Get-Content package.json -Raw | ConvertFrom-Json
-$packageJson.version = $newVersion
-$packageJson | ConvertTo-Json -Depth 10 | Set-Content package.json
-Write-Host "   ✅ Version updated: $currentVersion → $newVersion" -ForegroundColor Green
+if ($SkipVersionBump) {
+    Write-Host "   ⏭️  Skipped (using version $newVersion)" -ForegroundColor Magenta
+} else {
+    $packageJson = Get-Content package.json -Raw | ConvertFrom-Json
+    $packageJson.version = $newVersion
+    $packageJson | ConvertTo-Json -Depth 10 | Set-Content package.json
+    Write-Host "   ✅ Version updated: $currentVersion → $newVersion" -ForegroundColor Green
+}
 
 # Save to database
 Write-Host "`n📋 Step 3: Recording changes in database..." -ForegroundColor Yellow

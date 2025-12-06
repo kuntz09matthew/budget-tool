@@ -64,6 +64,21 @@ All changes stored permanently:
 - Cleans old releases (keeps last 5)
 - Marks version as "Released" in database
 
+### **Skip Automatic Version Bump:**
+```powershell
+.\ultra-deploy.ps1 -SkipVersionBump -CreateRelease
+```
+
+**Use this when:**
+- You've already manually updated the version in `package.json`
+- You want to use the current version without auto-bumping
+- Making changes that shouldn't trigger a new version
+
+**What happens:**
+- Uses current version from `package.json`
+- Skips automatic version detection
+- Still commits, pushes, and creates release if requested
+
 ---
 
 ## 📝 Example Output
