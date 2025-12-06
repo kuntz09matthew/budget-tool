@@ -3,6 +3,23 @@
 All notable changes to Budget Tool.
 
 
+## [1.2.9] - Released
+*2025-12-06 01:35:26*
+
+Fixed: Fixed display issues. Improved: Modified main.js, Enhanced user interface in app.js, Updated backend functionality in changelog_manager.py
+
+### 📝 Changes
+- Modified main.js
+- Enhanced user interface in app.js
+- Updated backend functionality in changelog_manager.py
+
+### 📝 Changes
+- Fixed display issues
+
+### 📝 Other Changes
+- Updated dependencies
+
+
 ## [1.2.2] - Unreleased
 *2025-12-06 00:18:49*
 
