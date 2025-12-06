@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 const { spawn } = require('child_process');
@@ -99,10 +99,17 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      // Disable cache in development
+      cache: false
     },
     icon: path.join(__dirname, '../assets/icon.png')
   });
+
+  // Disable cache for development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.session.clearCache();
+  }
 
   // Try to load from Flask server first, fallback to local file
   const serverUrl = 'http://localhost:5000';
@@ -141,6 +148,144 @@ function createWindow() {
       });
     }, 3000);
   });
+  
+  // Set custom menu
+  createMenu();
+}
+
+// Create custom application menu
+function createMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Quit',
+          accelerator: 'CmdOrCtrl+Q',
+          click: () => {
+            app.quit();
+          }
+        }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'delete' },
+        { type: 'separator' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'Budget',
+      submenu: [
+        {
+          label: 'Dashboard',
+          accelerator: 'CmdOrCtrl+1',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'dashboard');
+          }
+        },
+        {
+          label: 'Income',
+          accelerator: 'CmdOrCtrl+2',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'income');
+          }
+        },
+        {
+          label: 'Monthly Expenses',
+          accelerator: 'CmdOrCtrl+3',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'expenses');
+          }
+        },
+        {
+          label: 'Spending Accounts',
+          accelerator: 'CmdOrCtrl+4',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'spending');
+          }
+        },
+        {
+          label: 'Savings',
+          accelerator: 'CmdOrCtrl+5',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'savings');
+          }
+        },
+        {
+          label: 'Goals',
+          accelerator: 'CmdOrCtrl+6',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'goals');
+          }
+        },
+        {
+          label: 'Reports',
+          accelerator: 'CmdOrCtrl+7',
+          click: () => {
+            mainWindow.webContents.send('navigate-to', 'reports');
+          }
+        }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Check for Updates',
+          click: () => {
+            autoUpdater.checkForUpdates();
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'About Budget Tool',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'About Budget Tool',
+              message: 'Budget Tool',
+              detail: `Version: ${app.getVersion()}\n\nA local desktop budgeting application with Python backend.`
+            });
+          }
+        }
+      ]
+    }
+  ];
+
+  // Add Developer menu in development mode
+  if (process.env.NODE_ENV === 'development') {
+    template.push({
+      label: 'Developer',
+      submenu: [
+        { role: 'toggleDevTools' }
+      ]
+    });
+  }
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 // Auto-updater events
@@ -306,6 +451,10 @@ autoUpdater.on('update-downloaded', (info) => {
 });
 
 // IPC handlers
+ipcMain.on('get-version', (event) => {
+  event.returnValue = app.getVersion();
+});
+
 ipcMain.on('check-for-updates', () => {
   if (process.env.NODE_ENV !== 'development') {
     autoUpdater.checkForUpdates();

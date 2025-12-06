@@ -3,6 +3,11 @@ const { contextBridge, ipcRenderer } = require('electron');
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electron', {
+  // Get app version
+  getVersion: () => {
+    return ipcRenderer.sendSync('get-version');
+  },
+  
   // Update-related methods
   checkForUpdates: () => {
     ipcRenderer.send('check-for-updates');
@@ -38,5 +43,10 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.removeAllListeners('update-download-progress');
     ipcRenderer.removeAllListeners('update-downloaded');
     ipcRenderer.removeAllListeners('update-error');
+  },
+  
+  // Navigation listener
+  onNavigate: (callback) => {
+    ipcRenderer.on('navigate-to', (event, page) => callback(page));
   }
 });

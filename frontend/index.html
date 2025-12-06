@@ -7,15 +7,45 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="app">
+    <div class="app" data-theme="dark">
         <header class="app-header">
-            <h1>💰 Budget Tool <span class="version-tag">v1.5.6</span></h1>
-            <p class="subtitle">Your Local Budgeting Assistant</p>
-            <nav class="app-nav">
-                <button id="menu-home" class="nav-btn active">Home</button>
-                <button id="menu-status" class="nav-btn">Server Status</button>
-            </nav>
+            <h1>💰 Kuntz Family Budget App</h1>
+            <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+                <span class="theme-icon">🌙</span>
+            </button>
         </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="dashboard">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Dashboard</span>
+            </button>
+            <button class="tab-btn" data-tab="income">
+                <span class="tab-icon">💵</span>
+                <span class="tab-label">Income</span>
+            </button>
+            <button class="tab-btn" data-tab="expenses">
+                <span class="tab-icon">📝</span>
+                <span class="tab-label">Monthly Expenses</span>
+            </button>
+            <button class="tab-btn" data-tab="spending">
+                <span class="tab-icon">🛒</span>
+                <span class="tab-label">Spending Accounts</span>
+            </button>
+            <button class="tab-btn" data-tab="savings">
+                <span class="tab-icon">🏦</span>
+                <span class="tab-label">Savings</span>
+            </button>
+            <button class="tab-btn" data-tab="goals">
+                <span class="tab-icon">🎯</span>
+                <span class="tab-label">Goals</span>
+            </button>
+            <button class="tab-btn" data-tab="reports">
+                <span class="tab-icon">📈</span>
+                <span class="tab-label">Reports</span>
+            </button>
+        </nav>
 
         <main class="app-main">
             <!-- Update Banner (hidden by default) -->
@@ -35,75 +65,289 @@
                 </button>
             </div>
 
-            <!-- Welcome Section -->
-            <div class="welcome-section">
-                <h2>Welcome to Budget Tool</h2>
-                <p class="version-badge">✨ Auto-Update System Active!</p>
-                <p>
-                    This is your local budgeting application running with a Python Flask backend. 
-                    The server runs on your laptop, and everything works offline!
-                </p>
-                <div class="feature-list">
-                    <div class="feature">
-                        <h3>🏠 Runs Locally</h3>
-                        <p>No internet required - all data stays on your computer</p>
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="dashboard-header">
+                    <h2>Financial Overview</h2>
+                    <p class="dashboard-date" id="current-date"></p>
+                </div>
+                
+                <!-- Top Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card income-card">
+                        <h3>Total Monthly Income</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">All income sources</span>
                     </div>
-                    <div class="feature">
-                        <h3>🐍 Python Backend</h3>
-                        <p>Flask server for flexible and powerful data handling</p>
+                    <div class="summary-card expense-card">
+                        <h3>Fixed Expenses</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">Monthly bills & obligations</span>
                     </div>
-                    <div class="feature">
-                        <h3>🔄 Auto-Updates</h3>
-                        <p>Automatically checks for updates when available</p>
+                    <div class="summary-card available-card">
+                        <h3>Available to Spend</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">After expenses & savings</span>
+                    </div>
+                    <div class="summary-card savings-card">
+                        <h3>Total Savings</h3>
+                        <p class="summary-amount">$0.00</p>
+                        <span class="summary-label">All savings accounts</span>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Left Column -->
+                    <div class="dashboard-column-left">
+                        <!-- Account Balances Section -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💳 Account Balances</h3>
+                                <button class="btn-primary btn-sm" id="add-account-btn">+ Add Account</button>
+                            </div>
+                            <div id="accounts-container" class="accounts-grid">
+                                <p class="placeholder-text">No accounts added yet. Click "Add Account" to get started.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity Section -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📝 Recent Activity</h3>
+                            </div>
+                            <p class="placeholder-text">No recent transactions</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="dashboard-column-right">
+                        <!-- Month-to-Date Spending -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>📊 Month-to-Date Spending</h3>
+                                <span class="section-subtitle" id="mtd-date-range"></span>
+                            </div>
+                            <div class="mtd-summary">
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Total Spent</span>
+                                    <span class="mtd-amount" id="mtd-total">$0.00</span>
+                                </div>
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Transactions</span>
+                                    <span class="mtd-count" id="mtd-count">0</span>
+                                </div>
+                                <div class="mtd-card">
+                                    <span class="mtd-label">Average/Day</span>
+                                    <span class="mtd-average" id="mtd-average">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Budget Health Section -->
+                        <div class="dashboard-section">
+                            <div class="section-header">
+                                <h3>💪 Budget Health</h3>
+                            </div>
+                            <p class="placeholder-text">Set up your budget to see insights</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Budget Overview Section -->
-            <div class="budget-section">
-                <h2>Budget Overview</h2>
-                <div class="budget-stats">
-                    <div class="stat-card">
-                        <h3>Total Budget</h3>
-                        <p class="stat-value">$0.00</p>
+            <!-- Income Tab -->
+            <div id="tab-income" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>💵 Income Sources</h2>
+                        <p class="tab-description">Track all sources of income for your household</p>
                     </div>
-                    <div class="stat-card">
-                        <h3>Transactions</h3>
-                        <p class="stat-value" id="transaction-count">0</p>
+                    <button class="btn-primary" id="add-income-btn">+ Add Income Source</button>
+                </div>
+                
+                <div class="income-summary">
+                    <div class="summary-box">
+                        <span class="summary-label">Total Monthly Income</span>
+                        <span class="summary-value" id="income-total-display">$0.00</span>
                     </div>
-                    <div class="stat-card">
-                        <h3>Categories</h3>
-                        <p class="stat-value" id="category-count">0</p>
+                    <div class="summary-box">
+                        <span class="summary-label">Active Income Sources</span>
+                        <span class="summary-value" id="income-count-display">0</span>
                     </div>
+                </div>
+                
+                <div id="income-list-container" class="income-list">
+                    <p class="placeholder-text">No income sources added yet. Click "Add Income Source" to get started.</p>
                 </div>
             </div>
 
-            <!-- Next Steps -->
-            <div class="next-steps">
-                <h2>Next Steps</h2>
-                <ul>
-                    <li>✅ Python Flask backend is running</li>
-                    <li>✅ Frontend connected to backend</li>
-                    <li>📝 Build transaction management UI</li>
-                    <li>📊 Add budget categories and tracking</li>
-                    <li>💾 Implement SQLite for persistent storage</li>
-                    <li>📈 Create data visualization (charts/graphs)</li>
-                </ul>
+            <!-- Monthly Expenses Tab -->
+            <div id="tab-expenses" class="tab-content">
+                <h2>Monthly Expenses</h2>
+                <p class="tab-description">Manage your fixed monthly bills and obligations</p>
+                <div class="content-placeholder">
+                    <p>Expense tracking will be built here</p>
+                    <ul>
+                        <li>Rent/Mortgage</li>
+                        <li>Utilities</li>
+                        <li>Insurance</li>
+                        <li>Subscriptions</li>
+                        <li>Loan payments</li>
+                    </ul>
+                </div>
             </div>
 
-            <!-- Server Status Section (hidden by default) -->
-            <div id="status-section" class="status-section" style="display: none;">
-                <h2>Server Status</h2>
-                <div class="status-card">
-                    <p id="server-status" class="status-checking">Checking...</p>
-                    <button id="refresh-status" class="refresh-btn">Refresh Status</button>
+            <!-- Spending Accounts Tab -->
+            <div id="tab-spending" class="tab-content">
+                <h2>Spending Accounts</h2>
+                <p class="tab-description">Allocate money to different spending categories</p>
+                <div class="content-placeholder">
+                    <p>Spending accounts will be built here</p>
+                    <ul>
+                        <li>Groceries</li>
+                        <li>Entertainment</li>
+                        <li>Dining out</li>
+                        <li>Personal care</li>
+                        <li>Clothing</li>
+                        <li>Transportation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Savings Tab -->
+            <div id="tab-savings" class="tab-content">
+                <h2>Savings</h2>
+                <p class="tab-description">Track your savings accounts and emergency funds</p>
+                <div class="content-placeholder">
+                    <p>Savings tracking will be built here</p>
+                    <ul>
+                        <li>Emergency fund</li>
+                        <li>Vacation fund</li>
+                        <li>Home improvement</li>
+                        <li>Vehicle fund</li>
+                        <li>Education savings</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Goals Tab -->
+            <div id="tab-goals" class="tab-content">
+                <h2>Financial Goals</h2>
+                <p class="tab-description">Set and track progress toward your financial goals</p>
+                <div class="content-placeholder">
+                    <p>Goal tracking will be built here</p>
+                    <ul>
+                        <li>Short-term goals</li>
+                        <li>Long-term goals</li>
+                        <li>Debt payoff plans</li>
+                        <li>Savings milestones</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="tab-reports" class="tab-content">
+                <h2>Financial Reports</h2>
+                <p class="tab-description">Analyze your spending patterns and trends</p>
+                <div class="content-placeholder">
+                    <p>Reports will be built here</p>
+                    <ul>
+                        <li>Monthly spending breakdown</li>
+                        <li>Income vs expenses trends</li>
+                        <li>Category spending analysis</li>
+                        <li>Year-over-year comparison</li>
+                        <li>Net worth tracking</li>
+                    </ul>
                 </div>
             </div>
         </main>
 
         <footer class="app-footer">
-            <p>Budget Tool <strong>v1.5.10</strong> • Running locally on your computer</p>
+            <p>Budget Tool <strong id="footer-version">v1.5.10</strong></p>
         </footer>
+    </div>
+
+    <!-- Account Modal -->
+    <div id="account-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="account-modal-title">Add Account</h3>
+                <button class="modal-close" id="close-account-modal">&times;</button>
+            </div>
+            <form id="account-form">
+                <div class="form-group">
+                    <label for="account-type">Account Type</label>
+                    <select id="account-type" required>
+                        <option value="">Select account type...</option>
+                        <option value="checking">💵 Checking Account</option>
+                        <option value="savings">🏦 Savings Account</option>
+                        <option value="credit">💳 Credit Card</option>
+                        <option value="investment">📈 Investment Account</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="account-name">Account Name</label>
+                    <input type="text" id="account-name" placeholder="e.g., Chase Checking, Wells Fargo Savings" required>
+                </div>
+                <div class="form-group">
+                    <label for="account-balance">Current Balance</label>
+                    <input type="number" id="account-balance" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-account-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-account-btn">Save Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Income Modal -->
+    <div id="income-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="income-modal-title">Add Income Source</h3>
+                <button class="modal-close" id="close-income-modal">&times;</button>
+            </div>
+            <form id="income-form">
+                <div class="form-group">
+                    <label for="income-type">Income Type</label>
+                    <select id="income-type" required>
+                        <option value="">Select income type...</option>
+                        <option value="salary">💼 Primary Salary</option>
+                        <option value="secondary-salary">💼 Secondary Salary</option>
+                        <option value="freelance">💻 Freelance/Side Hustle</option>
+                        <option value="investment">📈 Investment Income</option>
+                        <option value="rental">🏠 Rental Income</option>
+                        <option value="other">💰 Other Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="income-name">Source Name</label>
+                    <input type="text" id="income-name" placeholder="e.g., Acme Corp Salary, Freelance Design" required>
+                </div>
+                <div class="form-group">
+                    <label for="income-amount">Amount</label>
+                    <input type="number" id="income-amount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="income-frequency">Frequency</label>
+                    <select id="income-frequency" required>
+                        <option value="weekly">Weekly</option>
+                        <option value="bi-weekly">Bi-weekly (Every 2 weeks)</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="annual">Annual</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="income-notes">Notes (Optional)</label>
+                    <textarea id="income-notes" placeholder="Additional details about this income source..." rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-income-btn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="save-income-btn">Save Income Source</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="app.js"></script>
