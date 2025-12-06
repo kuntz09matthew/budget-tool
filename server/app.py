@@ -6,7 +6,16 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+# Determine the correct path to frontend files
+# In packaged app, server is in app.asar.unpacked/server
+# frontend is in app.asar/frontend (or app.asar.unpacked/frontend if we unpack it)
+script_dir = Path(__file__).parent
+frontend_path = script_dir.parent / 'frontend'
+
+print(f"Looking for frontend at: {frontend_path}")
+print(f"Frontend exists: {frontend_path.exists()}")
+
+app = Flask(__name__, static_folder=str(frontend_path), static_url_path='')
 CORS(app)
 
 # Import updater if available

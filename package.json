@@ -36,7 +36,8 @@
       "python-embed/**/*"
     ],
     "asarUnpack": [
-      "server/**/*"
+      "server/**/*",
+      "frontend/**/*"
     ],
     "extraResources": [
       {

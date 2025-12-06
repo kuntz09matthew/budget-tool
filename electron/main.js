@@ -32,9 +32,17 @@ function startServer() {
       console.log('Using system Python');
     }
     
+    // Set the correct working directory for the server
+    const serverDir = isPackaged
+      ? path.join(process.resourcesPath, 'app.asar.unpacked', 'server')
+      : path.join(__dirname, '../server');
+    
+    console.log('Working directory:', serverDir);
+    
     serverProcess = spawn(pythonCommand, [serverPath], {
       stdio: 'pipe',
-      cwd: path.join(__dirname, '../server')
+      cwd: serverDir,
+      shell: false
     });
 
     serverProcess.stdout.on('data', (data) => {
