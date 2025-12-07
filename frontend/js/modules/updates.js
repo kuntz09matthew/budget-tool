@@ -21,24 +21,24 @@ function setupElectronUpdates() {
     }
     
     // Listen for update available
-    window.electron.on('update-available', (info) => {
+    window.electron.onUpdateAvailable((info) => {
         console.log('Update available:', info);
         showUpdateBanner(info);
     });
     
     // Listen for download progress
-    window.electron.on('download-progress', (progress) => {
+    window.electron.onUpdateDownloadProgress((progress) => {
         showUpdateProgress(progress);
     });
     
     // Listen for update downloaded
-    window.electron.on('update-downloaded', (info) => {
+    window.electron.onUpdateDownloaded((info) => {
         console.log('Update downloaded:', info);
         showUpdateReady(info);
     });
     
     // Listen for update error
-    window.electron.on('update-error', (error) => {
+    window.electron.onUpdateError((error) => {
         console.error('Update error:', error);
         showUpdateError(error);
     });

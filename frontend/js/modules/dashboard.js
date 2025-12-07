@@ -167,8 +167,8 @@ async function loadOverview() {
     showLoading('summary-cards', 'Loading dashboard metrics...');
     
     try {
-        // Load all data including overdraft warning and month comparison
-        const [accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison] = await Promise.all([
+        // Load all data including overdraft warning, month comparison, and projected balance
+        const [accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison, projectedBalance] = await Promise.all([
             API.getAccounts(),
             API.getAccountSummary(),
             API.getAvailableSpending(),
@@ -179,11 +179,12 @@ async function loadOverview() {
             API.getTotalExpenses(),
             API.getMoneyLeftPerDay(),
             API.getOverdraftWarning(),
-            API.getMonthComparison()
+            API.getMonthComparison(),
+            API.getProjectedBalance()
         ]);
         
         // Render the overview cards
-        renderOverviewCards({ accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison });
+        renderOverviewCards({ accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison, projectedBalance });
     } catch (error) {
         console.error('Error loading overview:', error);
         showError('summary-cards', 'Failed to load dashboard overview');
@@ -197,7 +198,7 @@ function renderOverviewCards(data) {
     const container = document.getElementById('summary-cards');
     if (!container) return;
     
-    const { accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison } = data;
+    const { accounts, summary, availableSpending, mtdSpending, nextPaycheck, healthScore, totalIncome, totalExpenses, moneyPerDay, overdraft, monthComparison, projectedBalance } = data;
     
     // Check if we have ANY data at all
     const hasAnyData = (
@@ -206,6 +207,7 @@ function renderOverviewCards(data) {
         mtdSpending?.has_data || 
         healthScore?.has_data ||
         moneyPerDay?.money_per_day !== undefined ||
+        projectedBalance?.has_data ||
         (accounts && accounts.length > 0) ||
         (totalIncome && totalIncome.total > 0) ||
         (totalExpenses && totalExpenses.total > 0)
@@ -350,6 +352,28 @@ function renderOverviewCards(data) {
             ${healthScore.score !== undefined ? `<p class="card-extra-detail" style="font-size: 0.8em; opacity: 0.8; margin-top: 0.25rem;">Click for detailed breakdown</p>` : ''}
         </div>
     `;
+    
+    // Add Projected End-of-Month Balance if we have data
+    if (projectedBalance && projectedBalance.has_data) {
+        const changeSign = projectedBalance.balance_change >= 0 ? '+' : '';
+        const changeColor = projectedBalance.balance_change >= 0 ? '#22c55e' : '#ef4444';
+        
+        html += `
+            <!-- Projected End-of-Month Balance -->
+            <div class="summary-card clickable ${projectedBalance.status === 'critical' ? 'card-danger' : projectedBalance.status === 'warning' ? 'card-warning' : projectedBalance.status === 'caution' ? 'card-info' : 'card-success'}" 
+                 onclick="window.dashboardModule.showProjectedBalanceModal()" 
+                 style="cursor: pointer;" 
+                 title="Click for detailed projection breakdown">
+                <div class="card-icon">${projectedBalance.status_icon}</div>
+                <h3>Projected Balance (EOM)</h3>
+                <p class="card-value ${projectedBalance.projected_balance < 0 ? 'negative' : ''}">${formatCurrency(projectedBalance.projected_balance)}</p>
+                <p class="card-detail">${projectedBalance.status_text} - ${projectedBalance.days_remaining} day${projectedBalance.days_remaining !== 1 ? 's' : ''} left</p>
+                <p class="card-extra-detail" style="color: ${changeColor}; font-weight: 600; margin-top: 0.25rem;">
+                    ${changeSign}${formatCurrency(Math.abs(projectedBalance.balance_change))} from today
+                </p>
+            </div>
+        `;
+    }
     
     // Add Month Comparison Section if we have data
     if (monthComparison && monthComparison.has_data) {
@@ -641,88 +665,411 @@ function displayInsights(patternsData, recommendationsData) {
     // Extract the actual arrays from the API response
     const patterns = patternsData?.patterns || patternsData || [];
     const alerts = patternsData?.alerts || [];
-    const insights = patternsData?.insights || [];
+    const patternInsights = patternsData?.insights || [];
     const recommendations = recommendationsData?.recommendations || recommendationsData || [];
     const priorityActions = recommendationsData?.priority_actions || [];
+    const insights = recommendationsData?.insights || [];
+    const tips = recommendationsData?.tips || [];
+    const summary = recommendationsData?.summary || {};
     
-    let html = '<div class="insights-grid">';
+    let html = '';
     
-    // Display priority actions first (urgent/critical)
+    // ================================================================
+    // SUMMARY BANNER (if we have data)
+    // ================================================================
+    if (summary && Object.keys(summary).length > 0) {
+        const emergencyStatus = summary.emergency_fund_status || 'building';
+        const spendingTrend = summary.spending_trend || 'unknown';
+        const statusIcon = emergencyStatus === 'ideal' ? '🎉' : emergencyStatus === 'good' ? '✅' : '🏗️';
+        const trendIcon = spendingTrend === 'increasing' ? '📈' : spendingTrend === 'decreasing' ? '📉' : '➡️';
+        const trendColor = spendingTrend === 'decreasing' ? '#22c55e' : spendingTrend === 'increasing' ? '#ef4444' : '#6b7280';
+        
+        html += `
+            <div class="insights-summary-banner">
+                <div class="summary-stat">
+                    <span class="stat-icon">${statusIcon}</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Emergency Fund</div>
+                        <div class="stat-value">${emergencyStatus === 'ideal' ? 'Excellent' : emergencyStatus === 'good' ? 'Good' : 'Building'}</div>
+                    </div>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-icon" style="color: ${trendColor}">${trendIcon}</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Spending Trend</div>
+                        <div class="stat-value" style="color: ${trendColor}">${spendingTrend === 'insufficient_data' ? 'Tracking' : spendingTrend.charAt(0).toUpperCase() + spendingTrend.slice(1)}</div>
+                    </div>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-icon">💰</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Daily Budget</div>
+                        <div class="stat-value">${formatCurrency(summary.safe_daily_rate || 0)}/day</div>
+                    </div>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-icon">📅</span>
+                    <div class="stat-content">
+                        <div class="stat-label">Days Left</div>
+                        <div class="stat-value">${summary.days_remaining || 0} days</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '<div class="insights-grid">';
+    
+    // ================================================================
+    // PRIORITY ACTIONS (Critical/Urgent)
+    // ================================================================
     if (priorityActions && priorityActions.length > 0) {
-        html += '<div class="insight-section priority"><h3>⚡ Priority Actions</h3>';
-        priorityActions.forEach(action => {
+        html += `
+            <div class="insight-section priority-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">🚨</span> Priority Actions Needed</h3>
+                    <span class="section-badge">${priorityActions.length} action${priorityActions.length !== 1 ? 's' : ''}</span>
+                </div>
+        `;
+        
+        priorityActions.forEach((action, index) => {
             const priorityClass = action.priority === 'critical' ? 'critical' : action.priority === 'urgent' ? 'urgent' : 'high';
+            const priorityLabel = action.priority === 'critical' ? 'CRITICAL' : action.priority === 'urgent' ? 'URGENT' : 'HIGH';
+            const actionableSteps = action.actionable_steps || [];
+            
             html += `
-                <div class="insight-card ${priorityClass}">
-                    <span class="insight-icon">${action.icon || '⚠️'}</span>
-                    <h4>${action.action}</h4>
-                    <p><strong>${action.reason}</strong></p>
-                    <small>${action.impact}</small>
+                <div class="priority-action-card ${priorityClass}">
+                    <div class="priority-header">
+                        <div class="priority-title-row">
+                            <span class="priority-icon">${action.icon || '⚠️'}</span>
+                            <div class="priority-title-content">
+                                <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
+                                <h4 class="priority-title">${action.action}</h4>
+                            </div>
+                        </div>
+                        ${action.category ? `<span class="priority-category">${action.category}</span>` : ''}
+                    </div>
+                    
+                    <div class="priority-body">
+                        <div class="priority-reason">
+                            <strong>Why:</strong> ${action.reason}
+                        </div>
+                        <div class="priority-impact">
+                            <strong>Impact:</strong> ${action.impact}
+                            ${action.estimated_impact && action.estimated_impact > 0 ? `
+                                <span class="impact-amount">(${formatCurrency(action.estimated_impact)})</span>
+                            ` : ''}
+                        </div>
+                        
+                        ${actionableSteps.length > 0 ? `
+                            <details class="priority-steps" ${index === 0 ? 'open' : ''}>
+                                <summary>
+                                    <span class="steps-icon">📋</span>
+                                    <span class="steps-label">Action Steps (${actionableSteps.length})</span>
+                                </summary>
+                                <ol class="steps-list">
+                                    ${actionableSteps.map(step => `<li>${step}</li>`).join('')}
+                                </ol>
+                            </details>
+                        ` : ''}
+                    </div>
                 </div>
             `;
         });
+        
         html += '</div>';
     }
     
-    // Display spending alerts
-    if (alerts && alerts.length > 0) {
-        html += '<div class="insight-section"><h3>⚠️ Spending Alerts</h3>';
-        alerts.forEach(alert => {
-            html += `
-                <div class="insight-card alert-${alert.severity || 'medium'}">
-                    <span class="insight-icon">${alert.icon || '📊'}</span>
-                    <h4>${alert.message}</h4>
-                    <p>${alert.detail || ''}</p>
-                </div>
-            `;
-        });
-        html += '</div>';
-    }
-    
-    // Display positive insights
-    if (insights && insights.length > 0) {
-        html += '<div class="insight-section"><h3>💡 Insights</h3>';
-        insights.forEach(insight => {
-            html += `
-                <div class="insight-card insight-${insight.type}">
-                    <span class="insight-icon">${insight.icon || '📊'}</span>
-                    <h4>${insight.message}</h4>
-                    <p>${insight.detail || ''}</p>
-                </div>
-            `;
-        });
-        html += '</div>';
-    }
-    
-    // Display recommendations
+    // ================================================================
+    // RECOMMENDATIONS (Important but not urgent)
+    // ================================================================
     if (recommendations && recommendations.length > 0) {
-        html += '<div class="insight-section"><h3>💡 Recommendations</h3>';
-        recommendations.forEach(rec => {
-            const recObj = typeof rec === 'string' ? { message: rec } : rec;
+        html += `
+            <div class="insight-section recommendations-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">💡</span> Smart Recommendations</h3>
+                    <span class="section-badge">${recommendations.length} suggestion${recommendations.length !== 1 ? 's' : ''}</span>
+                </div>
+        `;
+        
+        recommendations.forEach((rec) => {
+            const recObj = typeof rec === 'string' ? { action: rec, priority: 'low' } : rec;
+            const priorityClass = recObj.priority || 'low';
+            const actionableSteps = recObj.actionable_steps || [];
+            
             html += `
-                <div class="recommendation-card priority-${recObj.priority || 'low'}">
-                    <span class="rec-icon">${recObj.icon || '💡'}</span>
-                    <h4>${recObj.action || recObj.message || rec}</h4>
-                    ${recObj.reason ? `<p>${recObj.reason}</p>` : ''}
-                    ${recObj.impact ? `<small>Impact: ${recObj.impact}</small>` : ''}
+                <div class="recommendation-card priority-${priorityClass}">
+                    <div class="rec-header">
+                        <span class="rec-icon">${recObj.icon || '💡'}</span>
+                        <div class="rec-title-content">
+                            <h4 class="rec-title">${recObj.action || recObj.message || rec}</h4>
+                            ${recObj.category ? `<span class="rec-category">${recObj.category}</span>` : ''}
+                        </div>
+                        ${priorityClass !== 'low' ? `<span class="rec-priority-badge ${priorityClass}">${priorityClass.toUpperCase()}</span>` : ''}
+                    </div>
+                    
+                    ${recObj.reason || recObj.impact || actionableSteps.length > 0 ? `
+                        <div class="rec-body">
+                            ${recObj.reason ? `
+                                <div class="rec-reason">
+                                    <strong>Why:</strong> ${recObj.reason}
+                                </div>
+                            ` : ''}
+                            
+                            ${recObj.impact ? `
+                                <div class="rec-impact">
+                                    <strong>Impact:</strong> ${recObj.impact}
+                                    ${recObj.estimated_impact && recObj.estimated_impact > 0 ? `
+                                        <span class="impact-amount">(${formatCurrency(recObj.estimated_impact)})</span>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                            
+                            ${recObj.timeline ? `
+                                <div class="rec-timeline">
+                                    <strong>Timeline:</strong> ${recObj.timeline}
+                                </div>
+                            ` : ''}
+                            
+                            ${actionableSteps.length > 0 ? `
+                                <details class="rec-steps">
+                                    <summary>
+                                        <span class="steps-icon">📋</span>
+                                        <span class="steps-label">How to do this (${actionableSteps.length} steps)</span>
+                                    </summary>
+                                    <ol class="steps-list">
+                                        ${actionableSteps.map(step => `<li>${step}</li>`).join('')}
+                                    </ol>
+                                </details>
+                            ` : ''}
+                        </div>
+                    ` : ''}
                 </div>
             `;
         });
+        
         html += '</div>';
     }
     
-    // Show empty state if no insights
-    if (priorityActions.length === 0 && alerts.length === 0 && insights.length === 0 && recommendations.length === 0) {
+    // ================================================================
+    // POSITIVE INSIGHTS & WINS
+    // ================================================================
+    const allInsights = [...insights, ...patternInsights];
+    const positiveInsights = allInsights.filter(i => i.type === 'positive' || i.type === 'celebration' || i.type === 'opportunity');
+    const infoInsights = allInsights.filter(i => i.type === 'info');
+    
+    if (positiveInsights.length > 0) {
+        html += `
+            <div class="insight-section positive-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">✨</span> Wins & Positive Trends</h3>
+                    <span class="section-badge success">${positiveInsights.length}</span>
+                </div>
+        `;
+        
+        positiveInsights.forEach(insight => {
+            const insightClass = insight.type === 'celebration' ? 'celebration' : insight.type === 'opportunity' ? 'opportunity' : 'positive';
+            html += `
+                <div class="positive-insight-card ${insightClass}">
+                    <span class="insight-icon-large">${insight.icon || '✨'}</span>
+                    <div class="insight-content">
+                        <h4 class="insight-title">${insight.message}</h4>
+                        ${insight.detail ? `<p class="insight-detail">${insight.detail}</p>` : ''}
+                        ${insight.category ? `<span class="insight-tag">${insight.category}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+    
+    // ================================================================
+    // SPENDING PATTERN ALERTS
+    // ================================================================
+    if (alerts && alerts.length > 0) {
+        html += `
+            <div class="insight-section alerts-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">⚠️</span> Spending Pattern Alerts</h3>
+                    <span class="section-badge warning">${alerts.length}</span>
+                </div>
+        `;
+        
+        alerts.forEach(alert => {
+            const severityClass = alert.severity || 'medium';
+            html += `
+                <div class="spending-alert-card severity-${severityClass}">
+                    <div class="alert-header">
+                        <span class="alert-icon">${alert.icon || '📊'}</span>
+                        <div class="alert-title-content">
+                            <h4 class="alert-title">${alert.message}</h4>
+                            ${alert.category ? `<span class="alert-category">${alert.category}</span>` : ''}
+                        </div>
+                        ${alert.severity ? `<span class="severity-badge ${severityClass}">${alert.severity.toUpperCase()}</span>` : ''}
+                    </div>
+                    ${alert.detail ? `<p class="alert-detail">${alert.detail}</p>` : ''}
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+    
+    // ================================================================
+    // FINANCIAL WISDOM & TIPS
+    // ================================================================
+    if (tips && tips.length > 0) {
+        html += `
+            <div class="insight-section tips-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">📚</span> Financial Tips & Wisdom</h3>
+                    <span class="section-badge info">${tips.length}</span>
+                </div>
+                <div class="tips-grid">
+        `;
+        
+        tips.forEach(tip => {
+            html += `
+                <div class="tip-card">
+                    <div class="tip-header">
+                        <span class="tip-icon">${tip.icon || '💡'}</span>
+                        <h4 class="tip-title">${tip.title}</h4>
+                    </div>
+                    ${tip.category ? `<span class="tip-category">${tip.category}</span>` : ''}
+                    <p class="tip-message">${tip.message}</p>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    // ================================================================
+    // INFO INSIGHTS (General information)
+    // ================================================================
+    if (infoInsights.length > 0) {
+        html += `
+            <div class="insight-section info-section">
+                <div class="section-header-with-icon">
+                    <h3><span class="section-icon">ℹ️</span> Additional Information</h3>
+                </div>
+        `;
+        
+        infoInsights.forEach(insight => {
+            html += `
+                <div class="info-insight-card">
+                    <span class="insight-icon">${insight.icon || 'ℹ️'}</span>
+                    <div class="insight-content">
+                        <h4>${insight.message}</h4>
+                        ${insight.detail ? `<p>${insight.detail}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+    
+    // ================================================================
+    // EMPTY STATE
+    // ================================================================
+    const hasAnyContent = priorityActions.length > 0 || recommendations.length > 0 || 
+                          allInsights.length > 0 || alerts.length > 0 || tips.length > 0;
+    
+    if (!hasAnyContent) {
+        const dataCompleteness = summary?.data_completeness || {};
+        const missingItems = [];
+        
+        if (!dataCompleteness.has_accounts) missingItems.push('bank accounts');
+        if (!dataCompleteness.has_income) missingItems.push('income sources');
+        if (!dataCompleteness.has_expenses) missingItems.push('monthly bills');
+        if (!dataCompleteness.has_transactions) missingItems.push('transactions');
+        
         html += `
             <div class="empty-insights">
-                <span class="empty-icon">📊</span>
-                <p>Keep tracking your income and expenses to get personalized insights and recommendations!</p>
+                <span class="empty-icon">🤖</span>
+                <h3>Your AI Financial Assistant is Ready!</h3>
+                <p class="empty-message">I'll provide personalized recommendations once you add your financial data.</p>
+                
+                ${missingItems.length > 0 ? `
+                    <div class="empty-checklist">
+                        <h4>Get Started:</h4>
+                        <ul>
+                            ${!dataCompleteness.has_accounts ? '<li>✓ Add your bank accounts (checking, savings, credit)</li>' : ''}
+                            ${!dataCompleteness.has_income ? '<li>✓ Add your income sources (salary, side hustles)</li>' : ''}
+                            ${!dataCompleteness.has_expenses ? '<li>✓ Add your monthly bills and fixed expenses</li>' : ''}
+                            ${!dataCompleteness.has_transactions ? '<li>✓ Start tracking your transactions</li>' : ''}
+                        </ul>
+                    </div>
+                ` : `
+                    <p class="empty-hint">💡 Keep tracking your finances and check back here for smart insights and recommendations!</p>
+                `}
+                
+                <div class="empty-actions">
+                    ${!dataCompleteness.has_accounts ? '<button class="btn-primary" onclick="window.dashboardModule.showAccountModal()">Add Account</button>' : ''}
+                    ${!dataCompleteness.has_income ? '<button class="btn-primary" onclick="BudgetApp.switchTab(\'income\')">Add Income</button>' : ''}
+                    ${!dataCompleteness.has_expenses ? '<button class="btn-primary" onclick="BudgetApp.switchTab(\'expenses\')">Add Bills</button>' : ''}
+                </div>
             </div>
         `;
     }
     
     html += '</div>';
     container.innerHTML = html;
+}
+
+/**
+ * Render a single bill item
+ */
+function renderBillItem(bill) {
+    const daysText = bill.days_until_due === 0 ? 'Due Today!' : 
+                     bill.days_until_due === 1 ? 'Due Tomorrow' : 
+                     `Due in ${bill.days_until_due} days`;
+    
+    const categoryIcon = getCategoryIcon(bill.category);
+    const autopayBadge = bill.is_autopay ? '<span class="bill-badge autopay">🔄 Auto-Pay</span>' : '<span class="bill-badge manual">👤 Manual</span>';
+    const paidBadge = bill.is_paid ? '<span class="bill-badge paid">✅ Paid</span>' : '';
+    
+    return `
+        <div class="bill-item ${bill.is_paid ? 'paid' : ''}" data-bill-id="${bill.id}">
+            <div class="bill-icon">${categoryIcon}</div>
+            <div class="bill-details">
+                <div class="bill-name-row">
+                    <span class="bill-name">${bill.name}</span>
+                    ${autopayBadge}
+                    ${paidBadge}
+                </div>
+                <div class="bill-info-row">
+                    <span class="bill-date">${bill.due_date_formatted} (${daysText})</span>
+                    <span class="bill-category">${bill.category}</span>
+                </div>
+            </div>
+            <div class="bill-amount ${bill.is_paid ? 'paid-amount' : ''}">${formatCurrency(bill.amount)}</div>
+        </div>
+    `;
+}
+
+/**
+ * Get category icon for bills
+ */
+function getCategoryIcon(category) {
+    const icons = {
+        'Housing': '🏠',
+        'Utilities': '💡',
+        'Transportation': '🚗',
+        'Insurance': '🛡️',
+        'Debt': '💳',
+        'Subscriptions': '📺',
+        'Health': '🏥',
+        'Childcare': '👶',
+        'Education': '📚',
+        'Other': '📋'
+    };
+    return icons[category] || '📋';
 }
 
 /**
@@ -733,13 +1080,14 @@ async function loadAlerts() {
     showLoading('alerts-container', 'Loading alerts...');
     
     try {
-        const [overdraft, upcomingBills, healthScore] = await Promise.all([
+        const [overdraft, upcomingBills, healthScore, spendingPatterns] = await Promise.all([
             API.getOverdraftWarning(),
             API.getUpcomingBills(),
-            API.getBudgetHealthScore()
+            API.getBudgetHealthScore(),
+            API.getSpendingPatterns()
         ]);
         
-        displayAlerts(overdraft, upcomingBills, healthScore);
+        displayAlerts(overdraft, upcomingBills, healthScore, spendingPatterns);
     } catch (error) {
         console.error('Error loading alerts:', error);
         showError('alerts-container', 'Failed to load alerts');
@@ -747,14 +1095,15 @@ async function loadAlerts() {
 }
 
 /**
- * Display alerts with comprehensive overdraft warning system
+ * Display alerts with comprehensive overdraft warning system and spending pattern alerts
  */
-function displayAlerts(overdraft, upcomingBills, healthScore) {
+function displayAlerts(overdraft, upcomingBills, healthScore, spendingPatterns) {
     const container = document.getElementById('alerts-container');
     if (!container) return;
     
     // Check if we have any data
-    const hasData = overdraft || (upcomingBills?.bills && upcomingBills.bills.length > 0) || healthScore;
+    const hasData = overdraft || (upcomingBills?.bills && upcomingBills.bills.length > 0) || healthScore || 
+                    (spendingPatterns?.alerts && spendingPatterns.alerts.length > 0);
     
     if (!hasData) {
         container.innerHTML = `
@@ -923,27 +1272,694 @@ function displayAlerts(overdraft, upcomingBills, healthScore) {
     }
     
     // ==========================================
+    // SPENDING PATTERN ALERTS
+    // ==========================================
+    if (spendingPatterns && spendingPatterns.alerts && spendingPatterns.alerts.length > 0) {
+        const alerts = spendingPatterns.alerts;
+        const insights = spendingPatterns.insights || [];
+        const hasSufficientData = spendingPatterns.has_sufficient_data;
+        
+        // Determine overall alert level
+        const highSeverityCount = alerts.filter(a => a.severity === 'high').length;
+        const alertClass = highSeverityCount > 0 ? 'alert-warning' : 'alert-info';
+        
+        html += `
+            <div class="spending-patterns-card ${alertClass}">
+                <div class="patterns-header">
+                    <div class="patterns-title">
+                        <span class="alert-icon">📊</span>
+                        <div>
+                            <h3>Spending Pattern Alerts</h3>
+                            <p class="patterns-subtitle">${alerts.length} unusual spending ${alerts.length === 1 ? 'pattern' : 'patterns'} detected</p>
+                        </div>
+                    </div>
+                    ${hasSufficientData ? `
+                        <button class="btn-view-all" onclick="window.dashboardModule.showSpendingPatternsModal()">
+                            View All Patterns
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <div class="patterns-alerts">
+        `;
+        
+        // Display alerts (limit to top 5 in the card)
+        alerts.slice(0, 5).forEach(alert => {
+            const severityClass = alert.severity === 'high' ? 'severity-high' : 
+                                 alert.severity === 'medium' ? 'severity-medium' : 'severity-low';
+            const severityIcon = alert.severity === 'high' ? '🔴' : 
+                                alert.severity === 'medium' ? '🟡' : '🟢';
+            
+            html += `
+                <div class="pattern-alert-item ${severityClass}">
+                    <div class="pattern-icon">${alert.icon}</div>
+                    <div class="pattern-details">
+                        <div class="pattern-header">
+                            <span class="pattern-category">${alert.category}</span>
+                            <span class="pattern-severity">${severityIcon}</span>
+                        </div>
+                        <div class="pattern-message">${alert.message}</div>
+                        <div class="pattern-comparison">
+                            <span class="current-amount">Current: ${formatCurrency(alert.current_amount)}</span>
+                            <span class="comparison-arrow">vs</span>
+                            <span class="typical-amount">Typical: ${formatCurrency(alert.typical_amount)}</span>
+                        </div>
+                        <div class="pattern-detail">${alert.detail}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+        `;
+        
+        // Show positive insights if available
+        if (insights.length > 0) {
+            const positiveInsights = insights.filter(i => i.type === 'positive').slice(0, 2);
+            if (positiveInsights.length > 0) {
+                html += `
+                    <div class="patterns-insights">
+                        <h4 class="insights-header">✨ Positive Trends</h4>
+                `;
+                
+                positiveInsights.forEach(insight => {
+                    html += `
+                        <div class="pattern-insight positive">
+                            <span class="insight-icon">${insight.icon}</span>
+                            <div class="insight-content">
+                                <div class="insight-message">${insight.message}</div>
+                                <div class="insight-detail">${insight.detail}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    </div>
+                `;
+            }
+        }
+        
+        // Info section
+        html += `
+                <details class="patterns-help">
+                    <summary>ℹ️ Understanding Your Spending Alerts</summary>
+                    <div class="help-content">
+                        <p><strong>What the numbers mean:</strong></p>
+                        <ul>
+                            <li><strong>CURRENT:</strong> How much you've spent in this category so far this month</li>
+                            <li><strong>TYPICAL:</strong> Your average monthly spending in this category (based on past months)</li>
+                            <li><strong>DIFFERENCE:</strong> How much more (or less) you've spent compared to typical</li>
+                        </ul>
+                        <p><strong>Example:</strong> If you typically spend $500/month on groceries, but you've already spent $650 just 6 days into the month, we'll alert you that you're on track to overspend.</p>
+                        <p><strong>Alert Levels:</strong></p>
+                        <ul>
+                            <li><strong style="color: #ef4444;">🔴 High:</strong> You've already spent 60%+ more than your typical FULL MONTH amount</li>
+                            <li><strong style="color: #f59e0b;">🟡 Medium:</strong> You've spent 30-60% more than your typical monthly amount</li>
+                        </ul>
+                        <p class="help-tip">💡 <strong>Tip:</strong> Early in the month, even small overspending can trigger alerts because it suggests you might significantly exceed your typical monthly total!</p>
+                    </div>
+                </details>
+            </div>
+        `;
+    } else if (spendingPatterns && !spendingPatterns.has_sufficient_data) {
+        // Show a card indicating we're building history
+        html += `
+            <div class="spending-patterns-card alert-info">
+                <div class="patterns-header">
+                    <div class="patterns-title">
+                        <span class="alert-icon">📊</span>
+                        <div>
+                            <h3>Spending Pattern Alerts</h3>
+                            <p class="patterns-subtitle">Building your spending history...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="empty-patterns-message">
+                    <p>Keep adding transactions over time to get personalized spending pattern alerts!</p>
+                    <p><small>We need at least 2-3 months of data across multiple categories to detect meaningful patterns.</small></p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // ==========================================
     // UPCOMING BILLS (NEXT 7 DAYS)
     // ==========================================
-    const bills = upcomingBills?.bills || upcomingBills || [];
-    if (bills && bills.length > 0) {
-        const totalDue = upcomingBills?.total_due || 0;
+    if (upcomingBills && upcomingBills.bills && upcomingBills.bills.length > 0) {
+        const bills = upcomingBills.bills;
+        const totalDue = upcomingBills.total_due || 0;
+        const unpaidCount = upcomingBills.unpaid_count || 0;
+        
+        // Group bills by urgency
+        const urgentBills = bills.filter(b => b.urgency === 'urgent' && !b.is_paid);
+        const soonBills = bills.filter(b => b.urgency === 'soon' && !b.is_paid);
+        const upcomingBillsList = bills.filter(b => b.urgency === 'upcoming' && !b.is_paid);
+        const paidBills = bills.filter(b => b.is_paid);
+        
+        // Determine overall urgency level
+        let urgencyClass = 'alert-info';
+        let urgencyIcon = '📅';
+        let urgencyTitle = 'Upcoming Bills';
+        
+        if (urgentBills.length > 0) {
+            urgencyClass = 'alert-danger';
+            urgencyIcon = '🚨';
+            urgencyTitle = 'Urgent Bills Due Soon!';
+        } else if (soonBills.length > 0) {
+            urgencyClass = 'alert-warning';
+            urgencyIcon = '⚠️';
+            urgencyTitle = 'Bills Due This Week';
+        }
+        
         html += `
-            <div class="alert-card alert-info">
-                <span class="alert-icon">📅</span>
-                <h4>Upcoming Bills (${bills.length})</h4>
-                <p class="alert-subtitle">Total Due: ${formatCurrency(totalDue)}</p>
-                <ul class="bills-list">
+            <div class="upcoming-bills-card ${urgencyClass}">
+                <div class="bills-header">
+                    <div class="bills-title">
+                        <span class="alert-icon">${urgencyIcon}</span>
+                        <div>
+                            <h3>${urgencyTitle}</h3>
+                            <p class="bills-subtitle">${unpaidCount} unpaid bill${unpaidCount !== 1 ? 's' : ''} • ${formatCurrency(totalDue)} total due</p>
+                        </div>
+                    </div>
+                    <button class="btn-view-all" onclick="window.dashboardModule.showUpcomingBillsModal()">
+                        View Details
+                    </button>
+                </div>
+                
+                <div class="bills-timeline">
         `;
-        bills.forEach(bill => {
-            const urgencyClass = bill.urgency === 'urgent' ? 'urgent' : '';
-            html += `<li class="${urgencyClass}">${bill.name}: ${formatCurrency(bill.amount)} due ${bill.due_date_formatted || bill.due_date} (${bill.days_until_due} days)</li>`;
-        });
-        html += '</ul></div>';
+        
+        // Display urgent bills (1-2 days)
+        if (urgentBills.length > 0) {
+            html += `
+                <div class="bills-urgency-group urgent">
+                    <h4 class="urgency-header">
+                        <span class="urgency-icon">🔴</span>
+                        <span>Urgent (Due in 1-2 days)</span>
+                    </h4>
+                    <div class="bills-list">
+            `;
+            urgentBills.forEach(bill => {
+                html += renderBillItem(bill);
+            });
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Display soon bills (3-5 days)
+        if (soonBills.length > 0) {
+            html += `
+                <div class="bills-urgency-group soon">
+                    <h4 class="urgency-header">
+                        <span class="urgency-icon">🟡</span>
+                        <span>Coming Soon (3-5 days)</span>
+                    </h4>
+                    <div class="bills-list">
+            `;
+            soonBills.forEach(bill => {
+                html += renderBillItem(bill);
+            });
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Display upcoming bills (6-7 days)
+        if (upcomingBillsList.length > 0) {
+            html += `
+                <div class="bills-urgency-group upcoming">
+                    <h4 class="urgency-header">
+                        <span class="urgency-icon">🟢</span>
+                        <span>Upcoming (6-7 days)</span>
+                    </h4>
+                    <div class="bills-list">
+            `;
+            upcomingBillsList.forEach(bill => {
+                html += renderBillItem(bill);
+            });
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Display paid bills (collapsed)
+        if (paidBills.length > 0) {
+            html += `
+                <details class="bills-urgency-group paid">
+                    <summary class="urgency-header">
+                        <span class="urgency-icon">✅</span>
+                        <span>Already Paid (${paidBills.length})</span>
+                    </summary>
+                    <div class="bills-list">
+            `;
+            paidBills.forEach(bill => {
+                html += renderBillItem(bill);
+            });
+            html += `
+                    </div>
+                </details>
+            `;
+        }
+        
+        html += `
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="bills-quick-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">💰</span>
+                        <div class="stat-content">
+                            <span class="stat-value">${formatCurrency(totalDue)}</span>
+                            <span class="stat-label">Total Due</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">📋</span>
+                        <div class="stat-content">
+                            <span class="stat-value">${unpaidCount}</span>
+                            <span class="stat-label">Unpaid</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🔄</span>
+                        <div class="stat-content">
+                            <span class="stat-value">${bills.filter(b => b.is_autopay).length}</span>
+                            <span class="stat-label">Auto-Pay</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // No upcoming bills
+        html += `
+            <div class="upcoming-bills-card alert-success">
+                <div class="bills-header">
+                    <div class="bills-title">
+                        <span class="alert-icon">✅</span>
+                        <div>
+                            <h3>No Bills Due Soon</h3>
+                            <p class="bills-subtitle">You're all clear for the next 7 days!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="empty-bills-message">
+                    <p>🎉 Great news! No bills are due in the next week. Enjoy the peace of mind!</p>
+                </div>
+            </div>
+        `;
     }
     
     html += '</div>';
     container.innerHTML = html;
+}
+
+/**
+ * Show detailed upcoming bills modal
+ */
+async function showUpcomingBillsModal() {
+    try {
+        showLoading('alerts-container', 'Loading bill details...');
+        
+        const upcomingBills = await API.getUpcomingBills();
+        
+        if (!upcomingBills || !upcomingBills.bills || upcomingBills.bills.length === 0) {
+            showNotification('No upcoming bills in the next 7 days', 'info');
+            const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+            if (loadingElement) loadingElement.remove();
+            return;
+        }
+        
+        const bills = upcomingBills.bills;
+        const totalDue = upcomingBills.total_due || 0;
+        const unpaidCount = upcomingBills.unpaid_count || 0;
+        
+        // Build modal HTML
+        const modalHTML = `
+            <div class="modal-overlay" id="bills-modal">
+                <div class="modal-content large-modal">
+                    <div class="modal-header">
+                        <h2>📅 Upcoming Bills (Next 7 Days)</h2>
+                        <button class="modal-close" onclick="document.getElementById('bills-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Summary Cards -->
+                        <div class="bills-summary-grid">
+                            <div class="summary-card">
+                                <div class="card-icon">💰</div>
+                                <div class="card-content">
+                                    <h4>Total Due</h4>
+                                    <p class="card-value">${formatCurrency(totalDue)}</p>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-icon">📋</div>
+                                <div class="card-content">
+                                    <h4>Unpaid Bills</h4>
+                                    <p class="card-value">${unpaidCount}</p>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-icon">🔄</div>
+                                <div class="card-content">
+                                    <h4>Auto-Pay Enabled</h4>
+                                    <p class="card-value">${bills.filter(b => b.is_autopay).length}</p>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="card-icon">👤</div>
+                                <div class="card-content">
+                                    <h4>Manual Payment</h4>
+                                    <p class="card-value">${bills.filter(b => !b.is_autopay).length}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bills Timeline -->
+                        <div class="bills-modal-timeline">
+                            ${bills.map((bill, index) => `
+                                <div class="bill-modal-item ${bill.is_paid ? 'paid' : ''} ${bill.urgency}">
+                                    <div class="bill-timeline-marker">
+                                        <div class="timeline-dot ${bill.urgency}"></div>
+                                        ${index < bills.length - 1 ? '<div class="timeline-line"></div>' : ''}
+                                    </div>
+                                    <div class="bill-modal-content">
+                                        <div class="bill-modal-header">
+                                            <div class="bill-modal-title">
+                                                <span class="bill-modal-icon">${getCategoryIcon(bill.category)}</span>
+                                                <h4>${bill.name}</h4>
+                                                ${bill.is_paid ? '<span class="status-badge paid">✅ Paid</span>' : ''}
+                                                ${bill.is_autopay ? '<span class="status-badge autopay">🔄 Auto-Pay</span>' : '<span class="status-badge manual">👤 Manual</span>'}
+                                            </div>
+                                            <div class="bill-modal-amount ${bill.is_paid ? 'paid' : ''}">${formatCurrency(bill.amount)}</div>
+                                        </div>
+                                        <div class="bill-modal-details">
+                                            <div class="detail-item">
+                                                <span class="detail-label">Due Date:</span>
+                                                <span class="detail-value">${bill.due_date_formatted}</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <span class="detail-label">Days Until Due:</span>
+                                                <span class="detail-value ${bill.days_until_due <= 2 ? 'urgent-text' : ''}">${bill.days_until_due === 0 ? 'Due Today!' : bill.days_until_due === 1 ? 'Due Tomorrow' : `${bill.days_until_due} days`}</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <span class="detail-label">Category:</span>
+                                                <span class="detail-value">${bill.category}</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <span class="detail-label">Urgency:</span>
+                                                <span class="detail-value urgency-${bill.urgency}">${bill.urgency.charAt(0).toUpperCase() + bill.urgency.slice(1)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Helpful Tips -->
+                        <div class="bills-tips">
+                            <h4>💡 Bill Management Tips</h4>
+                            <ul>
+                                <li><strong>Set up auto-pay:</strong> Avoid late fees by enabling automatic payments for recurring bills</li>
+                                <li><strong>Check your balance:</strong> Ensure you have sufficient funds before bills are due</li>
+                                <li><strong>Review upcoming bills:</strong> Check this section daily to stay on top of your payments</li>
+                                <li><strong>Set reminders:</strong> For manual payments, set calendar reminders 2-3 days before due date</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="document.getElementById('bills-modal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove loading state
+        const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+        if (loadingElement) loadingElement.remove();
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Close on overlay click
+        const modal = document.getElementById('bills-modal');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Close on Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+    } catch (error) {
+        console.error('Error showing bills modal:', error);
+        showNotification('Failed to load bill details', 'error');
+        
+        const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+        if (loadingElement) loadingElement.remove();
+    }
+}
+
+/**
+ * Show detailed spending patterns modal
+ */
+async function showSpendingPatternsModal() {
+    try {
+        showLoading('alerts-container', 'Analyzing spending patterns...');
+        
+        const spendingPatterns = await API.getSpendingPatterns();
+        
+        if (!spendingPatterns || !spendingPatterns.patterns || spendingPatterns.patterns.length === 0) {
+            showNotification('Not enough data to analyze spending patterns yet', 'info');
+            const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+            if (loadingElement) loadingElement.remove();
+            return;
+        }
+        
+        const patterns = spendingPatterns.patterns;
+        const alerts = spendingPatterns.alerts || [];
+        const insights = spendingPatterns.insights || [];
+        const recommendations = spendingPatterns.recommendations || [];
+        
+        // Build modal HTML
+        const modalHTML = `
+            <div class="modal-overlay" id="patterns-modal">
+                <div class="modal-content large-modal">
+                    <div class="modal-header">
+                        <h3>📊 Spending Pattern Analysis</h3>
+                        <button class="modal-close" onclick="document.getElementById('patterns-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Summary Stats -->
+                        <div class="patterns-summary">
+                            <div class="summary-stat">
+                                <span class="stat-icon">📂</span>
+                                <div class="stat-content">
+                                    <div class="stat-value">${patterns.length}</div>
+                                    <div class="stat-label">Categories Tracked</div>
+                                </div>
+                            </div>
+                            <div class="summary-stat ${alerts.length > 0 ? 'warning' : 'success'}">
+                                <span class="stat-icon">${alerts.length > 0 ? '⚠️' : '✅'}</span>
+                                <div class="stat-content">
+                                    <div class="stat-value">${alerts.length}</div>
+                                    <div class="stat-label">Anomalies Detected</div>
+                                </div>
+                            </div>
+                            <div class="summary-stat success">
+                                <span class="stat-icon">📈</span>
+                                <div class="stat-content">
+                                    <div class="stat-value">${spendingPatterns.months_analyzed || 0}</div>
+                                    <div class="stat-label">Months Analyzed</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alerts Section -->
+                        ${alerts.length > 0 ? `
+                            <div class="patterns-section alerts-section">
+                                <h4>⚠️ Spending Alerts</h4>
+                                <div class="patterns-alerts-list">
+                                    ${alerts.map(alert => {
+                                        const severityClass = alert.severity === 'high' ? 'severity-high' : 
+                                                             alert.severity === 'medium' ? 'severity-medium' : 'severity-low';
+                                        const severityIcon = alert.severity === 'high' ? '🔴' : 
+                                                            alert.severity === 'medium' ? '🟡' : '🟢';
+                                        
+                                        return `
+                                            <div class="pattern-alert-detail ${severityClass}">
+                                                <div class="alert-header-row">
+                                                    <div class="alert-category-info">
+                                                        <span class="pattern-icon-large">${alert.icon}</span>
+                                                        <div>
+                                                            <h5>${alert.category}</h5>
+                                                            <p class="alert-message">${alert.message}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span class="severity-badge">${severityIcon} ${alert.severity.toUpperCase()}</span>
+                                                </div>
+                                                <div class="alert-comparison-row">
+                                                    <div class="comparison-item current">
+                                                        <span class="comparison-label">Current</span>
+                                                        <span class="comparison-value">${formatCurrency(alert.current_amount)}</span>
+                                                    </div>
+                                                    <div class="comparison-arrow">→</div>
+                                                    <div class="comparison-item typical">
+                                                        <span class="comparison-label">Typical</span>
+                                                        <span class="comparison-value">${formatCurrency(alert.typical_amount)}</span>
+                                                    </div>
+                                                    <div class="comparison-item difference">
+                                                        <span class="comparison-label">Difference</span>
+                                                        <span class="comparison-value difference-amount">+${formatCurrency(alert.difference)}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="alert-detail-text">${alert.detail}</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Positive Insights Section -->
+                        ${insights.filter(i => i.type === 'positive').length > 0 ? `
+                            <div class="patterns-section insights-section">
+                                <h4>✨ Positive Trends</h4>
+                                <div class="patterns-insights-list">
+                                    ${insights.filter(i => i.type === 'positive').map(insight => `
+                                        <div class="pattern-insight-detail positive">
+                                            <span class="insight-icon-large">${insight.icon}</span>
+                                            <div class="insight-content">
+                                                <h5>${insight.category}</h5>
+                                                <p class="insight-message">${insight.message}</p>
+                                                <p class="insight-detail">${insight.detail}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- All Patterns Section -->
+                        <div class="patterns-section">
+                            <h4>📊 All Spending Patterns</h4>
+                            <div class="patterns-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Current MTD</th>
+                                            <th>Projected</th>
+                                            <th>Typical</th>
+                                            <th>Variance</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${patterns.map(pattern => {
+                                            const statusClass = pattern.status === 'high' ? 'status-high' : 
+                                                               pattern.status === 'low' ? 'status-low' : 'status-normal';
+                                            const statusIcon = pattern.status === 'high' ? '📈' : 
+                                                              pattern.status === 'low' ? '📉' : '➡️';
+                                            const varianceClass = pattern.variance > 0 ? 'variance-positive' : 
+                                                                 pattern.variance < 0 ? 'variance-negative' : 'variance-neutral';
+                                            
+                                            return `
+                                                <tr class="${statusClass}">
+                                                    <td class="category-cell">
+                                                        <span class="category-icon">${pattern.icon}</span>
+                                                        <span class="category-name">${pattern.category}</span>
+                                                    </td>
+                                                    <td>${formatCurrency(pattern.current_mtd)}</td>
+                                                    <td class="projected-cell">${formatCurrency(pattern.projected)}</td>
+                                                    <td class="typical-cell">${formatCurrency(pattern.historical_avg)}</td>
+                                                    <td class="variance-cell ${varianceClass}">
+                                                        ${pattern.variance > 0 ? '+' : ''}${pattern.variance.toFixed(1)}%
+                                                    </td>
+                                                    <td class="status-cell">
+                                                        <span class="status-indicator ${statusClass}">${statusIcon}</span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendations Section -->
+                        ${recommendations.length > 0 ? `
+                            <div class="patterns-section recommendations-section">
+                                <h4>💡 Recommendations</h4>
+                                <ul class="recommendations-list">
+                                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Info Section -->
+                        <div class="patterns-info">
+                            <p><strong>How to interpret this data:</strong></p>
+                            <ul>
+                                <li><strong>Current MTD:</strong> What you've spent so far this month</li>
+                                <li><strong>Projected:</strong> What we estimate you'll spend by month-end at your current pace</li>
+                                <li><strong>Typical:</strong> Your average monthly spending based on past months</li>
+                                <li><strong>Variance:</strong> How different your projected spending is from typical</li>
+                            </ul>
+                            <p class="info-note">💡 Based on ${spendingPatterns.months_analyzed} months of transaction history</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="document.getElementById('patterns-modal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove loading state
+        const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+        if (loadingElement) loadingElement.remove();
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Close on overlay click
+        const modal = document.getElementById('patterns-modal');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Close on Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+    } catch (error) {
+        console.error('Error showing spending patterns modal:', error);
+        showNotification('Failed to load spending pattern details', 'error');
+        
+        const loadingElement = document.querySelector('#alerts-container .loading-overlay');
+        if (loadingElement) loadingElement.remove();
+    }
 }
 
 /**
@@ -2601,11 +3617,232 @@ async function showHealthScoreModal() {
     }
 }
 
+/**
+ * Show detailed Projected End-of-Month Balance modal
+ */
+async function showProjectedBalanceModal() {
+    try {
+        showLoading('dashboard-overview', 'Loading projection details...');
+        
+        const projection = await API.getProjectedBalance();
+        
+        if (!projection || !projection.has_data) {
+            showError('dashboard-overview', 'Unable to load projection. Please add financial data first.');
+            return;
+        }
+        
+        const breakdown = projection.breakdown || {};
+        const changeSign = projection.balance_change >= 0 ? '+' : '';
+        const changeColor = projection.balance_change >= 0 ? '#22c55e' : '#ef4444';
+        
+        // Build the detailed modal
+        const modalHTML = `
+            <div class="modal-overlay" id="projected-balance-modal">
+                <div class="modal-content large-modal">
+                    <div class="modal-header">
+                        <h2>${projection.status_icon} End-of-Month Projection</h2>
+                        <button class="modal-close" onclick="document.getElementById('projected-balance-modal').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Projection Summary -->
+                        <div class="projection-summary" style="background: linear-gradient(135deg, ${projection.status_color}15, ${projection.status_color}30); border: 2px solid ${projection.status_color}; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; text-align: center;">
+                            <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">
+                                Projected Balance by End of ${projection.month_name}
+                            </div>
+                            <div style="font-size: 3.5rem; font-weight: bold; color: ${projection.status_color};">
+                                ${formatCurrency(projection.projected_balance)}
+                            </div>
+                            <div style="font-size: 1.25rem; font-weight: 600; margin-top: 0.5rem; color: ${changeColor};">
+                                ${changeSign}${formatCurrency(Math.abs(projection.balance_change))} from today
+                            </div>
+                            <div style="font-size: 1rem; margin-top: 0.75rem;">
+                                <span style="background: ${projection.status_color}; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600;">
+                                    ${projection.status_text}
+                                </span>
+                            </div>
+                            <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 1rem;">
+                                ${projection.days_remaining} day${projection.days_remaining !== 1 ? 's' : ''} remaining in ${projection.month_name}
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Breakdown -->
+                        <div class="projection-breakdown">
+                            <h3 style="margin-bottom: 1.5rem;">Calculation Breakdown</h3>
+                            
+                            <!-- Starting Balance -->
+                            <div class="breakdown-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <h4 style="margin: 0 0 0.25rem 0; font-size: 1rem;">💰 Current Balance (Liquid Assets)</h4>
+                                        <p style="margin: 0; font-size: 0.85rem; opacity: 0.7;">Checking: ${formatCurrency(breakdown.checking_balance)} | Savings: ${formatCurrency(breakdown.savings_balance)}</p>
+                                    </div>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">
+                                        ${formatCurrency(breakdown.starting_balance)}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Expected Income -->
+                            <div class="breakdown-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #22c55e;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <h4 style="margin: 0; font-size: 1rem;">➕ Expected Income (Rest of Month)</h4>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #22c55e;">
+                                        +${formatCurrency(breakdown.expected_income)}
+                                    </div>
+                                </div>
+                                ${breakdown.upcoming_paychecks && breakdown.upcoming_paychecks.length > 0 ? `
+                                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(0,0,0,0.1);">
+                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; opacity: 0.7;">Upcoming Paychecks:</p>
+                                        ${breakdown.upcoming_paychecks.map(paycheck => `
+                                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.9rem;">
+                                                <span>${paycheck.name} (${paycheck.date})</span>
+                                                <span style="font-weight: 600; color: #22c55e;">${formatCurrency(paycheck.amount)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.7;">No additional income expected this month</p>
+                                `}
+                            </div>
+                            
+                            <!-- Remaining Bills -->
+                            <div class="breakdown-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ef4444;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <h4 style="margin: 0; font-size: 1rem;">➖ Remaining Bills & Fixed Expenses</h4>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #ef4444;">
+                                        -${formatCurrency(breakdown.remaining_expenses)}
+                                    </div>
+                                </div>
+                                ${breakdown.unpaid_bills && breakdown.unpaid_bills.length > 0 ? `
+                                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(0,0,0,0.1);">
+                                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; opacity: 0.7;">Unpaid Bills:</p>
+                                        ${breakdown.unpaid_bills.map(bill => `
+                                            <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.9rem;">
+                                                <span>${bill.name} (Due day ${bill.due_day})</span>
+                                                <span style="font-weight: 600; color: #ef4444;">${formatCurrency(bill.amount)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : `
+                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.7;">All bills paid for this month!</p>
+                                `}
+                            </div>
+                            
+                            <!-- Projected Variable Spending -->
+                            <div class="breakdown-item" style="background: var(--card-bg); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <h4 style="margin: 0; font-size: 1rem;">➖ Projected Variable Spending</h4>
+                                    <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">
+                                        -${formatCurrency(breakdown.projected_remaining_spending)}
+                                    </div>
+                                </div>
+                                <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.7;">
+                                    Based on current spending: ${formatCurrency(breakdown.mtd_spending)} in ${breakdown.days_elapsed} day${breakdown.days_elapsed !== 1 ? 's' : ''} 
+                                    (${formatCurrency(breakdown.daily_average)}/day average) × ${breakdown.days_remaining} day${breakdown.days_remaining !== 1 ? 's' : ''} remaining
+                                </p>
+                            </div>
+                            
+                            <!-- Divider -->
+                            <div style="border-top: 2px solid ${projection.status_color}; margin: 1.5rem 0;"></div>
+                            
+                            <!-- Final Projection -->
+                            <div class="breakdown-item" style="background: linear-gradient(135deg, ${projection.status_color}20, ${projection.status_color}10); padding: 1.25rem; border-radius: 8px; border: 2px solid ${projection.status_color};">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700;">${projection.status_icon} Projected Balance (${projection.month_name} 30)</h4>
+                                    <div style="font-size: 2rem; font-weight: 700; color: ${projection.status_color};">
+                                        ${formatCurrency(projection.projected_balance)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Insights -->
+                        ${projection.insights && projection.insights.length > 0 ? `
+                            <div class="projection-insights" style="margin-top: 2rem;">
+                                <h3 style="margin-bottom: 1rem;">💡 Insights</h3>
+                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                    ${projection.insights.map(insight => `
+                                        <li style="background: var(--card-bg); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #3b82f6;">
+                                            ${insight}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Recommendations -->
+                        ${projection.recommendations && projection.recommendations.length > 0 ? `
+                            <div class="projection-recommendations" style="margin-top: 2rem;">
+                                <h3 style="margin-bottom: 1rem;">🎯 Recommendations</h3>
+                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                    ${projection.recommendations.map(rec => `
+                                        <li style="background: var(--card-bg); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 0.5rem; border-left: 3px solid #22c55e;">
+                                            ${rec}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- Disclaimer -->
+                        <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.85rem; opacity: 0.8;">
+                            <strong>Note:</strong> This projection is based on your current spending patterns and known upcoming transactions. 
+                            Actual results may vary based on unexpected expenses, income changes, or spending behavior adjustments.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="document.getElementById('projected-balance-modal').remove()">Close</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove loading state
+        const loadingElement = document.querySelector('#dashboard-overview .loading-overlay');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Close on overlay click
+        const modal = document.getElementById('projected-balance-modal');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        // Close on Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+    } catch (error) {
+        console.error('Error showing projected balance modal:', error);
+        showNotification('Failed to load projection details', 'error');
+        
+        // Remove loading state if error
+        const loadingElement = document.querySelector('#dashboard-overview .loading-overlay');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+    }
+}
+
 // Expose functions to global scope for onclick handlers
 window.dashboardModule = window.dashboardModule || {};
 window.dashboardModule.showAvailableSpendingBreakdown = showAvailableSpendingBreakdown;
 window.dashboardModule.showMTDSpendingBreakdown = showMTDSpendingBreakdown;
 window.dashboardModule.showMoneyPerDayBreakdown = showMoneyPerDayBreakdown;
 window.dashboardModule.showHealthScoreModal = showHealthScoreModal;
+window.dashboardModule.showProjectedBalanceModal = showProjectedBalanceModal;
+window.dashboardModule.showUpcomingBillsModal = showUpcomingBillsModal;
+window.dashboardModule.showSpendingPatternsModal = showSpendingPatternsModal;
 window.dashboardModule.navigateToPaycheckCountdown = navigateToPaycheckCountdown;
 window.dashboardModule.showAccountModal = showAccountModal;

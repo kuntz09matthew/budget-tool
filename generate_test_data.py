@@ -79,72 +79,100 @@ def generate_test_data():
                 'name': 'Rent',
                 'amount': 950,
                 'frequency': 'monthly',
-                'due_date': 1,
+                'due_day': 1,
                 'category': 'Housing',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': True  # Already paid for December
             },
             {
                 'id': 2,
                 'name': 'Car Payment',
                 'amount': 285,
                 'frequency': 'monthly',
-                'due_date': 8,  # Due in 2 days - UPCOMING
+                'due_day': 8,  # Due in 2 days - UPCOMING
                 'category': 'Transportation',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
             },
             {
                 'id': 3,
                 'name': 'Car Insurance',
                 'amount': 125,
                 'frequency': 'monthly',
-                'due_date': 10,  # Due in 4 days - UPCOMING
+                'due_day': 10,  # Due in 4 days - UPCOMING
                 'category': 'Insurance',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
             },
             {
                 'id': 4,
                 'name': 'Electric Bill',
                 'amount': 85,
                 'frequency': 'monthly',
-                'due_date': 9,  # Due in 3 days - UPCOMING
+                'due_day': 9,  # Due in 3 days - UPCOMING
                 'category': 'Utilities',
-                'auto_pay': False
+                'auto_pay': False,
+                'is_paid': False
             },
             {
                 'id': 5,
                 'name': 'Internet',
                 'amount': 60,
                 'frequency': 'monthly',
-                'due_date': 20,
+                'due_day': 20,
                 'category': 'Utilities',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
             },
             {
                 'id': 6,
                 'name': 'Phone Plan',
                 'amount': 75,
                 'frequency': 'monthly',
-                'due_date': 7,  # Due TOMORROW - URGENT!
+                'due_day': 7,  # Due TOMORROW - URGENT!
                 'category': 'Utilities',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
             },
             {
                 'id': 7,
                 'name': 'Netflix',
                 'amount': 15.99,
                 'frequency': 'monthly',
-                'due_date': 12,
+                'due_day': 12,
                 'category': 'Subscriptions',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
             },
             {
                 'id': 8,
                 'name': 'Gym Membership',
                 'amount': 30,
                 'frequency': 'monthly',
-                'due_date': 11,  # Due in 5 days - UPCOMING
+                'due_day': 11,  # Due in 5 days - UPCOMING
                 'category': 'Health',
-                'auto_pay': True
+                'auto_pay': True,
+                'is_paid': False
+            },
+            {
+                'id': 9,
+                'name': 'Water/Sewer',
+                'amount': 45,
+                'frequency': 'monthly',
+                'due_day': 15,
+                'category': 'Utilities',
+                'auto_pay': False,
+                'is_paid': False
+            },
+            {
+                'id': 10,
+                'name': 'Student Loan',
+                'amount': 180,
+                'frequency': 'monthly',
+                'due_day': 25,
+                'category': 'Debt',
+                'auto_pay': True,
+                'is_paid': False
             }
         ]
     }
@@ -341,14 +369,184 @@ def generate_test_data():
     
     budget_data['income_sources'] = income_sources
     
-    # Generate realistic transactions for November and December 2025
-    # This will help test the month comparison feature
+    # Generate realistic transactions for multiple months (July-December 2025)
+    # This will help test spending pattern alerts and month comparison features
     transactions = []
     transaction_id = 1
     
     # Realistic spending categories for a family making ~$60k/year
     # Available spending after fixed expenses: ~$4,000-$4,500/month
-    # Groceries: $600-800/month, Gas: $200-250/month, Dining: $150-250/month, etc.
+    # Typical monthly spending patterns:
+    # - Groceries: $650-750/month (~$150-180/week)
+    # - Gas: $180-220/month (~$40-50/fill-up, 4-5 times/month)
+    # - Dining: $200-280/month
+    # - Household: $80-120/month
+    # - Healthcare: $30-60/month
+    # - Shopping: $100-200/month
+    # - Clothing: $50-100/month
+    # - Pet Care: $40-60/month
+    # - Personal Care: $30-50/month
+    
+    # Helper function to generate monthly transactions with realistic patterns
+    def generate_monthly_spending(year, month, groceries_multiplier=1.0, dining_multiplier=1.0, shopping_multiplier=1.0):
+        """Generate realistic monthly spending with adjustable category multipliers"""
+        base_transactions = []
+        
+        # Groceries (typically 4 shopping trips per month)
+        for week in range(1, 5):
+            day = week * 7 - random.randint(0, 3)
+            if day > 28:
+                day = 28
+            amount = random.uniform(140, 180) * groceries_multiplier
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(8,18):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['Walmart', 'Aldi', 'Target', 'Kroger']),
+                'description': 'Grocery shopping',
+                'amount': round(amount, 2),
+                'category': 'Groceries',
+                'payment_method': random.choice(['debit', 'debit', 'credit'])
+            })
+        
+        # Gas (4-5 fill-ups per month)
+        for i in range(random.randint(4, 5)):
+            day = random.randint(1, 28)
+            amount = random.uniform(38, 48)
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(7,19):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['Shell', 'Kwik Trip', 'BP', 'Speedway']),
+                'description': 'Gas fill-up',
+                'amount': round(amount, 2),
+                'category': 'Gas/Transportation',
+                'payment_method': random.choice(['credit', 'credit', 'debit'])
+            })
+        
+        # Dining Out (8-12 times per month)
+        for i in range(random.randint(8, 12)):
+            day = random.randint(1, 28)
+            amount = random.uniform(15, 65) * dining_multiplier
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(11,20):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['McDonalds', 'Chipotle', 'Pizza Hut', 'Olive Garden', 'Applebees', 'Panera', 'Subway', 'Starbucks']),
+                'description': random.choice(['Quick lunch', 'Family dinner', 'Date night', 'Coffee', 'Dinner out']),
+                'amount': round(amount, 2),
+                'category': 'Dining Out',
+                'payment_method': random.choice(['debit', 'credit'])
+            })
+        
+        # Household items (3-5 times per month)
+        for i in range(random.randint(3, 5)):
+            day = random.randint(1, 28)
+            amount = random.uniform(20, 70)
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(9,18):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['Target', 'Walmart', 'Dollar General', 'Walgreens']),
+                'description': random.choice(['Household items', 'Cleaning supplies', 'Home goods', 'Toiletries']),
+                'amount': round(amount, 2),
+                'category': 'Household',
+                'payment_method': random.choice(['debit', 'credit'])
+            })
+        
+        # Healthcare (1-3 times per month)
+        for i in range(random.randint(1, 3)):
+            day = random.randint(1, 28)
+            amount = random.uniform(15, 35)
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(9,17):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['CVS', 'Walgreens', 'Rite Aid']),
+                'description': random.choice(['Prescriptions', 'Medicine', 'Pharmacy']),
+                'amount': round(amount, 2),
+                'category': 'Healthcare',
+                'payment_method': 'debit'
+            })
+        
+        # Shopping (2-4 times per month)
+        for i in range(random.randint(2, 4)):
+            day = random.randint(1, 28)
+            amount = random.uniform(30, 120) * shopping_multiplier
+            base_transactions.append({
+                'date': f'{year}-{month:02d}-{day:02d}T{random.randint(10,19):02d}:{random.randint(0,59):02d}:00',
+                'merchant': random.choice(['Amazon', 'Target', 'Walmart', 'Best Buy']),
+                'description': 'Online shopping',
+                'amount': round(amount, 2),
+                'category': 'Shopping',
+                'payment_method': 'credit'
+            })
+        
+        # Clothing (1-2 times per month)
+        if random.random() > 0.3:  # Not every month
+            for i in range(random.randint(1, 2)):
+                day = random.randint(1, 28)
+                amount = random.uniform(40, 95)
+                base_transactions.append({
+                    'date': f'{year}-{month:02d}-{day:02d}T{random.randint(10,18):02d}:{random.randint(0,59):02d}:00',
+                    'merchant': random.choice(['Target', 'Kohls', 'Old Navy', 'TJ Maxx']),
+                    'description': 'Clothing',
+                    'amount': round(amount, 2),
+                    'category': 'Clothing',
+                    'payment_method': 'credit'
+                })
+        
+        # Pet Care (1-2 times per month)
+        if random.random() > 0.2:  # Most months
+            for i in range(random.randint(1, 2)):
+                day = random.randint(1, 28)
+                amount = random.uniform(25, 55)
+                base_transactions.append({
+                    'date': f'{year}-{month:02d}-{day:02d}T{random.randint(9,18):02d}:{random.randint(0,59):02d}:00',
+                    'merchant': 'PetSmart',
+                    'description': random.choice(['Pet supplies', 'Dog food', 'Cat litter']),
+                    'amount': round(amount, 2),
+                    'category': 'Pet Care',
+                    'payment_method': 'debit'
+                })
+        
+        # Personal Care (1-2 times per month)
+        if random.random() > 0.4:
+            for i in range(random.randint(1, 2)):
+                day = random.randint(1, 28)
+                amount = random.uniform(15, 40)
+                base_transactions.append({
+                    'date': f'{year}-{month:02d}-{day:02d}T{random.randint(9,17):02d}:{random.randint(0,59):02d}:00',
+                    'merchant': random.choice(['CVS', 'Ulta', 'Target']),
+                    'description': 'Personal care',
+                    'amount': round(amount, 2),
+                    'category': 'Personal Care',
+                    'payment_method': 'debit'
+                })
+        
+        # Gifts (occasional, more in certain months)
+        # Base gift spending for birthdays/occasions (not December)
+        if random.random() > 0.6:  # Some months have gifts
+            for i in range(random.randint(1, 2)):
+                day = random.randint(1, 28)
+                amount = random.uniform(30, 80)
+                base_transactions.append({
+                    'date': f'{year}-{month:02d}-{day:02d}T{random.randint(10,18):02d}:{random.randint(0,59):02d}:00',
+                    'merchant': random.choice(['Amazon', 'Target', 'Walmart']),
+                    'description': 'Gift purchase',
+                    'amount': round(amount, 2),
+                    'category': 'Gifts',
+                    'payment_method': 'credit'
+                })
+        
+        # Sort by date
+        base_transactions.sort(key=lambda x: x['date'])
+        return base_transactions
+    
+    # Generate historical transactions (July - October 2025)
+    historical_months = []
+    
+    # July 2025 - Typical summer spending
+    historical_months.extend(generate_monthly_spending(2025, 7, groceries_multiplier=1.0, dining_multiplier=1.1, shopping_multiplier=0.9))
+    
+    # August 2025 - Back to school, higher shopping
+    historical_months.extend(generate_monthly_spending(2025, 8, groceries_multiplier=1.05, dining_multiplier=0.95, shopping_multiplier=1.4))
+    
+    # September 2025 - Normal spending
+    historical_months.extend(generate_monthly_spending(2025, 9, groceries_multiplier=1.0, dining_multiplier=1.0, shopping_multiplier=1.0))
+    
+    # October 2025 - Halloween, slightly higher shopping
+    historical_months.extend(generate_monthly_spending(2025, 10, groceries_multiplier=1.0, dining_multiplier=1.05, shopping_multiplier=1.2))
     
     # November 2025 transactions (for comparison)
     november_transactions = [
@@ -437,10 +635,23 @@ def generate_test_data():
         {'date': '2025-12-20T10:00:00', 'merchant': 'Aldi', 'description': 'Groceries', 'amount': 88.40, 'category': 'Groceries', 'payment_method': 'debit'},
         {'date': '2025-12-20T16:30:00', 'merchant': 'Best Buy', 'description': 'Electronics gift', 'amount': 189.99, 'category': 'Gifts', 'payment_method': 'credit'},
         {'date': '2025-12-21T12:00:00', 'merchant': 'Panera', 'description': 'Lunch', 'amount': 26.80, 'category': 'Dining Out', 'payment_method': 'debit'},
+        
+        # Add a few more December transactions to show pattern changes
+        # More gifts for holidays
+        {'date': '2025-12-03T15:00:00', 'merchant': 'Amazon', 'description': 'Holiday gifts', 'amount': 98.50, 'category': 'Gifts', 'payment_method': 'credit'},
+        {'date': '2025-12-05T10:30:00', 'merchant': 'Toys R Us', 'description': 'Kids gifts', 'amount': 156.75, 'category': 'Gifts', 'payment_method': 'credit'},
+        
+        # More dining out than usual (holiday parties/gatherings)
+        {'date': '2025-12-06T18:30:00', 'merchant': 'Texas Roadhouse', 'description': 'Family gathering', 'amount': 85.40, 'category': 'Dining Out', 'payment_method': 'credit'},
+        {'date': '2025-12-12T19:00:00', 'merchant': 'Red Lobster', 'description': 'Celebration dinner', 'amount': 94.50, 'category': 'Dining Out', 'payment_method': 'credit'},
+        
+        # Extra groceries for holiday baking/cooking
+        {'date': '2025-12-08T10:00:00', 'merchant': 'Walmart', 'description': 'Holiday baking supplies', 'amount': 72.30, 'category': 'Groceries', 'payment_method': 'debit'},
+        {'date': '2025-12-16T14:00:00', 'merchant': 'Costco', 'description': 'Bulk holiday food', 'amount': 185.60, 'category': 'Groceries', 'payment_method': 'debit'},
     ]
     
-    # Combine November and December transactions
-    all_transactions = november_transactions + december_transactions
+    # Combine all transactions (historical + November + December)
+    all_transactions = historical_months + november_transactions + december_transactions
     
     for tx_data in all_transactions:
         transactions.append({

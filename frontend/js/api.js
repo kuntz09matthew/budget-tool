@@ -199,6 +199,10 @@ export async function getSmartRecommendations() {
     return apiRequest('/dashboard/recommendations');
 }
 
+export async function getProjectedBalance() {
+    return apiRequest('/dashboard/projected-balance');
+}
+
 // Tax APIs
 export async function getTaxEstimate(filingStatus, taxYear) {
     return apiRequest(`/tax/estimate?filing_status=${filingStatus}&tax_year=${taxYear}`);
