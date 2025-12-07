@@ -186,18 +186,19 @@ def generate_test_data():
         'id': 1,
         'name': 'Manufacturing Supervisor',
         'source_name': 'Primary Job',
-        'type': 'salary',
-        'amount': 3000,  # $36k/year
+        'type': 'primary-salary',  # Fixed: use 'primary-salary' to match backend expectations
+        'amount': 3000,  # $36k/year gross
         'frequency': 'monthly',
         'earner_name': 'John Kuntz',
         'next_pay_date': '2025-12-15',
         'is_variable': False,
         'actual_payments': [],
-        'federal_tax_percent': 12.0,
-        'state_tax_percent': 5.0,
-        'social_security_percent': 6.2,
-        'medicare_percent': 1.45,
-        'other_deductions': 150  # Health insurance, etc.
+        'federal_tax_percent': 12.0,  # Federal withholding
+        'state_tax_percent': 5.0,     # State tax (varies by state)
+        'social_security_percent': 6.2,  # Standard FICA
+        'medicare_percent': 1.45,     # Standard Medicare
+        'other_deductions': 150,      # Health insurance: $150/month
+        'notes': 'Full-time job with benefits. Net income after taxes: ~$2,359/month. Combined household income ~$62k/year for tax bracket estimator testing.'
     }
     
     # Generate payments for 2023 (lower salary)
@@ -232,23 +233,24 @@ def generate_test_data():
     
     income_sources.append(primary_salary)
     
-    # Secondary Salary (spouse) - part-time retail (~$24k/year)
+    # Secondary Salary (spouse) - part-time retail (~$26k/year)
     secondary_salary = {
         'id': 2,
         'name': 'Retail Cashier',
         'source_name': 'Part-time Job',
         'type': 'secondary-salary',
-        'amount': 2000,  # ~$24k/year
+        'amount': 1000,  # $1,000 bi-weekly = ~$26k/year gross
         'frequency': 'bi-weekly',
         'earner_name': 'Sarah Kuntz',
         'next_pay_date': '2025-12-13',
         'is_variable': False,
         'actual_payments': [],
-        'federal_tax_percent': 10.0,
-        'state_tax_percent': 4.0,
-        'social_security_percent': 6.2,
-        'medicare_percent': 1.45,
-        'other_deductions': 50  # Lower deductions for part-time
+        'federal_tax_percent': 10.0,  # Lower tax bracket
+        'state_tax_percent': 4.0,     # State tax
+        'social_security_percent': 6.2,  # Standard FICA
+        'medicare_percent': 1.45,     # Standard Medicare
+        'other_deductions': 35,       # Small 401k contribution: $35 bi-weekly
+        'notes': 'Part-time retail job, 25-30 hours/week. Net income after taxes: ~$783/paycheck, ~$1,566/month'
     }
     
     # Generate bi-weekly payments starting June 2023
@@ -275,22 +277,23 @@ def generate_test_data():
     
     income_sources.append(secondary_salary)
     
-    # Freelance income - variable, growing over time
+    # Freelance income - variable, growing over time (~$14-18k/year)
     freelance = {
         'id': 3,
         'name': 'Freelance Web Development',
         'source_name': 'Side Projects',
         'type': 'freelance',
-        'amount': 1200,
+        'amount': 1200,  # Varies significantly month to month
         'frequency': 'monthly',
         'earner_name': 'John Kuntz',
         'is_variable': True,
         'actual_payments': [],
-        'federal_tax_percent': 0,
-        'state_tax_percent': 0,
-        'social_security_percent': 0,
-        'medicare_percent': 0,
-        'other_deductions': 0
+        'federal_tax_percent': 0,     # Self-employed, pays quarterly estimated taxes
+        'state_tax_percent': 0,       # Pays quarterly
+        'social_security_percent': 0,  # Pays self-employment tax separately (15.3%)
+        'medicare_percent': 0,        # Included in self-employment tax
+        'other_deductions': 0,        # No regular deductions
+        'notes': 'Variable side income from freelance projects. Income varies $500-$2,000/month. Must pay quarterly estimated taxes.'
     }
     
     # 2023 - sporadic freelance
@@ -327,22 +330,23 @@ def generate_test_data():
     
     income_sources.append(freelance)
     
-    # Investment income - started in 2024
+    # Investment income - started in 2024 (~$600-800/year)
     investment = {
         'id': 4,
         'name': 'Dividend Income',
         'source_name': 'Investment Portfolio',
         'type': 'investment',
-        'amount': 150,
-        'frequency': 'monthly',
+        'amount': 150,  # Average quarterly payment, varies
+        'frequency': 'monthly',  # Treating as monthly for budgeting, though actually quarterly
         'earner_name': 'Joint',
         'is_variable': True,
         'actual_payments': [],
-        'federal_tax_percent': 0,
-        'state_tax_percent': 0,
-        'social_security_percent': 0,
-        'medicare_percent': 0,
-        'other_deductions': 0
+        'federal_tax_percent': 0,     # Qualified dividends, taxed at capital gains rate on annual return
+        'state_tax_percent': 0,       # Handled on annual return
+        'social_security_percent': 0,  # Not subject to FICA
+        'medicare_percent': 0,        # Not subject to Medicare tax
+        'other_deductions': 0,        # No deductions
+        'notes': 'Quarterly dividend payments from index fund investments. Qualified dividends taxed at 0-15% capital gains rate.'
     }
     
     # Quarterly payments in 2024
@@ -670,40 +674,51 @@ def generate_test_data():
     # Generate retirement accounts with contributions
     retirement_accounts = []
     
-    # 401(k) Account
+    # 401(k) Account - realistic for $36k/year salary
     retirement_401k = {
         'id': 1,
-        'account_name': 'Tech Company 401(k)',
+        'account_name': 'Company 401(k)',
         'account_type': '401k',
         'contribution_type': 'pre_tax',
         'annual_limit': 23500,
-        'current_balance': 45000.00,
-        'employer_match_percent': 100,
-        'employer_match_limit': 6,
+        'current_balance': 18500.00,  # More realistic for someone starting to save
+        'employer_match_percent': 50,  # Company matches 50% (50 cents per dollar)
+        'employer_match_limit': 6,  # Up to 6% of salary
         'linked_income_id': 1,
-        'contribution_per_paycheck': 500,
-        'notes': 'Company matches 100% up to 6% of salary',
+        'contribution_per_paycheck': 180,  # 6% of $3,000 = $180/month
+        'notes': 'Company matches 50% up to 6% of salary. Contributing 6% to maximize match.',
         'contributions': [],
         'created_at': '2023-01-01T00:00:00'
     }
     
-    # Generate contributions for 401(k) for 2024 and 2025
-    for year in [2024, 2025]:
-        for month in range(1, 13 if year == 2024 else 12):  # 2025 only up to November
-            # Employee contribution
+    # Generate contributions for 401(k) for 2023, 2024 and 2025
+    for year in [2023, 2024, 2025]:
+        months = 12 if year < 2025 else 12  # All 12 months for all years
+        for month in range(1, months + 1):
+            # Employee contribution - 6% of salary
             date = f"{year}-{month:02d}-15"
-            amount = 500.00
+            
+            # Adjust contribution based on salary progression
+            if year == 2023:
+                employee_amount = 162.00  # 6% of $2,700
+                employer_match = 81.00    # 50% match of employee contribution
+            elif year == 2024:
+                employee_amount = 171.00  # 6% of $2,850
+                employer_match = 85.50    # 50% match of employee contribution
+            else:  # 2025
+                employee_amount = 180.00  # 6% of $3,000
+                employer_match = 90.00    # 50% match of employee contribution
+            
             retirement_401k['contributions'].append({
                 'id': len(retirement_401k['contributions']) + 1,
                 'date': date,
-                'amount': amount,
+                'amount': employee_amount,
                 'contribution_type': 'employee',
                 'note': f'Paycheck contribution {month}/{year}',
                 'created_at': f'{year}-{month:02d}-15T12:00:00'
             })
             
-            # Employer match (assuming 6% of $5000 salary = $300)
-            employer_match = 300.00
+            # Employer match
             retirement_401k['contributions'].append({
                 'id': len(retirement_401k['contributions']) + 1,
                 'date': date,
@@ -715,38 +730,64 @@ def generate_test_data():
     
     retirement_accounts.append(retirement_401k)
     
-    # Roth IRA Account
+    # Roth IRA Account - spouse's retirement account
     retirement_roth = {
         'id': 2,
-        'account_name': 'Vanguard Roth IRA',
+        'account_name': 'Personal Roth IRA',
         'account_type': 'roth_ira',
         'contribution_type': 'post_tax',
         'annual_limit': 7000,
-        'current_balance': 12500.00,
+        'current_balance': 8250.00,  # Smaller balance, started more recently
         'employer_match_percent': 0,
         'employer_match_limit': 0,
-        'linked_income_id': None,
+        'linked_income_id': 2,  # Linked to secondary salary
         'contribution_per_paycheck': 0,
-        'notes': 'Personal retirement savings',
+        'notes': 'Personal retirement savings for spouse. Contributing when possible.',
         'contributions': [],
         'created_at': '2023-06-01T00:00:00'
     }
     
-    # Generate quarterly contributions for Roth IRA
-    for year in [2024, 2025]:
-        for quarter in [3, 6, 9, 12]:
-            if year == 2025 and quarter == 12:
-                continue  # Skip December 2025
-            date = f"{year}-{quarter:02d}-01"
-            amount = 500.00 + random.randint(-50, 50)
-            retirement_roth['contributions'].append({
-                'id': len(retirement_roth['contributions']) + 1,
-                'date': date,
-                'amount': amount,
-                'contribution_type': 'employee',
-                'note': f'Quarterly contribution Q{quarter//3}/{year}',
-                'created_at': f'{year}-{quarter:02d}-01T12:00:00'
-            })
+    # Generate occasional contributions for Roth IRA (not every month, more realistic)
+    # Contributing when they have extra money
+    contribution_months_2023 = [6, 9, 12]  # Started mid-year
+    contribution_months_2024 = [2, 4, 7, 10, 12]  # More regular
+    contribution_months_2025 = [1, 3, 5, 7, 9, 11]  # Bi-monthly pattern
+    
+    for month in contribution_months_2023:
+        date = f"2023-{month:02d}-01"
+        amount = 250.00 + random.randint(-25, 25)
+        retirement_roth['contributions'].append({
+            'id': len(retirement_roth['contributions']) + 1,
+            'date': date,
+            'amount': amount,
+            'contribution_type': 'employee',
+            'note': f'Extra money from part-time job',
+            'created_at': f'2023-{month:02d}-01T12:00:00'
+        })
+    
+    for month in contribution_months_2024:
+        date = f"2024-{month:02d}-01"
+        amount = 300.00 + random.randint(-25, 25)
+        retirement_roth['contributions'].append({
+            'id': len(retirement_roth['contributions']) + 1,
+            'date': date,
+            'amount': amount,
+            'contribution_type': 'employee',
+            'note': f'Contribution from savings',
+            'created_at': f'2024-{month:02d}-01T12:00:00'
+        })
+    
+    for month in contribution_months_2025:
+        date = f"2025-{month:02d}-01"
+        amount = 350.00 + random.randint(-25, 25)
+        retirement_roth['contributions'].append({
+            'id': len(retirement_roth['contributions']) + 1,
+            'date': date,
+            'amount': amount,
+            'contribution_type': 'employee',
+            'note': f'Monthly IRA contribution',
+            'created_at': f'2025-{month:02d}-01T12:00:00'
+        })
     
     retirement_accounts.append(retirement_roth)
     

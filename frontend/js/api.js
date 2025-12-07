@@ -72,6 +72,10 @@ export async function getTotalIncome() {
     return apiRequest('/income/total');
 }
 
+export async function getIncomeByEarner() {
+    return apiRequest('/income/by-earner');
+}
+
 export async function getIncomeSource(id) {
     return apiRequest(`/income/${id}`);
 }
@@ -113,12 +117,20 @@ export async function getIncomeAnalysis(id) {
     return apiRequest(`/income/${id}/analysis`);
 }
 
+export async function getVariableIncomeAnalysis(id) {
+    return apiRequest(`/income/${id}/variable-analysis`);
+}
+
 export async function getIncomeTrends(months = 6) {
     return apiRequest(`/income/trends?months=${months}`);
 }
 
 export async function getIncomeYearOverYear() {
     return apiRequest('/income/year-over-year');
+}
+
+export async function getTaxEstimate(filingStatus = 'married-joint', useActual = false) {
+    return apiRequest(`/income/tax-estimate?filing_status=${filingStatus}&use_actual=${useActual}`);
 }
 
 // Expense APIs
@@ -203,32 +215,44 @@ export async function getProjectedBalance() {
     return apiRequest('/dashboard/projected-balance');
 }
 
-// Tax APIs
-export async function getTaxEstimate(filingStatus, taxYear) {
-    return apiRequest(`/tax/estimate?filing_status=${filingStatus}&tax_year=${taxYear}`);
-}
-
 // Retirement APIs
 export async function getRetirementAccounts() {
-    return apiRequest('/retirement/accounts');
+    return apiRequest('/retirement-accounts');
 }
 
-export async function createRetirementAccount(accountData) {
-    return apiRequest('/retirement/accounts', {
+export async function getRetirementSummary() {
+    return apiRequest('/retirement-accounts/summary');
+}
+
+export async function addRetirementAccount(accountData) {
+    return apiRequest('/retirement-accounts', {
         method: 'POST',
         body: JSON.stringify(accountData)
     });
 }
 
 export async function updateRetirementAccount(id, accountData) {
-    return apiRequest(`/retirement/accounts/${id}`, {
+    return apiRequest(`/retirement-accounts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(accountData)
     });
 }
 
 export async function deleteRetirementAccount(id) {
-    return apiRequest(`/retirement/accounts/${id}`, {
+    return apiRequest(`/retirement-accounts/${id}`, {
+        method: 'DELETE'
+    });
+}
+
+export async function addRetirementContribution(accountId, contributionData) {
+    return apiRequest(`/retirement-accounts/${accountId}/contributions`, {
+        method: 'POST',
+        body: JSON.stringify(contributionData)
+    });
+}
+
+export async function deleteRetirementContribution(accountId, contributionId) {
+    return apiRequest(`/retirement-accounts/${accountId}/contributions/${contributionId}`, {
         method: 'DELETE'
     });
 }

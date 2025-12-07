@@ -150,6 +150,42 @@ def _update_variable_income_stats(income):
     if income['income_variance'] > 15:
         income['is_variable'] = True
 
+def calculate_net_income(income):
+    """Calculate net income after taxes and deductions"""
+    gross_amount = float(income.get('amount', 0))
+    
+    # Get tax percentages (default to 0 if not set)
+    federal_tax_percent = float(income.get('federal_tax_percent', 0))
+    state_tax_percent = float(income.get('state_tax_percent', 0))
+    social_security_percent = float(income.get('social_security_percent', 6.2))
+    medicare_percent = float(income.get('medicare_percent', 1.45))
+    
+    # Get flat deductions
+    other_deductions = float(income.get('other_deductions', 0))
+    
+    # Calculate tax amounts
+    federal_tax = (gross_amount * federal_tax_percent) / 100
+    state_tax = (gross_amount * state_tax_percent) / 100
+    social_security = (gross_amount * social_security_percent) / 100
+    medicare = (gross_amount * medicare_percent) / 100
+    
+    # Calculate total deductions
+    total_deductions = federal_tax + state_tax + social_security + medicare + other_deductions
+    
+    # Calculate net income
+    net_income = gross_amount - total_deductions
+    
+    return {
+        'gross_amount': round(gross_amount, 2),
+        'federal_tax': round(federal_tax, 2),
+        'state_tax': round(state_tax, 2),
+        'social_security': round(social_security, 2),
+        'medicare': round(medicare, 2),
+        'other_deductions': round(other_deductions, 2),
+        'total_deductions': round(total_deductions, 2),
+        'net_income': round(net_income, 2)
+    }
+
 # Add test data for demonstration (only in development mode)
 def load_test_data():
     """Load sample data for testing Phase 3 features"""
@@ -849,48 +885,100 @@ def get_accounts_summary():
 # Income endpoints
 @app.route('/api/income', methods=['GET'])
 def get_income_sources():
-    """Get all income sources"""
-    return jsonify(budget_data['income_sources'])
+    """Get all income sources with calculated net income"""
+    # Add net income calculation to each source
+    income_sources_with_net = []
+    for income in budget_data['income_sources']:
+        income_copy = income.copy()
+        income_copy['net_income_breakdown'] = calculate_net_income(income)
+        income_sources_with_net.append(income_copy)
+    
+    return jsonify(income_sources_with_net)
 
 @app.route('/api/income/by-earner', methods=['GET'])
 def get_income_by_earner():
-    """Get income sources grouped by earner"""
+    """Get income sources grouped by earner with comprehensive statistics"""
     earners = {}
     unassigned = []
+    household_total_gross = 0
+    household_total_net = 0
     
     for income in budget_data['income_sources']:
         earner_name = income.get('earner_name')
+        
+        # Calculate gross monthly amount
+        amount = income.get('amount', 0)
+        frequency = income.get('frequency', 'monthly')
+        
+        if frequency == 'weekly':
+            monthly_gross = amount * 52 / 12
+        elif frequency == 'bi-weekly':
+            monthly_gross = amount * 26 / 12
+        elif frequency == 'annual':
+            monthly_gross = amount / 12
+        else:  # monthly
+            monthly_gross = amount
+        
+        # Calculate net income
+        net_breakdown = calculate_net_income(income)
+        monthly_net = net_breakdown.get('monthly_net', monthly_gross)
+        
+        household_total_gross += monthly_gross
+        household_total_net += monthly_net
         
         if earner_name:
             if earner_name not in earners:
                 earners[earner_name] = {
                     'name': earner_name,
                     'income_sources': [],
-                    'total_monthly': 0
+                    'source_count': 0,
+                    'total_monthly_gross': 0,
+                    'total_monthly_net': 0,
+                    'total_annual_gross': 0,
+                    'total_annual_net': 0,
+                    'total_deductions': 0,
+                    'contribution_percent_gross': 0,
+                    'contribution_percent_net': 0
                 }
             
-            earners[earner_name]['income_sources'].append(income)
+            # Add net income breakdown to income copy
+            income_copy = income.copy()
+            income_copy['net_income_breakdown'] = net_breakdown
+            income_copy['monthly_gross'] = monthly_gross
+            income_copy['monthly_net'] = monthly_net
             
-            # Calculate monthly amount
-            amount = income.get('amount', 0)
-            frequency = income.get('frequency', 'monthly')
-            
-            if frequency == 'weekly':
-                monthly = amount * 52 / 12
-            elif frequency == 'bi-weekly':
-                monthly = amount * 26 / 12
-            elif frequency == 'annual':
-                monthly = amount / 12
-            else:  # monthly
-                monthly = amount
-            
-            earners[earner_name]['total_monthly'] += monthly
+            earners[earner_name]['income_sources'].append(income_copy)
+            earners[earner_name]['source_count'] += 1
+            earners[earner_name]['total_monthly_gross'] += monthly_gross
+            earners[earner_name]['total_monthly_net'] += monthly_net
+            earners[earner_name]['total_deductions'] += net_breakdown.get('total_deductions', 0)
         else:
-            unassigned.append(income)
+            # Add net income breakdown to unassigned income
+            income_copy = income.copy()
+            income_copy['net_income_breakdown'] = net_breakdown
+            income_copy['monthly_gross'] = monthly_gross
+            income_copy['monthly_net'] = monthly_net
+            unassigned.append(income_copy)
+    
+    # Calculate contribution percentages and annual totals
+    for earner in earners.values():
+        earner['total_annual_gross'] = earner['total_monthly_gross'] * 12
+        earner['total_annual_net'] = earner['total_monthly_net'] * 12
+        if household_total_gross > 0:
+            earner['contribution_percent_gross'] = (earner['total_monthly_gross'] / household_total_gross) * 100
+        if household_total_net > 0:
+            earner['contribution_percent_net'] = (earner['total_monthly_net'] / household_total_net) * 100
     
     return jsonify({
         'earners': list(earners.values()),
-        'unassigned': unassigned
+        'unassigned': unassigned,
+        'household_totals': {
+            'monthly_gross': household_total_gross,
+            'monthly_net': household_total_net,
+            'annual_gross': household_total_gross * 12,
+            'annual_net': household_total_net * 12,
+            'earner_count': len(earners)
+        }
     })
 
 @app.route('/api/income', methods=['POST'])

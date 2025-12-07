@@ -5399,6 +5399,221 @@ body {
     margin: 0.5rem 0;
 }
 
+/* New Income Management Styles */
+.income-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.income-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-left: 4px solid #10b981;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.income-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow-hover);
+}
+
+.income-card.variable {
+    border-left-color: #8b5cf6;
+}
+
+.income-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.income-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.income-title-block {
+    flex: 1;
+}
+
+.income-title-block h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.income-earner {
+    margin: 0.25rem 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.variable-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.income-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.income-detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.income-detail-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.income-detail-row label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.income-detail-row span {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.amount-gross {
+    color: var(--text-primary);
+}
+
+.amount-net {
+    color: #10b981;
+    font-size: 1.125rem !important;
+}
+
+.highlight {
+    color: #8b5cf6 !important;
+    font-size: 1.125rem !important;
+}
+
+.income-deductions {
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+}
+
+.deductions-amount {
+    color: #ef4444;
+}
+
+.deductions-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.deductions-breakdown small {
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.income-actual-vs-expected {
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: var(--bg-primary);
+}
+
+.income-actual-vs-expected.above {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.income-actual-vs-expected.below {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.variance {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.variance.above {
+    color: #10b981;
+}
+
+.variance.below {
+    color: #ef4444;
+}
+
+.income-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Income Modal Styles */
+.modal-large {
+    max-width: 800px;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.form-section h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+    font-size: 1.125rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.net-income-display {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.net-income-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 0.25rem;
+}
+
 .btn-link {
     background: none;
     border: none;
@@ -5431,6 +5646,308 @@ body {
 
 .btn-icon-sm:hover {
     opacity: 1;
+}
+
+/* ============================================ */
+/* Income By Earner Styles */
+/* ============================================ */
+
+.earner-household-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.earner-household-summary h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.household-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.stat-card label {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .stat-value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.earners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.earner-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-left: 4px solid #3b82f6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.earner-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow-hover);
+}
+
+.earner-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.earner-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.earner-title-block h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.earner-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.earner-totals {
+    margin-bottom: 1.5rem;
+}
+
+.earner-total-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.earner-total-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.earner-total-item label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.earner-total-item span {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.earner-total-item .amount-gross {
+    color: var(--text-secondary);
+}
+
+.earner-total-item .amount-net {
+    color: #10b981;
+}
+
+.earner-total-item .contribution-percent {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.earner-deductions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-top: 0.5rem;
+}
+
+.earner-deductions label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.deductions-amount {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.earner-contribution-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.contribution-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    transition: width 0.5s ease;
+}
+
+.earner-sources {
+    margin-bottom: 1.5rem;
+}
+
+.earner-sources h5 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.earner-source-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: background 0.2s ease;
+}
+
+.earner-source-item:hover {
+    background: var(--bg-hover);
+}
+
+.earner-source-item .source-icon {
+    font-size: 1.5rem;
+}
+
+.source-details {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.source-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.source-amount {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.earner-actions {
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.unassigned-income {
+    background: var(--bg-secondary);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.unassigned-income h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.unassigned-note {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.unassigned-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.unassigned-source {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.unassigned-source .source-icon {
+    font-size: 2rem;
+}
+
+.unassigned-source .source-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.unassigned-source .source-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.unassigned-source .source-amount {
+    font-weight: 600;
+    color: #10b981;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments for earner view */
+@media (max-width: 768px) {
+    .earners-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .household-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .earner-total-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .unassigned-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ============================================ */
@@ -7299,54 +7816,121 @@ button:disabled:hover {
 
 /* ==================== Year-over-Year Comparison Styles ==================== */
 
-.yoy-comparison-section {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 2rem;
-    margin-top: 2rem;
-    box-shadow: 0 2px 8px var(--shadow);
-}
-
+/* Header Section */
 .yoy-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
     border-bottom: 2px solid var(--border-color);
 }
 
 .yoy-header h3 {
     color: var(--text-primary);
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+}
+
+.yoy-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
     margin: 0;
 }
 
-/* Year-over-Year Statistics */
-.yoy-stats-summary {
+/* Statistics Banner */
+.yoy-stats-banner {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-/* Year Cards Grid */
-.yoy-years-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
-.yoy-year-card {
-    background: var(--bg-primary);
+.yoy-stat-card {
+    background: var(--bg-secondary);
     border: 2px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     transition: all 0.3s ease;
-    position: relative;
+}
+
+.yoy-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.yoy-stat-card.trend-increasing {
+    border-color: rgba(34, 197, 94, 0.5);
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 100%);
+}
+
+.yoy-stat-card.trend-decreasing {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.yoy-stat-card.trend-stable {
+    border-color: rgba(107, 114, 128, 0.5);
+}
+
+.yoy-stat-card .stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.yoy-stat-card .stat-content {
+    flex: 1;
+}
+
+.yoy-stat-card .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.yoy-stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.yoy-stat-card .stat-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Years Section */
+.yoy-years-section {
+    margin-bottom: 2.5rem;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.yoy-year-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Individual Year Card */
+.yoy-year-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
     overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .yoy-year-card:hover {
@@ -7354,181 +7938,483 @@ button:disabled:hover {
     box-shadow: 0 8px 20px var(--shadow-hover);
 }
 
-.yoy-year-card.latest-year {
-    border-color: #667eea;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-}
-
-.yoy-year-header {
+.year-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
 }
 
-.yoy-year-title {
+.year-title {
+    color: white;
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--text-primary);
     margin: 0;
 }
 
-.yoy-year-badge {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.year-badge {
+    background: rgba(255, 255, 255, 0.2);
     color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
     font-weight: 600;
-    text-transform: uppercase;
+    backdrop-filter: blur(10px);
 }
 
-.yoy-year-total {
-    font-size: 2rem;
+.year-badge.positive {
+    background: rgba(34, 197, 94, 0.9);
+}
+
+.year-badge.negative {
+    background: rgba(239, 68, 68, 0.9);
+}
+
+.year-badge.neutral {
+    background: rgba(107, 114, 128, 0.9);
+}
+
+.year-badge.baseline {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.year-card-body {
+    padding: 1.5rem;
+}
+
+/* Main Stats in Year Card */
+.year-main-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.main-stat {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.main-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.main-stat-value {
+    font-size: 1.3rem;
     font-weight: 700;
-    color: #667eea;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.main-stat-change {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.main-stat-change.positive {
+    color: #10b981;
+}
+
+.main-stat-change.negative {
+    color: #ef4444;
+}
+
+.main-stat-change.neutral {
+    color: #6366f1;
+}
+
+.main-stat-detail {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Top Sources in Year Card */
+.year-top-sources {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1rem;
     margin-bottom: 1rem;
 }
 
-.yoy-year-stats {
+.sources-header {
+    margin-bottom: 0.75rem;
+}
+
+.sources-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sources-list {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-.yoy-stat-row {
+.source-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.source-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.85rem;
 }
 
-[data-theme="dark"] .yoy-stat-row {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
+.source-name {
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
-.yoy-stat-row:last-child {
-    border-bottom: none;
-}
-
-.yoy-stat-label {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.yoy-stat-value {
+.source-amount {
     color: var(--text-primary);
     font-weight: 600;
 }
 
-.yoy-change-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
+.source-bar {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.source-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* View Details Button */
+.btn-view-year-details {
+    width: 100%;
     padding: 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
     border-radius: 8px;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.yoy-change-indicator.positive {
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
+.btn-view-year-details:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.yoy-change-indicator.negative {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+/* Charts Section */
+.yoy-charts-section {
+    margin-top: 2.5rem;
 }
 
-.yoy-change-indicator.neutral {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+.chart-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
-.yoy-change-icon {
-    font-size: 1.2rem;
-}
-
-.yoy-change-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.yoy-change-amount {
-    font-size: 1.1rem;
-}
-
-.yoy-change-percent {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-/* Year-over-Year Charts */
-.yoy-charts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
-}
-
-/* Empty State */
-.yoy-empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--text-secondary);
-}
-
-.empty-icon {
-    font-size: 4rem;
+.chart-header {
     margin-bottom: 1rem;
 }
 
-.yoy-empty-state h4 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    margin: 1rem 0;
-}
-
-.yoy-empty-state p {
-    font-size: 1rem;
-    margin: 0.5rem 0;
-}
-
-.empty-hint {
-    font-size: 0.9rem;
-    opacity: 0.8;
-}
-
-/* Top Sources List */
-.yoy-top-sources {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.yoy-top-sources-title {
-    font-size: 0.85rem;
+.chart-header h5 {
+    font-size: 1.2rem;
     font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+}
+
+.chart-description {
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 0.75rem;
+    margin: 0;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+}
+
+/* Year Details Modal Styles */
+.year-details-modal {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.year-details-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.summary-stat {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.summary-stat .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
     text-transform: uppercase;
 }
 
-.yoy-source-item {
+.summary-stat .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.year-comparison-info {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.4rem 0;
+    gap: 1rem;
+}
+
+.year-comparison-info.increase {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.year-comparison-info.decrease {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.year-comparison-info.stable {
+    background: rgba(107, 114, 128, 0.1);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.comparison-icon {
+    font-size: 2rem;
+}
+
+.comparison-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.comparison-text strong {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.comparison-text span {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Monthly Timeline */
+.monthly-timeline-section {
+    margin-bottom: 2rem;
+}
+
+.monthly-timeline-section h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.monthly-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.timeline-month {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.timeline-month.has-income {
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.timeline-month.no-income {
+    opacity: 0.5;
+}
+
+.month-label {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.month-bar-container {
+    height: 20px;
+    background: var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.month-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.month-amount {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary);
     font-size: 0.9rem;
 }
 
-.yoy-source-name {
+/* Sources Breakdown */
+.sources-breakdown-section,
+.earners-breakdown-section {
+    margin-bottom: 2rem;
+}
+
+.sources-breakdown-section h4,
+.earners-breakdown-section h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
     color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.sources-breakdown-list,
+.earners-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.source-breakdown-item,
+.earner-breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.source-rank {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+    min-width: 40px;
+    text-align: center;
+}
+
+.source-details,
+.earner-info {
+    flex: 1;
+}
+
+.source-name,
+.earner-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.source-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.source-amount,
+.earner-amount {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.source-percent,
+.earner-percent {
+    color: var(--text-secondary);
+}
+
+.source-visual-bar,
+.earner-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+    max-width: 200px;
+}
+
+.source-visual-fill,
+.earner-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .yoy-stats-banner {
+        grid-template-columns: 1fr;
+    }
+    
+    .yoy-year-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .year-main-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline-month {
+        grid-template-columns: 80px 1fr 100px;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .source-breakdown-item,
+    .earner-breakdown-item {
+        flex-wrap: wrap;
+    }
+    
+    .source-visual-bar,
+    .earner-bar {
+        max-width: 100%;
+        width: 100%;
+    }
 }
 
 .yoy-source-amount {
@@ -11253,6 +12139,1929 @@ button:disabled:hover {
         align-self: flex-start;
     }
 }
+
+/* ============================================
+   VARIABLE INCOME TRACKING - COMPREHENSIVE STYLES
+   ============================================ */
+
+.variable-income-header {
+    margin-bottom: 2rem;
+}
+
+.variable-income-header h3 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.variable-income-header .section-description {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 800px;
+}
+
+.variable-income-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.variable-income-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.variable-income-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.variable-income-card.stable {
+    border-left: 4px solid #22c55e;
+}
+
+.variable-income-card.moderate {
+    border-left: 4px solid #f59e0b;
+}
+
+.variable-income-card.highly-variable {
+    border-left: 4px solid #ef4444;
+}
+
+.variable-income-card.no-data {
+    border-left: 4px solid #94a3b8;
+    background: var(--bg-tertiary);
+}
+
+.variable-income-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+}
+
+.variable-income-card .header-left {
+    flex: 1;
+}
+
+.variable-income-card .card-header h4 {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.income-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.stability-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.stability-icon {
+    font-size: 1.25rem;
+}
+
+.stability-label {
+    font-size: 0.875rem;
+}
+
+.card-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.stat-box {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.stat-box label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-box strong {
+    display: block;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-box .amount-large {
+    font-size: 1.5rem;
+    color: #3b82f6;
+}
+
+.stat-box .variability {
+    color: #f59e0b;
+}
+
+.stat-box .range-display {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.stat-box .stat-note {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+}
+
+.stat-box.trend-box {
+    grid-column: span 2;
+}
+
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trend-indicator.increasing {
+    color: #22c55e;
+}
+
+.trend-indicator.decreasing {
+    color: #ef4444;
+}
+
+.trend-indicator.stable {
+    color: #64748b;
+}
+
+.current-month-highlight {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.current-month-highlight .highlight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.current-month-highlight .highlight-header span {
+    font-weight: 600;
+}
+
+.current-month-highlight .highlight-header strong {
+    font-size: 1.5rem;
+}
+
+.current-month-highlight .vs-average {
+    text-align: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.current-month-highlight .vs-average span {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.current-month-highlight .vs-average .positive {
+    color: #86efac;
+}
+
+.current-month-highlight .vs-average .negative {
+    color: #fca5a5;
+}
+
+.btn-analyze {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-secondary);
+}
+
+.no-data-message p {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.no-data-message small {
+    font-size: 0.875rem;
+}
+
+/* Variable Analysis Modal */
+.modal-xl {
+    max-width: 1000px;
+    width: 95%;
+}
+
+.variable-analysis-body {
+    max-height: calc(90vh - 180px);
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.analysis-summary-banner {
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.analysis-summary-banner .summary-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.analysis-summary-banner .summary-icon {
+    font-size: 3rem;
+}
+
+.analysis-summary-banner .summary-text h4 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.analysis-summary-banner .summary-text p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.analysis-summary-banner .summary-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.analysis-summary-banner .summary-stat {
+    text-align: center;
+}
+
+.analysis-summary-banner .summary-stat label {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.analysis-summary-banner .summary-stat strong {
+    font-size: 1.5rem;
+}
+
+.analysis-section {
+    margin-bottom: 2rem;
+}
+
+.analysis-section h4 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stats-grid-detailed {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card .stat-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.stat-card strong {
+    display: block;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-card small {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.trend-analysis-box {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.trend-indicator-large {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.trend-icon-large {
+    font-size: 3rem;
+}
+
+.trend-indicator-large .trend-text {
+    flex: 1;
+}
+
+.trend-indicator-large .trend-text strong {
+    display: block;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.trend-indicator-large .trend-text p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.trend-indicator-large .trend-percent {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.trend-indicator-large.increasing .trend-icon-large,
+.trend-indicator-large.increasing .trend-percent {
+    color: #22c55e;
+}
+
+.trend-indicator-large.decreasing .trend-icon-large,
+.trend-indicator-large.decreasing .trend-percent {
+    color: #ef4444;
+}
+
+.trend-indicator-large.stable .trend-icon-large,
+.trend-indicator-large.stable .trend-percent {
+    color: #64748b;
+}
+
+.current-month-analysis {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.month-comparison {
+    margin-bottom: 1rem;
+}
+
+.comparison-bar {
+    margin-bottom: 1rem;
+}
+
+.comparison-bar:last-child {
+    margin-bottom: 0;
+}
+
+.comparison-bar .bar-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.comparison-bar .bar-visual {
+    position: relative;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.comparison-bar .bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.comparison-bar .bar-fill.current {
+    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.comparison-bar .bar-fill.average {
+    background: linear-gradient(90deg, #64748b 0%, #475569 100%);
+}
+
+.comparison-bar .bar-amount {
+    position: absolute;
+    right: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.comparison-summary {
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.comparison-summary p {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.comparison-summary .positive {
+    color: #22c55e;
+}
+
+.comparison-summary .negative {
+    color: #ef4444;
+}
+
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.forecast-card {
+    background: var(--card-bg);
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.forecast-card.conservative {
+    border-color: #ef4444;
+}
+
+.forecast-card.expected {
+    border-color: #3b82f6;
+}
+
+.forecast-card.optimistic {
+    border-color: #22c55e;
+}
+
+.forecast-card label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.forecast-card.conservative label {
+    color: #ef4444;
+}
+
+.forecast-card.expected label {
+    color: #3b82f6;
+}
+
+.forecast-card.optimistic label {
+    color: #22c55e;
+}
+
+.forecast-card strong {
+    display: block;
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.forecast-card small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.forecast-note {
+    background: #dbeafe;
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    border-radius: 8px;
+    color: #1e40af;
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .forecast-note {
+    background: rgba(59, 130, 246, 0.1);
+    color: #93c5fd;
+}
+
+.chart-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recommendation-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.recommendation-card.warning {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.recommendation-card.tip {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.recommendation-card.success {
+    background: #d1fae5;
+    border-color: #22c55e;
+    color: #065f46;
+}
+
+.recommendation-card.info {
+    background: #e0e7ff;
+    border-color: #6366f1;
+    color: #3730a3;
+}
+
+[data-theme="dark"] .recommendation-card.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fcd34d;
+}
+
+[data-theme="dark"] .recommendation-card.tip {
+    background: rgba(59, 130, 246, 0.1);
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .recommendation-card.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #86efac;
+}
+
+[data-theme="dark"] .recommendation-card.info {
+    background: rgba(99, 102, 241, 0.1);
+    color: #a5b4fc;
+}
+
+.recommendation-card .rec-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.recommendation-card p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Responsive Design for Variable Income */
+@media (max-width: 768px) {
+    .variable-income-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-box.trend-box {
+        grid-column: span 1;
+    }
+    
+    .analysis-summary-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .analysis-summary-banner .summary-main {
+        flex-direction: column;
+    }
+    
+    .stats-grid-detailed {
+        grid-template-columns: 1fr;
+    }
+    
+    .trend-indicator-large {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .comparison-bar .bar-amount {
+        position: static;
+        margin-top: 0.5rem;
+        display: block;
+    }
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .variable-income-card {
+    background: var(--card-bg-dark);
+}
+
+[data-theme="dark"] .stat-box {
+    background: var(--bg-secondary-dark);
+}
+
+[data-theme="dark"] .current-month-highlight {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+[data-theme="dark"] .stability-indicator {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* ================================================
+   Income Trends Section
+   ================================================ */
+
+.income-trends-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.income-trends-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.income-trends-header .sub-description {
+    margin: 0.5rem 0 0 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.period-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.period-selector label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.period-select {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.period-select:hover {
+    border-color: #667eea;
+}
+
+.period-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Trends Statistics Grid */
+.trends-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.stat-card .stat-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.stat-card .stat-content {
+    flex: 1;
+}
+
+.stat-card .stat-content label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-content strong {
+    display: block;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+/* Trend indicators */
+.stat-card.trend-increasing {
+    border-left: 4px solid #10b981;
+}
+
+.stat-card.trend-increasing .stat-content strong {
+    color: #10b981;
+}
+
+.stat-card.trend-decreasing {
+    border-left: 4px solid #ef4444;
+}
+
+.stat-card.trend-decreasing .stat-content strong {
+    color: #ef4444;
+}
+
+.stat-card.trend-stable {
+    border-left: 4px solid #6b7280;
+}
+
+.stat-card.trend-stable .stat-content strong {
+    color: #6b7280;
+}
+
+/* Chart Sections */
+.chart-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-section h4 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+}
+
+.chart-container canvas {
+    max-height: 400px;
+}
+
+.empty-chart-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Dark mode adjustments for charts */
+[data-theme="dark"] .stat-card {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .chart-section {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+/* Responsive Design for Trends */
+@media (max-width: 768px) {
+    .income-trends-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .period-selector {
+        width: 100%;
+    }
+    
+    .period-select {
+        flex: 1;
+    }
+    
+    .trends-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-container canvas {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card .stat-content strong {
+        font-size: 1.1rem;
+    }
+    
+    .chart-section {
+        padding: 1rem;
+    }
+    
+    .chart-container canvas {
+        max-height: 250px;
+    }
+}
+
+/* ========================================
+   Tax Estimator Styles
+   ======================================== */
+
+.tax-controls {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.control-group {
+    flex: 1;
+}
+
+.control-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.control-group select.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-group select.form-control:hover {
+    border-color: var(--primary-color);
+}
+
+.control-group select.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-color-light);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.control-hint {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.tax-summary-banner {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--primary-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.banner-icon {
+    font-size: 3rem;
+}
+
+.banner-info {
+    flex: 1;
+}
+
+.banner-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.banner-subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.banner-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.tax-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.tax-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tax-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tax-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.tax-card .card-header {
+    background: var(--bg-primary);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tax-card .card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.tax-card .card-content {
+    padding: 1.5rem;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stat-row:last-child {
+    border-bottom: none;
+}
+
+.stat-row.highlight {
+    background: var(--bg-primary);
+    padding: 1rem;
+    margin: 0.5rem -0.5rem;
+    border-radius: 8px;
+    border: none;
+}
+
+.stat-row .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.stat-row .stat-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.stat-row .stat-value.success {
+    color: var(--success-color);
+}
+
+.info-text {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border-left: 3px solid var(--info-color);
+}
+
+.info-text small {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.tax-rates-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.rate-box {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+}
+
+.rate-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.rate-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.rate-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bracket-breakdown {
+    margin-top: 2rem;
+}
+
+.bracket-breakdown h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.bracket-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.bracket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.bracket-rate {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.bracket-range {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bracket-bar-container {
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.bracket-bar {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.bracket-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.bracket-tax {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.total-tax-row {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.withholding-info {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.progress-bar-container {
+    margin-top: 1.5rem;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.progress-bar {
+    height: 24px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    border: 2px solid var(--border-color);
+}
+
+.progress-fill {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.success {
+    background: var(--success-color);
+}
+
+.tax-disclaimer {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border-left: 4px solid var(--warning-color);
+    margin-top: 2rem;
+}
+
+.disclaimer-icon {
+    font-size: 2rem;
+    color: var(--warning-color);
+}
+
+.disclaimer-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.disclaimer-content p {
+    margin: 0 0 1rem 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.disclaimer-content ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.disclaimer-content li {
+    margin-bottom: 0.5rem;
+}
+
+.disclaimer-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: color 0.2s;
+}
+
+.btn-link:hover {
+    color: var(--primary-color-dark);
+    text-decoration: underline;
+}
+
+/* Income Breakdown Modal */
+.income-breakdown-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.summary-stat {
+    text-align: center;
+}
+
+.summary-stat .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    display: block;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.summary-stat .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.income-sources-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.source-item {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.source-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.source-amount {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.source-details {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.source-type, .source-earner {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.source-bar-container {
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.source-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color-light), var(--primary-color));
+    transition: width 0.3s ease;
+}
+
+.source-percentage {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tax-controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .banner-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .banner-stats {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    .tax-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tax-rates-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .income-breakdown-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .tax-disclaimer {
+        flex-direction: column;
+    }
+}
+
+/* ============================================================================
+   RETIREMENT ACCOUNTS STYLES
+   ============================================================================ */
+
+.retirement-summary {
+    margin-bottom: 2rem;
+}
+
+.retirement-summary .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.retirement-summary .summary-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 4px var(--shadow);
+    transition: transform 0.2s ease;
+}
+
+.retirement-summary .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow-hover);
+}
+
+.retirement-summary .summary-icon {
+    font-size: 2rem;
+}
+
+.retirement-summary .summary-content {
+    flex: 1;
+}
+
+.retirement-summary .summary-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.retirement-summary .summary-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.retirement-accounts-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.retirement-account-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.retirement-account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.account-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.account-card-title h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.account-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-type {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+[data-theme="dark"] .badge-type {
+    background: #1e3a8a;
+    color: #93c5fd;
+}
+
+.badge-contribution {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+[data-theme="dark"] .badge-contribution {
+    background: #064e3b;
+    color: #6ee7b7;
+}
+
+.badge-limit {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-limit.near-limit {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+[data-theme="dark"] .badge-limit.near-limit {
+    background: #78350f;
+    color: #fde68a;
+}
+
+.badge-limit.limit-reached {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+[data-theme="dark"] .badge-limit.limit-reached {
+    background: #064e3b;
+    color: #6ee7b7;
+}
+
+.account-card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.account-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.account-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.contribution-limit-section {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.limit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.limit-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.limit-value {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.progress-bar-wrapper {
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-bar.near-limit {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-bar.limit-reached {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.limit-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.remaining-amount {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.per-paycheck-info,
+.employer-match-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.info-icon {
+    font-size: 1.25rem;
+}
+
+.account-card-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.view-details-btn {
+    width: 100%;
+    padding: 0.75rem;
+    text-align: center;
+    background: none;
+    border: none;
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+}
+
+.view-details-btn:hover {
+    background: var(--bg-primary);
+    color: #764ba2;
+}
+
+/* Account Detail Modal */
+.account-detail-summary {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.contribution-history-section {
+    margin-top: 2rem;
+}
+
+.contribution-history-section h4 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.contribution-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.contribution-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.contribution-item:hover {
+    background: var(--bg-secondary);
+}
+
+.contribution-date {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    min-width: 100px;
+    font-weight: 600;
+}
+
+.contribution-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.contribution-type {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.contribution-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.contribution-amount {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #10b981;
+    min-width: 100px;
+    text-align: right;
+}
+
+.btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Employer Match Section */
+#employer-match-section {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .retirement-accounts-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .account-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .retirement-summary .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .contribution-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .contribution-date,
+    .contribution-amount {
+        min-width: auto;
+    }
+    
+    .contribution-amount {
+        text-align: left;
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 
