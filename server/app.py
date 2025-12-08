@@ -676,6 +676,60 @@ def delete_transaction(transaction_id):
     save_data()
     return jsonify({'success': True})
 
+# ------------------- BILL CRUD ENDPOINTS -------------------
+def validate_bill(bill):
+    required_fields = ['name', 'category', 'amount', 'due_date', 'auto_pay']
+    for field in required_fields:
+        if field not in bill:
+            return False, f"Missing field: {field}"
+    try:
+        float(bill['amount'])
+    except Exception:
+        return False, "Amount must be a number"
+    return True, None
+
+@app.route('/api/bills', methods=['GET'])
+def get_bills():
+    return jsonify(budget_data.get('fixed_expenses', []))
+
+@app.route('/api/bills', methods=['POST'])
+def add_bill():
+    bill = request.json
+    valid, error = validate_bill(bill)
+    if not valid:
+        return jsonify({'success': False, 'error': error}), 400
+    bill['id'] = int(datetime.now().timestamp() * 1000)
+    budget_data['fixed_expenses'].append(bill)
+    save_data()
+    return jsonify({'success': True, 'data': bill})
+
+@app.route('/api/bills/<int:bill_id>', methods=['PUT'])
+def edit_bill(bill_id):
+    bill = request.json
+    valid, error = validate_bill(bill)
+    if not valid:
+        return jsonify({'success': False, 'error': error}), 400
+    for i, b in enumerate(budget_data['fixed_expenses']):
+        if b.get('id') == bill_id:
+            bill['id'] = bill_id
+            budget_data['fixed_expenses'][i] = bill
+            save_data()
+            return jsonify({'success': True, 'data': bill})
+    return jsonify({'success': False, 'error': 'Bill not found'}), 404
+
+@app.route('/api/bills/<int:bill_id>', methods=['DELETE'])
+def delete_bill(bill_id):
+    before = len(budget_data['fixed_expenses'])
+    budget_data['fixed_expenses'] = [b for b in budget_data['fixed_expenses'] if b.get('id') != bill_id]
+    after = len(budget_data['fixed_expenses'])
+    save_data()
+    if after < before:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'Bill not found'}), 404
+    save_data()
+    return jsonify({'success': True})
+
 @app.route('/api/transactions/month-to-date', methods=['GET'])
 def get_month_to_date_transactions():
     """Get transactions for the current month"""

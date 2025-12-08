@@ -134,34 +134,27 @@ export async function getTaxEstimate(filingStatus = 'married-joint', useActual =
 }
 
 // Expense APIs
+// Fixed Expenses (Bills) APIs
 export async function getExpenses() {
-    return apiRequest('/expenses');
-}
-
-export async function getTotalExpenses() {
-    return apiRequest('/expenses/total');
-}
-
-export async function getExpense(id) {
-    return apiRequest(`/expenses/${id}`);
+    return apiRequest('/bills');
 }
 
 export async function createExpense(expenseData) {
-    return apiRequest('/expenses', {
+    return apiRequest('/bills', {
         method: 'POST',
         body: JSON.stringify(expenseData)
     });
 }
 
 export async function updateExpense(id, expenseData) {
-    return apiRequest(`/expenses/${id}`, {
+    return apiRequest(`/bills/${id}`, {
         method: 'PUT',
         body: JSON.stringify(expenseData)
     });
 }
 
 export async function deleteExpense(id) {
-    return apiRequest(`/expenses/${id}`, {
+    return apiRequest(`/bills/${id}`, {
         method: 'DELETE'
     });
 }

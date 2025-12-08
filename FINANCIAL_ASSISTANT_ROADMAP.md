@@ -362,7 +362,7 @@ A feature is only complete when:
 **What Needs to Be Built:**
 
 #### Phase 1: Bill Management
-- [ ] Add/edit/delete bills
+- [x] Add/edit/delete bills ✅ COMPLETE
 - [ ] Bill categories:
   - Housing (rent/mortgage, insurance, HOA)
   - Utilities (electric, gas, water, trash, internet)

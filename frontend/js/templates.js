@@ -61,10 +61,7 @@ export function injectTab(tabId, htmlContent, isActive = false) {
 export function injectModal(modalId, htmlContent) {
     const modalsContainer = document.getElementById('modals-container');
     if (!modalsContainer) return;
-    
-    const modalWrapper = document.createElement('div');
-    modalWrapper.innerHTML = htmlContent;
-    modalsContainer.appendChild(modalWrapper.firstElementChild);
+    modalsContainer.insertAdjacentHTML('beforeend', htmlContent);
 }
 
 /**

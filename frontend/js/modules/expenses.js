@@ -102,11 +102,64 @@ function setupEventListeners() {
             loadExpenses();
         }
     });
-    
+
     // Setup add expense button
-    const addExpenseBtn = document.getElementById('add-expense-btn');
-    if (addExpenseBtn) {
-        addExpenseBtn.addEventListener('click', () => showExpenseModal());
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'add-expense-btn') {
+            showExpenseModal();
+        }
+    });
+
+    // Setup modal close/cancel
+    document.addEventListener('click', (e) => {
+        if (e.target && (e.target.id === 'close-expense-modal' || e.target.id === 'cancel-expense-btn')) {
+            hideModal('expense-modal');
+        }
+    });
+
+    // Handle form submit
+    document.addEventListener('submit', async (e) => {
+        if (e.target && e.target.id === 'expense-form') {
+            e.preventDefault();
+            await handleExpenseFormSubmit();
+        }
+    });
+}
+
+async function handleExpenseFormSubmit() {
+    const category = document.getElementById('expense-category').value;
+    const name = document.getElementById('expense-name').value.trim();
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const due_date = parseInt(document.getElementById('expense-due-date').value);
+    const auto_pay = document.getElementById('expense-autopay').checked;
+    const notes = document.getElementById('expense-notes').value.trim();
+
+    if (!category || !name || isNaN(amount)) {
+        showNotification('Please fill out all required fields.', 'error');
+        return;
+    }
+
+    const expenseData = {
+        category,
+        name,
+        amount,
+        due_date: due_date || null,
+        auto_pay,
+        notes
+    };
+
+    try {
+        if (currentEditExpenseId) {
+            await API.updateExpense(currentEditExpenseId, expenseData);
+            showNotification('Expense updated successfully', 'success');
+        } else {
+            await API.createExpense(expenseData);
+            showNotification('Expense added successfully', 'success');
+        }
+        hideModal('expense-modal');
+        loadExpenses();
+    } catch (error) {
+        showNotification('Failed to save expense', 'error');
     }
 }
 
@@ -190,20 +243,31 @@ function getExpenseIcon(category) {
 /**
  * Show expense modal
  */
-export function showExpenseModal(expenseId = null) {
+export async function showExpenseModal(expenseId = null) {
     currentEditExpenseId = expenseId;
-    
     const modal = document.getElementById('expense-modal');
     const title = document.getElementById('expense-modal-title');
-    
+    const form = document.getElementById('expense-form');
+
     if (expenseId) {
         title.textContent = 'Edit Fixed Expense';
-        // Load expense data
+        // Load bill data for editing
+        const expenses = await API.getExpenses();
+        const expense = expenses.find(e => String(e.id) === String(expenseId));
+        if (expense) {
+            document.getElementById('expense-category').value = expense.category ?? '';
+            document.getElementById('expense-name').value = expense.name ?? '';
+            document.getElementById('expense-amount').value = expense.amount ?? '';
+            document.getElementById('expense-due-date').value = (expense.due_date !== undefined && expense.due_date !== null) ? expense.due_date : '';
+            document.getElementById('expense-autopay').checked = !!expense.auto_pay;
+            document.getElementById('expense-notes').value = expense.notes ?? '';
+        } else {
+            form.reset();
+        }
     } else {
         title.textContent = 'Add Fixed Expense';
-        document.getElementById('expense-form').reset();
+        form.reset();
     }
-    
     showModal('expense-modal');
 }
 
